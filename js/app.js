@@ -9,7 +9,7 @@ class AppleCinemaApp {
     this.currentNav = "kham-pha";
     this.currentSegment = "all"; // all | series | single
     this.activeGenreFilter = "Tất cả";
-    this.visibleGridLimit = 60;
+    this.visibleGridLimit = 36;
     this.heroMovies = [];
     this.heroIndex = 0;
     this.heroTimer = null;
@@ -536,7 +536,7 @@ class AppleCinemaApp {
       items
         .map(
           (m, idx) => `
-        <div class="chart-row-item" onclick="app.openMovieModal('${m.slug}', false)" onmouseenter="app.updateAmbientBackdrop(app.findMovie('${m.slug}'))">
+        <div class="chart-row-item" onclick="app.openMovieModal('${m.slug}', false)">
           <span class="chart-rank-num">${idx + 1}</span>
           <img class="chart-thumb" src="${m.poster}" alt="${m.title}" loading="lazy" />
           <div class="chart-info">
@@ -590,8 +590,7 @@ class AppleCinemaApp {
     const inMyList = this.isInMyList(movie);
     return `
       <article class="movie-card ${rankNum ? "ranked-card" : ""}"
-               onclick="app.openMovieModal('${movie.slug}', false)"
-               onmouseenter="app.updateAmbientBackdrop(app.findMovie('${movie.slug}'))">
+               onclick="app.openMovieModal('${movie.slug}', false)">
         <div class="movie-poster-wrap">
           <img src="${movie.poster}" alt="${movie.title}" loading="lazy"
                onerror="this.src='https://phimmoiz.one/wp-content/uploads/2026/10/matchbox-phim-dien-anh-poster.webp'" />
@@ -1758,44 +1757,6 @@ class AppleCinemaApp {
         }
       }
     });
-
-    // Apple TV 3D Parallax Tilt & Liquid Glass Specular Glare Tracking (60/120fps GPU Smooth)
-    if (window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
-      let activeCard = null;
-      let rafId = null;
-
-      document.addEventListener(
-        " pointermove".trim(),
-        (e) => {
-          const card = e.target.closest(".movie-card");
-          if (!card) {
-            if (activeCard) {
-              activeCard.style.setProperty("--rx", "0deg");
-              activeCard.style.setProperty("--ry", "0deg");
-              activeCard = null;
-            }
-            return;
-          }
-          activeCard = card;
-          const clientX = e.clientX;
-          const clientY = e.clientY;
-          if (rafId) cancelAnimationFrame(rafId);
-          rafId = requestAnimationFrame(() => {
-            if (!activeCard) return;
-            const rect = activeCard.getBoundingClientRect();
-            const px = Math.max(0, Math.min(1, (clientX - rect.left) / (rect.width || 1)));
-            const py = Math.max(0, Math.min(1, (clientY - rect.top) / (rect.height || 1)));
-            const ry = ((px - 0.5) * 11).toFixed(2);
-            const rx = ((0.5 - py) * 11).toFixed(2);
-            activeCard.style.setProperty("--rx", `${rx}deg`);
-            activeCard.style.setProperty("--ry", `${ry}deg`);
-            activeCard.style.setProperty("--glare-x", `${(px * 100).toFixed(1)}%`);
-            activeCard.style.setProperty("--glare-y", `${(py * 100).toFixed(1)}%`);
-          });
-        },
-        { passive: true }
-      );
-    }
   }
 }
 
