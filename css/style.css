@@ -3747,12 +3747,78 @@ body {
   margin-left: 2px;
 }
 
-/* Adjust Bottom Player Bar to match Full-Screen visionOS Window */
+/* Compact Centered Floating visionOS Player Capsule */
 .apple-player-bar {
-  left: 76px;
-  right: 10px;
-  background: rgba(52, 54, 60, 0.88) !important;
-  border: 1px solid rgba(255, 255, 255, 0.26) !important;
+  left: calc(50% + 32px);
+  right: auto;
+  transform: translateX(-50%);
+  width: min(740px, calc(100vw - 104px));
+  height: 56px;
+  bottom: 10px;
+  padding: 0 14px;
+  border-radius: 999px;
+  grid-template-columns: minmax(170px, 1fr) minmax(220px, 1.25fr) auto;
+  gap: 14px;
+  background: linear-gradient(
+    145deg,
+    rgba(92, 95, 102, 0.72) 0%,
+    rgba(58, 60, 66, 0.78) 48%,
+    rgba(42, 44, 50, 0.84) 100%
+  ) !important;
+  backdrop-filter: blur(28px) saturate(165%);
+  -webkit-backdrop-filter: blur(28px) saturate(165%);
+  border: 1.5px solid rgba(255, 255, 255, 0.28) !important;
+  box-shadow:
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.45),
+    0 16px 40px rgba(0, 0, 0, 0.52);
+}
+
+.apple-player-bar .player-now-info {
+  gap: 10px;
+}
+
+.apple-player-bar .player-now-art {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+}
+
+.apple-player-bar .player-now-title {
+  font-size: 0.8rem;
+  gap: 6px;
+}
+
+.apple-player-bar .player-now-sub {
+  font-size: 0.68rem;
+}
+
+.apple-player-bar .player-transport {
+  gap: 3px;
+}
+
+.apple-player-bar .transport-btns {
+  gap: 12px;
+}
+
+.apple-player-bar .transport-play-main {
+  width: 30px;
+  height: 30px;
+}
+
+.apple-player-bar .transport-scrubber {
+  max-width: 240px;
+  font-size: 0.63rem;
+  gap: 8px;
+}
+
+.apple-player-bar .scrubber-track {
+  height: 3px;
+}
+
+.apple-player-bar .btn-expand-cinema {
+  padding: 6px 13px;
+  font-size: 0.74rem;
+  border-radius: 999px;
 }
 
 /* ==========================================================================
@@ -3942,8 +4008,10 @@ body {
     order: 1;
   }
   .apple-player-bar {
-    left: 14px;
-    right: 14px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(680px, calc(100vw - 28px));
   }
 }
 
