@@ -19,7 +19,9 @@ class AppleCinemaApp {
     this.playingMovie = null;
     this.currentEpisodeIndex = 0;
     this.currentServerMode = "hls-1"; // hls-1 | embed-1 | nguonc-1 | dub-1 | trailer
-    this.currentQuality = "4K"; // 4K | 2K | 1080p | 720p | Auto
+    this.currentQuality = "native-max"; // native-max | level-N | alt-N | 4K-upscale | 2K-upscale | Auto
+    this.detectedHlsLevels = [];
+    this.actualVideoRes = { width: 0, height: 0, bitrateMbps: 0 };
     this.ActiveModalTab = "related"; // related | episodes | trailer | details
     this.isPlaying = false;
     this.lightsOff = false;
@@ -648,14 +650,23 @@ class AppleCinemaApp {
     modalBackdrop.classList.add("open");
     document.body.style.overflow = "hidden";
 
+    const prevEpSource = movie.episodes?.[epIndex]?.source || "";
+
     if (autoPlay) {
       this.startVideoPlayback(movie, epIndex, "hls-1");
     }
 
-    // Tự động lấy thêm danh sách tập phim đầy đủ từ API phimmoiz.one / phimapi
+    // Tự động lấy thêm danh sách tập phim & luồng chất lượng thật từ PhimAPI / NguonC / WP API
     const enriched = await this.service.enrichMovieStreams(movie);
     if (this.selectedMovie && this.selectedMovie.slug === enriched.slug) {
       this.refreshEpisodesInModal(enriched);
+      const newEpSource = enriched.episodes?.[this.currentEpisodeIndex]?.source || "";
+      const isPlayingNow = document.getElementById("activeVideoContainer")?.classList.contains("playing");
+      if (isPlayingNow && newEpSource && newEpSource !== prevEpSource && this.currentServerMode === "hls-1") {
+        this.startVideoPlayback(enriched, this.currentEpisodeIndex, "hls-1");
+      } else {
+        this.renderDynamicQualityButtons();
+      }
     }
   }
 
@@ -775,19 +786,9 @@ class AppleCinemaApp {
         </div>
 
         <div class="player-toolbar-right">
-          <span class="server-label"><i class="fas fa-sliders"></i> Chất lượng:</span>
-          <div class="quality-selector-group" role="group" aria-label="Chọn độ phân giải">
-            ${["4K", "2K", "1080p", "720p", "Auto"]
-              .map(
-                (q) => `
-              <button class="quality-pill-btn ${this.currentQuality === q ? "active" : ""}"
-                      data-quality="${q}"
-                      onclick="app.setVideoQuality('${q}', true)">
-                ${q === "4K" ? "4K UHD" : q === "2K" ? "2K QHD" : q}
-              </button>
-            `
-              )
-              .join("")}
+          <span class="server-label"><i class="fas fa-sliders"></i> Chất lượng luồng:</span>
+          <div class="quality-selector-group" id="qualitySelectorGroup" role="group" aria-label="Chọn độ phân giải thực tế">
+            ${this.buildQualityButtonsHTML()}
           </div>
         </div>
       </div>
@@ -1050,6 +1051,8 @@ class AppleCinemaApp {
     }
 
     this.destroyHls();
+    this.detectedHlsLevels = [];
+    this.actualVideoRes = { width: 0, height: 0, bitrateMbps: 0 };
 
     if (window.Hls && window.Hls.isSupported()) {
       this.hlsInstance = new window.Hls({
@@ -1062,9 +1065,23 @@ class AppleCinemaApp {
       });
       this.hlsInstance.loadSource(streamUrl);
       this.hlsInstance.attachMedia(videoEl);
-      this.hlsInstance.on(window.Hls.Events.MANIFEST_PARSED, () => {
+      this.hlsInstance.on(window.Hls.Events.MANIFEST_PARSED, (_, data) => {
+        this.inspectHlsLevels(data?.levels || this.hlsInstance.levels || []);
         this.applyHlsQualityLevel();
+        this.renderDynamicQualityButtons();
+        this.applyVideoQualityVisuals();
         videoEl.play().catch(() => {});
+      });
+      this.hlsInstance.on(window.Hls.Events.LEVEL_SWITCHED, (_, data) => {
+        const lvl = this.hlsInstance?.levels?.[data.level];
+        if (lvl) {
+          this.actualVideoRes.width = lvl.width || videoEl.videoWidth || 1920;
+          this.actualVideoRes.height = lvl.height || videoEl.videoHeight || 1080;
+          if (lvl.bitrate) {
+            this.actualVideoRes.bitrateMbps = +(lvl.bitrate / 1000000).toFixed(1);
+          }
+          this.applyVideoQualityVisuals();
+        }
       });
       this.hlsInstance.on(window.Hls.Events.ERROR, (_, data) => {
         if (data.fatal && streamUrl !== fallbackStreams[0]) {
@@ -1074,10 +1091,24 @@ class AppleCinemaApp {
     } else if (videoEl.canPlayType("application/vnd.apple.mpegurl")) {
       videoEl.src = streamUrl;
       videoEl.addEventListener("loadedmetadata", () => {
+        this.actualVideoRes.width = videoEl.videoWidth || 1920;
+        this.actualVideoRes.height = videoEl.videoHeight || 1080;
+        this.renderDynamicQualityButtons();
+        this.applyVideoQualityVisuals();
         videoEl.play().catch(() => {});
       });
     }
 
+    videoEl.onloadedmetadata = () => {
+      if (videoEl.videoWidth && videoEl.videoHeight) {
+        this.actualVideoRes.width = videoEl.videoWidth;
+        this.actualVideoRes.height = videoEl.videoHeight;
+        this.renderDynamicQualityButtons();
+        this.applyVideoQualityVisuals();
+      }
+    };
+
+    this.renderDynamicQualityButtons();
     this.applyVideoQualityVisuals();
 
     // Đồng bộ thanh thời gian với Apple Music Now Playing Bar
@@ -1093,34 +1124,182 @@ class AppleCinemaApp {
     };
   }
 
-  getQualityLabel(q) {
-    switch (q) {
-      case "4K":
-        return "4K ULTRA HD • 2160p HDR";
-      case "2K":
-        return "2K QHD • 1440p";
-      case "1080p":
-        return "FULL HD • 1080p";
-      case "720p":
-        return "HD • 720p";
-      default:
-        return "AUTO • ADAPTIVE FHD";
+  inspectHlsLevels(rawLevels) {
+    if (!Array.isArray(rawLevels) || rawLevels.length === 0) {
+      this.detectedHlsLevels = [];
+      return;
+    }
+    this.detectedHlsLevels = rawLevels.map((lvl, index) => {
+      const w = lvl.width || 1920;
+      const h = lvl.height || 1080;
+      const mbps = lvl.bitrate ? +(lvl.bitrate / 1000000).toFixed(1) : 3.5;
+      const tier = this.resolveResolutionTier(w, h);
+      return {
+        index,
+        width: w,
+        height: h,
+        bitrateMbps: mbps,
+        tier,
+        shortLabel: `${tier} Gốc${mbps ? ` (${mbps}M)` : ""}`,
+        detailLabel: `${tier} Gốc • ${w}×${h}${mbps ? ` (${mbps} Mbps)` : ""}`
+      };
+    });
+
+    const highest = this.detectedHlsLevels[this.detectedHlsLevels.length - 1];
+    if (highest) {
+      this.actualVideoRes = {
+        width: highest.width,
+        height: highest.height,
+        bitrateMbps: highest.bitrateMbps
+      };
     }
   }
 
+  resolveResolutionTier(w, h) {
+    const maxDim = Math.max(w || 0, h || 0);
+    if (maxDim >= 3600 || h >= 2000) return "4K UHD";
+    if (maxDim >= 2400 || h >= 1350) return "2K QHD";
+    if (maxDim >= 1800 || h >= 1000) return "1080p";
+    if (maxDim >= 1200 || h >= 680) return "720p";
+    if (maxDim >= 800 || h >= 460) return "480p";
+    if (maxDim > 0) return `${h}p`;
+    return "1080p";
+  }
+
+  buildQualityButtonsHTML() {
+    const buttons = [];
+    const levels = this.detectedHlsLevels || [];
+    const ep = this.selectedMovie?.episodes?.[this.currentEpisodeIndex] || this.selectedMovie?.episodes?.[0];
+    const altSources = ep?.altSources || [];
+
+    if (levels.length > 1) {
+      // Phim có nhiều mức chất lượng thật trong luồng .m3u8 (Multi-variant HLS)
+      for (let i = levels.length - 1; i >= 0; i--) {
+        const l = levels[i];
+        const key = `level-${l.index}`;
+        buttons.push({
+          key,
+          label: l.shortLabel,
+          title: `Chuyển sang luồng gốc ${l.detailLabel}`
+        });
+      }
+      buttons.push({
+        key: "Auto",
+        label: "Auto (ABR)",
+        title: "Tự động điều chỉnh chất lượng theo tốc độ mạng"
+      });
+    } else {
+      // Luồng .m3u8 có 1 độ phân giải gốc (ví dụ 1920x1080 3.5 Mbps)
+      const w = this.actualVideoRes.width || 1920;
+      const h = this.actualVideoRes.height || 1080;
+      const mbps = this.actualVideoRes.bitrateMbps || 3.5;
+      const nativeTier = this.resolveResolutionTier(w, h);
+      buttons.push({
+        key: "native-max",
+        label: `${nativeTier} Gốc (${w}×${h} • ${mbps}M)`,
+        title: `Phát luồng .m3u8 nguyên bản từ CDN (${w}×${h}, ${mbps} Mbps)`
+      });
+    }
+
+    // Nếu tập phim có nhiều luồng .m3u8 từ các Server khác nhau (VD: Hà Nội / Đà Nẵng / StreamC)
+    if (altSources.length > 1) {
+      altSources.forEach((alt, idx) => {
+        buttons.push({
+          key: `alt-${idx}`,
+          label: `Luồng #${idx + 1} (${alt.label.replace(/^#/, "")})`,
+          title: `Đổi sang luồng .m3u8 từ ${alt.label}`
+        });
+      });
+    }
+
+    // Tùy chọn nâng cấp độ nét quang học (Cinema Super-Resolution Upscale) tách bạch rõ ràng với luồng gốc
+    buttons.push({
+      key: "2K-upscale",
+      label: "2K Upscale",
+      title: "Khóa luồng gốc cao nhất + Bộ lọc làm nét 2K QHD"
+    });
+    buttons.push({
+      key: "4K-upscale",
+      label: "4K Upscale",
+      title: "Khóa luồng gốc cao nhất + Bộ lọc tương phản 4K Cinema Clarity"
+    });
+
+    return buttons
+      .map(
+        (b) => `
+      <button class="quality-pill-btn ${this.currentQuality === b.key ? "active" : ""}"
+              data-quality="${b.key}"
+              title="${b.title}"
+              onclick="app.setVideoQuality('${b.key}', true)">
+        ${b.label}
+      </button>
+    `
+      )
+      .join("");
+  }
+
+  renderDynamicQualityButtons() {
+    const group = document.getElementById("qualitySelectorGroup");
+    if (group) {
+      group.innerHTML = this.buildQualityButtonsHTML();
+    }
+  }
+
+  getQualityLabel(q) {
+    const w = this.actualVideoRes.width || 1920;
+    const h = this.actualVideoRes.height || 1080;
+    const mbps = this.actualVideoRes.bitrateMbps || 3.5;
+    const nativeTier = this.resolveResolutionTier(w, h);
+    const nativeInfo = `${nativeTier} GỐC (${w}×${h} • ${mbps} Mbps)`;
+
+    if (q === "4K-upscale" || q === "4K") {
+      return `LUỒNG ${nativeInfo} → 4K UHD UPSCALE`;
+    }
+    if (q === "2K-upscale" || q === "2K") {
+      return `LUỒNG ${nativeInfo} → 2K QHD UPSCALE`;
+    }
+    if (q && q.startsWith("level-")) {
+      const idx = parseInt(q.replace("level-", ""), 10);
+      const lvl = this.detectedHlsLevels.find((l) => l.index === idx);
+      if (lvl) return `LUỒNG ${lvl.detailLabel.toUpperCase()}`;
+    }
+    if (q === "Auto") {
+      return `AUTO ABR • ĐANG PHÁT ${nativeInfo}`;
+    }
+    return `LUỒNG ${nativeInfo}`;
+  }
+
   getQualityVideoClass(q) {
-    if (q === "4K") return "quality-4k";
-    if (q === "2K") return "quality-2k";
-    if (q === "720p") return "quality-720p";
+    if (q === "4K-upscale" || q === "4K") return "quality-4k";
+    if (q === "2K-upscale" || q === "2K") return "quality-2k";
     return "";
   }
 
   setVideoQuality(qualityMode, showNotification = true) {
-    this.currentQuality = qualityMode;
-    document.querySelectorAll(".quality-pill-btn").forEach((btn) => {
-      btn.classList.toggle("active", btn.dataset.quality === qualityMode);
-    });
+    // Nếu người dùng bấm chuyển sang luồng .m3u8 của Server phụ (alt-0, alt-1...)
+    if (qualityMode.startsWith("alt-")) {
+      const altIdx = parseInt(qualityMode.replace("alt-", ""), 10);
+      const ep = this.selectedMovie?.episodes?.[this.currentEpisodeIndex] || this.selectedMovie?.episodes?.[0];
+      const altObj = ep?.altSources?.[altIdx];
+      if (altObj && altObj.source && this.hlsInstance) {
+        const videoEl = document.getElementById("hlsVideoElement");
+        const resumeTime = videoEl ? videoEl.currentTime : 0;
+        this.currentQuality = qualityMode;
+        this.hlsInstance.loadSource(altObj.source);
+        this.hlsInstance.once(window.Hls.Events.MANIFEST_PARSED, () => {
+          if (videoEl && resumeTime > 1) videoEl.currentTime = resumeTime;
+          videoEl?.play().catch(() => {});
+        });
+        this.renderDynamicQualityButtons();
+        if (showNotification) {
+          this.showToast(`Đã chuyển sang luồng .m3u8 từ ${altObj.label}`);
+        }
+        return;
+      }
+    }
 
+    this.currentQuality = qualityMode;
+    this.renderDynamicQualityButtons();
     this.applyHlsQualityLevel();
     this.applyVideoQualityVisuals();
 
@@ -1129,7 +1308,7 @@ class AppleCinemaApp {
     }
 
     if (showNotification) {
-      this.showToast(`Đã chuyển chất lượng phát sang ${this.getQualityLabel(qualityMode)}`);
+      this.showToast(`Chất lượng phát: ${this.getQualityLabel(qualityMode)}`);
     }
   }
 
@@ -1143,13 +1322,18 @@ class AppleCinemaApp {
       return;
     }
 
-    if (this.currentQuality === "4K" || this.currentQuality === "2K" || this.currentQuality === "1080p") {
-      // Khóa ở mức bitrate / độ phân giải cao nhất trong luồng m3u8
-      this.hlsInstance.currentLevel = maxIdx;
-      this.hlsInstance.nextLevel = maxIdx;
-    } else if (this.currentQuality === "720p") {
-      this.hlsInstance.currentLevel = 0;
+    if (this.currentQuality.startsWith("level-")) {
+      const targetIdx = parseInt(this.currentQuality.replace("level-", ""), 10);
+      if (!isNaN(targetIdx) && targetIdx >= 0 && targetIdx <= maxIdx) {
+        this.hlsInstance.currentLevel = targetIdx;
+        this.hlsInstance.loadLevel = targetIdx;
+        return;
+      }
     }
+
+    // Mặc định (native-max, 4K-upscale, 2K-upscale): khóa ở mức bitrate / độ phân giải gốc cao nhất của file .m3u8
+    this.hlsInstance.currentLevel = maxIdx;
+    this.hlsInstance.nextLevel = maxIdx;
   }
 
   applyVideoQualityVisuals() {

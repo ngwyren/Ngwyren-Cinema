@@ -1439,30 +1439,66 @@ class PhimmoiService {
   /**
    * Lấy đầy đủ danh sách tập phim & đa nguồn phát Vietsub / Lồng Tiếng / Thuyết Minh
    * Kết hợp đồng thời: PhimAPI (Netflix/KKPhim HLS + Embed) + NguonC (StreamC Vietsub Embed) + WP API
+   * Tự động dò tìm theo tên phim nếu slug bị lệch để luôn lấy được nhiều luồng chất lượng thật nhất.
    */
   async enrichMovieStreams(movie) {
     if (!movie) return movie;
     const slugToTry = movie.crawlSlug || movie.slug.replace(/-\d+$/, "");
 
-    const [phimApiRes, nguoncRes, wpPosts] = await Promise.all([
+    let [phimApiRes, nguoncRes, wpPosts] = await Promise.all([
       this.smartFetchJson(`${PHIMMOI_CONFIG.phimApiBase}${encodeURIComponent(slugToTry)}`, 5000),
       this.smartFetchJson(`${PHIMMOI_CONFIG.nguoncApiBase}${encodeURIComponent(slugToTry)}`, 5000),
       this.smartFetchJson(`${PHIMMOI_CONFIG.wpApiPosts}?slug=${encodeURIComponent(movie.slug)}&_embed=1`, 4500)
     ]);
 
-    // 1. Nguồn PhimAPI (Netflix / KKPhim Vietsub #1 + Lồng Tiếng / Thuyết Minh)
+    // Nếu slug có hậu tố số hoặc khác chuẩn khiến PhimAPI chưa khớp, tự động tìm theo tên phim để lấy luồng .m3u8 thật
+    if ((!phimApiRes || !Array.isArray(phimApiRes.episodes) || phimApiRes.episodes.length === 0) && movie.title) {
+      const searchRes = await this.smartFetchJson(
+        `${PHIMMOI_CONFIG.phimApiSearch}?keyword=${encodeURIComponent(movie.title)}&limit=4`,
+        4500
+      );
+      const items = searchRes?.data?.items;
+      if (Array.isArray(items) && items.length > 0) {
+        const cleanTarget = movie.title.toLowerCase().trim();
+        const bestHit =
+          items.find((it) => (it.name || "").toLowerCase().trim() === cleanTarget) ||
+          items.find((it) => (it.origin_name || "").toLowerCase().trim() === (movie.originTitle || "").toLowerCase().trim()) ||
+          items[0];
+        if (bestHit && bestHit.slug) {
+          movie.crawlSlug = bestHit.slug;
+          phimApiRes = await this.smartFetchJson(`${PHIMMOI_CONFIG.phimApiBase}${encodeURIComponent(bestHit.slug)}`, 5000);
+        }
+      }
+    }
+
+    // 1. Nguồn PhimAPI (Netflix / KKPhim Vietsub #1 + Lồng Tiếng / Thuyết Minh + Các luồng Server phụ)
     if (phimApiRes && Array.isArray(phimApiRes.episodes) && phimApiRes.episodes.length > 0) {
-      const serverData1 = phimApiRes.episodes[0].server_data || [];
+      const allServers = phimApiRes.episodes;
+      const serverData1 = allServers[0].server_data || [];
       if (serverData1.length > 0) {
         const parsedEps = serverData1
           .filter((ep) => ep.link_m3u8 || ep.link_embed)
           .map((ep, idx) => {
             const rawName = ep.name || `Tập ${idx + 1}`;
+            // Gom tất cả các luồng .m3u8 khác nhau của cùng tập phim từ các server trong PhimAPI
+            const altSources = [];
+            allServers.forEach((srv, sIdx) => {
+              const candidateEp = srv.server_data?.[idx];
+              if (candidateEp && candidateEp.link_m3u8) {
+                altSources.push({
+                  id: `srv-${sIdx}`,
+                  label: srv.server_name || `Server #${sIdx + 1}`,
+                  source: candidateEp.link_m3u8,
+                  embed: candidateEp.link_embed || ""
+                });
+              }
+            });
             return {
               name: rawName.startsWith("Tập") || rawName.includes("Full") ? rawName : `Tập ${rawName}`,
               slug: ep.slug || `tap-${idx + 1}`,
               source: ep.link_m3u8 || "",
-              embed: ep.link_embed || ""
+              embed: ep.link_embed || "",
+              altSources
             };
           });
         if (parsedEps.length > 0) {
@@ -1470,8 +1506,8 @@ class PhimmoiService {
         }
       }
       // Server 2: Lồng Tiếng / Thuyết Minh (nếu có)
-      if (phimApiRes.episodes.length > 1 && phimApiRes.episodes[1].server_data) {
-        movie.dubEpisodes = phimApiRes.episodes[1].server_data
+      if (allServers.length > 1 && allServers[1].server_data) {
+        movie.dubEpisodes = allServers[1].server_data
           .filter((ep) => ep.link_m3u8 || ep.link_embed)
           .map((ep, idx) => ({
             name: ep.name || `Tập ${idx + 1}`,
@@ -1481,6 +1517,9 @@ class PhimmoiService {
           }));
       }
       if (phimApiRes.movie) {
+        if (phimApiRes.movie.quality) {
+          movie.nativeQuality = phimApiRes.movie.quality;
+        }
         if (phimApiRes.movie.trailer_url && !movie.trailerUrl) {
           movie.trailerUrl = phimApiRes.movie.trailer_url;
         }
@@ -1501,6 +1540,20 @@ class PhimmoiService {
           source: item.m3u8 || "",
           embed: item.embed || ""
         }));
+        // Nếu NguonC có luồng m3u8 riêng, bổ sung vào altSources của tập tương ứng
+        movie.nguoncEpisodes.forEach((ncEp, idx) => {
+          if (ncEp.source && movie.episodes?.[idx]) {
+            movie.episodes[idx].altSources = movie.episodes[idx].altSources || [];
+            if (!movie.episodes[idx].altSources.some((a) => a.source === ncEp.source)) {
+              movie.episodes[idx].altSources.push({
+                id: `nguonc-${idx}`,
+                label: "StreamC FHD",
+                source: ncEp.source,
+                embed: ncEp.embed || ""
+              });
+            }
+          }
+        });
         // Nếu nguồn chính chỉ có 1 tập mẫu mà NguonC có nhiều tập hơn thì cập nhật luôn
         if (movie.nguoncEpisodes.length > (movie.episodes ? movie.episodes.length : 0)) {
           movie.episodes = movie.nguoncEpisodes.map((ep, i) => ({
