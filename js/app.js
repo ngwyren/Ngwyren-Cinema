@@ -181,12 +181,45 @@ class AppleCinemaApp {
       el.classList.toggle("active", el.dataset.nav === navKey);
     });
 
+    // Hiệu ứng trượt giọt nước (Liquid Pill Indicator) trên thanh Dock bên trái
+    const dockEl = document.getElementById("appleSidebar");
+    const dockIndicator = document.getElementById("visionDockIndicator");
+    if (dockEl) {
+      const dockMap = {
+        "kham-pha": 0,
+        "yeu-thich": 1,
+        "lich-su": 2,
+        "anime": 3,
+        "moi-cap-nhat": 4,
+        "phim-le": 4,
+        "phim-bo": 4,
+        "netflix": 4,
+        "vietsub": 4
+      };
+      const targetIdx = dockMap[navKey] !== undefined ? dockMap[navKey] : 0;
+      dockEl.style.setProperty("--dock-idx", String(targetIdx));
+      document.querySelectorAll(".vision-dock-icon").forEach((btn) => {
+        btn.classList.toggle("active", Number(btn.dataset.dockIdx) === targetIdx);
+      });
+      if (dockIndicator) {
+        dockIndicator.classList.remove("dock-morph");
+        void dockIndicator.offsetWidth;
+        dockIndicator.classList.add("dock-morph");
+      }
+    }
+
     // Đóng sidebar mobile nếu đang mở
     this.toggleMobileSidebar(false);
 
-    // Cuộn mượt lên đầu trang
+    // Cuộn mượt lên đầu trang & hiệu ứng chuyển trang
     window.scrollTo({ top: 0, behavior: "smooth" });
     this.renderMainView();
+    const container = document.getElementById("mainContentWrapper");
+    if (container) {
+      container.classList.remove("vision-view-enter");
+      void container.offsetWidth;
+      container.classList.add("vision-view-enter");
+    }
   }
 
   renderMainView() {

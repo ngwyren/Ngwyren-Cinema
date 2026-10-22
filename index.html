@@ -52,20 +52,21 @@
   <div class="vision-stage">
 
     <!-- FLOATING LEFT VERTICAL ICON PILL DOCK (LIKE VISION OS) -->
-    <aside class="vision-left-dock" id="appleSidebar" aria-label="Thanh điều hướng nhanh">
-      <button class="vision-dock-icon active" data-nav="kham-pha" onclick="app.resetAllFilters()" title="Trang chủ Khám Phá">
+    <aside class="vision-left-dock" id="appleSidebar" aria-label="Thanh điều hướng nhanh" style="--dock-idx: 0;">
+      <span class="vision-dock-indicator" id="visionDockIndicator" aria-hidden="true"></span>
+      <button class="vision-dock-icon active" data-nav="kham-pha" data-dock-idx="0" data-label="Khám Phá" onclick="app.resetAllFilters()" title="Trang chủ Khám Phá">
         <i class="fas fa-house"></i>
       </button>
-      <button class="vision-dock-icon" data-nav="yeu-thich" onclick="app.setNavigation('yeu-thich')" title="Danh sách Đã Lưu">
+      <button class="vision-dock-icon" data-nav="yeu-thich" data-dock-idx="1" data-label="Đã Lưu" onclick="app.setNavigation('yeu-thich')" title="Danh sách Đã Lưu">
         <i class="fas fa-heart"></i>
       </button>
-      <button class="vision-dock-icon" data-nav="lich-su" onclick="app.setNavigation('lich-su')" title="Lịch Sử Xem Tiếp">
+      <button class="vision-dock-icon" data-nav="lich-su" data-dock-idx="2" data-label="Lịch Sử" onclick="app.setNavigation('lich-su')" title="Lịch Sử Xem Tiếp">
         <i class="fas fa-download"></i>
       </button>
-      <button class="vision-dock-icon" data-nav="anime" onclick="app.setNavigation('anime')" title="Kho Phim Anime">
+      <button class="vision-dock-icon" data-nav="anime" data-dock-idx="3" data-label="Anime" onclick="app.setNavigation('anime')" title="Kho Phim Anime">
         <i class="fas fa-wand-magic-sparkles"></i>
       </button>
-      <button class="vision-dock-icon" data-nav="moi-cap-nhat" onclick="app.setNavigation('moi-cap-nhat')" title="Toàn Bộ Kho Phim">
+      <button class="vision-dock-icon" data-nav="moi-cap-nhat" data-dock-idx="4" data-label="Kho Phim" onclick="app.setNavigation('moi-cap-nhat')" title="Toàn Bộ Kho Phim">
         <i class="fas fa-gear"></i>
       </button>
     </aside>
