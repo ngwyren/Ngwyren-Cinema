@@ -469,8 +469,9 @@ class AppleCinemaApp {
     `;
   }
 
-  renderCarouselSection(title, subtitle, movies, navTarget) {
+  renderCarouselSection(title, subtitle, movies, navTarget, maxItems = 16) {
     const trackId = `track-${Math.random().toString(36).slice(2, 8)}`;
+    const displayMovies = (movies || []).slice(0, maxItems);
     return `
       <section class="movie-section">
         <div class="section-header">
@@ -482,7 +483,7 @@ class AppleCinemaApp {
             ${
               navTarget
                 ? `<button class="btn-see-all" onclick="app.setNavigation('${navTarget}')">
-                    Xem tất cả <i class="fas fa-chevron-right" style="font-size: 0.72rem;"></i>
+                    Xem tất cả (${(movies || []).length}) <i class="fas fa-chevron-right" style="font-size: 0.72rem;"></i>
                   </button>`
                 : ""
             }
@@ -495,7 +496,7 @@ class AppleCinemaApp {
           </div>
         </div>
         <div class="movie-track" id="${trackId}">
-          ${movies.map((m) => this.renderMovieCardHTML(m)).join("")}
+          ${displayMovies.map((m) => this.renderMovieCardHTML(m)).join("")}
         </div>
       </section>
     `;
@@ -592,7 +593,7 @@ class AppleCinemaApp {
       <article class="movie-card ${rankNum ? "ranked-card" : ""}"
                onclick="app.openMovieModal('${movie.slug}', false)">
         <div class="movie-poster-wrap">
-          <img src="${movie.poster}" alt="${movie.title}" loading="lazy"
+          <img src="${movie.poster}" alt="${movie.title}" loading="lazy" decoding="async"
                onerror="this.src='https://phimmoiz.one/wp-content/uploads/2026/10/matchbox-phim-dien-anh-poster.webp'" />
           <div class="poster-badges-top">
             <span class="ribbon-quality">${movie.quality}</span>

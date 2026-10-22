@@ -2386,6 +2386,11 @@ html {
   transform: none !important;
 }
 
+.movie-section {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 360px;
+}
+
 /* ==========================================================================
    MOBILE & TABLET SIDEBAR BACKDROP + LIQUID GLASS BOTTOM DOCK
    ========================================================================== */
