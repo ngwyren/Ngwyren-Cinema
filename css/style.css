@@ -2391,6 +2391,24 @@ html {
   contain-intrinsic-size: 0 360px;
 }
 
+.movie-card,
+.movie-poster-wrap,
+.chart-row-item,
+.netflix-related-card {
+  contain: layout style paint;
+}
+
+.hero-kicker,
+.meta-pill,
+.btn-primary-play,
+.btn-glass-secondary,
+.mini-circle-btn,
+.netflix-related-duration,
+.chart-column-card {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
 /* ==========================================================================
    MOBILE & TABLET SIDEBAR BACKDROP + LIQUID GLASS BOTTOM DOCK
    ========================================================================== */

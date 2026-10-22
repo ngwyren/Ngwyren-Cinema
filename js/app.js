@@ -35,9 +35,13 @@ class AppleCinemaApp {
     ]);
 
     this.searchDebounce = null;
+    this.tagCache = new Map();
+    this.countryCache = new Map();
+    this.chartsCache = null;
   }
 
   async init() {
+    this.buildFastIndexes();
     this.setupHeroMovies();
     this.bindGlobalEvents();
     this.updateSidebarCounts();
@@ -50,8 +54,41 @@ class AppleCinemaApp {
     this.renderMainView();
     this.startHeroAutoRotate();
 
-    // Đồng bộ ngầm dữ liệu mới nhất từ https://phimmoiz.one/wp-json/wp/v2/posts?_embed
-    this.syncLivePhimmoi(false);
+    // Trì hoãn đồng bộ ngầm khi trình duyệt rảnh để không gây giật lag lúc mới mở trang
+    setTimeout(() => this.syncLivePhimmoi(false), 6000);
+  }
+
+  buildFastIndexes() {
+    this.tagCache.clear();
+    this.countryCache.clear();
+    const movies = this.service.movies;
+    for (let i = 0; i < movies.length; i++) {
+      const m = movies[i];
+      if (m.sectionTags) {
+        for (let t = 0; t < m.sectionTags.length; t++) {
+          const tag = m.sectionTags[t];
+          let arr = this.tagCache.get(tag);
+          if (!arr) {
+            arr = [];
+            this.tagCache.set(tag, arr);
+          }
+          arr.push(m);
+        }
+      }
+      if (m.countrySlug) {
+        let cArr = this.countryCache.get(m.countrySlug);
+        if (!cArr) {
+          cArr = [];
+          this.countryCache.set(m.countrySlug, cArr);
+        }
+        cArr.push(m);
+      }
+    }
+    this.chartsCache = {
+      newSingles: movies.filter((m) => m.type === "single").slice(0, 5),
+      newSeries: movies.filter((m) => m.type === "series").slice(0, 5),
+      topRated: [...movies].sort((a, b) => b.rating - a.rating).slice(0, 5)
+    };
   }
 
   loadStorage(key, fallback) {
@@ -89,15 +126,8 @@ class AppleCinemaApp {
   /* ==========================================================================
      AMBIENT COLOR & ARTWORK GLOW ENGINE (MINIMAL MONOCHROME MOTION)
      ========================================================================== */
-  updateAmbientBackdrop(movie) {
-    if (!movie) return;
-    const artEl = document.getElementById("ambientArtworkBlur");
-    if (artEl) {
-      artEl.style.backgroundImage = `url('${movie.backdrop || movie.poster}')`;
-    }
-    document.documentElement.style.setProperty("--ambient-primary", "rgba(255, 255, 255, 0.08)");
-    document.documentElement.style.setProperty("--ambient-secondary", "rgba(255, 255, 255, 0.05)");
-    document.documentElement.style.setProperty("--ambient-tertiary", "rgba(255, 255, 255, 0.03)");
+  updateAmbientBackdrop() {
+    // Đã tắt hiệu ứng đổi ảnh nền mờ để tối ưu hiệu năng tuyệt đối (0ms GPU lag)
   }
 
   /* ==========================================================================
@@ -110,6 +140,7 @@ class AppleCinemaApp {
     if (syncBtn) syncBtn.disabled = true;
 
     const result = await this.service.syncLatestFromPhimmoi(30);
+    this.buildFastIndexes();
     this.setupHeroMovies();
     this.updateSidebarCounts();
 
@@ -118,8 +149,8 @@ class AppleCinemaApp {
     }
     if (syncBtn) syncBtn.disabled = false;
 
-    this.renderMainView();
     if (showToast) {
+      this.renderMainView();
       if (result.added > 0) {
         this.showToast(`Đã cập nhật thêm ${result.added} phim mới (Tổng ${result.total} phim)`);
       } else {
@@ -469,7 +500,7 @@ class AppleCinemaApp {
     `;
   }
 
-  renderCarouselSection(title, subtitle, movies, navTarget, maxItems = 16) {
+  renderCarouselSection(title, subtitle, movies, navTarget, maxItems = 12) {
     const trackId = `track-${Math.random().toString(36).slice(2, 8)}`;
     const displayMovies = (movies || []).slice(0, maxItems);
     return `
@@ -529,9 +560,8 @@ class AppleCinemaApp {
   }
 
   renderAppleCharts3ColSection() {
-    const newSingles = this.service.movies.filter((m) => m.type === "single").slice(0, 5);
-    const newSeries = this.service.movies.filter((m) => m.type === "series").slice(0, 5);
-    const topRated = [...this.service.movies].sort((a, b) => b.rating - a.rating).slice(0, 5);
+    if (!this.chartsCache) this.buildFastIndexes();
+    const { newSingles, newSeries, topRated } = this.chartsCache;
 
     const renderList = (items) =>
       items
@@ -1629,10 +1659,15 @@ class AppleCinemaApp {
   startHeroAutoRotate() {
     clearInterval(this.heroTimer);
     this.heroTimer = setInterval(() => {
-      if (this.currentNav === "kham-pha" && !document.getElementById("movieDetailModal")?.classList.contains("open")) {
+      if (
+        this.currentNav === "kham-pha" &&
+        !document.hidden &&
+        window.scrollY < 320 &&
+        !document.getElementById("movieDetailModal")?.classList.contains("open")
+      ) {
         this.setHeroSlide((this.heroIndex + 1) % this.heroMovies.length);
       }
-    }, 7500);
+    }, 9000);
   }
 
   setHeroSlide(index) {
@@ -1640,7 +1675,6 @@ class AppleCinemaApp {
     const heroEl = document.getElementById("heroShowcase");
     if (heroEl) {
       heroEl.outerHTML = this.renderHeroHTML();
-      this.updateAmbientBackdrop(this.heroMovies[this.heroIndex]);
     }
   }
 
@@ -1666,11 +1700,11 @@ class AppleCinemaApp {
   }
 
   getMoviesByTag(tag) {
-    return this.service.movies.filter((m) => m.sectionTags && m.sectionTags.includes(tag));
+    return this.tagCache.get(tag) || [];
   }
 
   getMoviesByCountry(countrySlug) {
-    return this.service.movies.filter((m) => m.countrySlug === countrySlug);
+    return this.countryCache.get(countrySlug) || [];
   }
 
   extractYouTubeId(url) {
