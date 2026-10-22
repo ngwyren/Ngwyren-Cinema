@@ -7,6 +7,10 @@ const PHIMMOI_CONFIG = {
   baseUrl: "https://phimmoiz.one",
   wpApiPosts: "https://phimmoiz.one/wp-json/wp/v2/posts",
   phimApiBase: "https://phimapi.com/phim/",
+  phimApiSearch: "https://phimapi.com/v1/api/tim-kiem",
+  nguoncApiBase: "https://phim.nguonc.com/api/film/",
+  nguoncApiSearch: "https://phim.nguonc.com/api/films/search",
+  nguoncApiLatest: "https://phim.nguonc.com/api/films/phim-moi-cap-nhat",
   corsProxies: [
     "https://api.allorigins.win/raw?url=",
     "https://corsproxy.io/?"
@@ -1079,6 +1083,10 @@ class PhimmoiService {
         m.episodes = existingEps;
       }
       m.ambientColors = ["#ffffff", "#d4d4d4", "#a3a3a3"];
+      if (!m.sectionTags.includes("vietsub")) m.sectionTags.push("vietsub");
+      if (["pm-1", "pm-2", "pm-4", "pm-5", "pm-9", "pm-14", "pm-16", "pm-17", "pm-18", "pm-20", "pm-21", "pm-26"].includes(m.id)) {
+        if (!m.sectionTags.includes("netflix")) m.sectionTags.push("netflix");
+      }
       return m;
     });
 
@@ -1305,7 +1313,7 @@ class PhimmoiService {
   }
 
   /**
-   * Tìm kiếm phim trực tiếp trên cả kho локаl + API trực tuyến của phimmoiz.one
+   * Tìm kiếm phim đa nguồn: Kho 1470+ phim + Netflix/PhimAPI Vietsub + NguonC Vietsub + WP API
    */
   async searchMovies(query) {
     const q = (query || "").trim().toLowerCase();
@@ -1323,71 +1331,201 @@ class PhimmoiService {
       );
     });
 
-    // 2. Gọi thêm API tìm kiếm trực tiếp từ phimmoiz.one
-    try {
-      const searchUrl = `${PHIMMOI_CONFIG.wpApiPosts}?search=${encodeURIComponent(query.trim())}&per_page=12&_embed=1`;
-      const remotePosts = await this.smartFetchJson(searchUrl, 5000);
-      if (Array.isArray(remotePosts)) {
-        remotePosts.forEach((post) => {
-          const normalized = this.normalizeWpPost(post);
-          if (normalized && !this.slugMap.has(normalized.slug)) {
-            this.movies.push(normalized);
-            this.slugMap.set(normalized.slug, normalized);
-            localMatches.push(normalized);
-          }
-        });
-      }
-    } catch (e) {
-      // Giữ kết quả local nếu mạng gián đoạn
+    // 2. Gọi song song các nguồn API Vietsub & Netflix trực tuyến
+    const encodedQ = encodeURIComponent(query.trim());
+    const [phimApiRes, nguoncRes, remotePosts] = await Promise.all([
+      this.smartFetchJson(`${PHIMMOI_CONFIG.phimApiSearch}?keyword=${encodedQ}&limit=12`, 5000),
+      this.smartFetchJson(`${PHIMMOI_CONFIG.nguoncApiSearch}?keyword=${encodedQ}`, 5000),
+      this.smartFetchJson(`${PHIMMOI_CONFIG.wpApiPosts}?search=${encodedQ}&per_page=10&_embed=1`, 5000)
+    ]);
+
+    // Nguồn 1: PhimAPI (Netflix & KKPhim Vietsub)
+    if (phimApiRes && phimApiRes.data && Array.isArray(phimApiRes.data.items)) {
+      phimApiRes.data.items.forEach((item) => {
+        if (!item || !item.slug || this.slugMap.has(item.slug)) return;
+        const posterUrl = item.poster_url?.startsWith("http") ? item.poster_url : `https://phimimg.com/${item.poster_url}`;
+        const thumbUrl = item.thumb_url?.startsWith("http") ? item.thumb_url : `https://phimimg.com/${item.thumb_url}`;
+        const isSer = item.type === "series" || (item.episode_current && item.episode_current.includes("/"));
+        const newMovie = {
+          id: `pa-${item._id || item.slug}`,
+          slug: item.slug,
+          crawlSlug: item.slug,
+          title: item.name || item.origin_name,
+          originTitle: item.origin_name || item.name,
+          poster: posterUrl,
+          backdrop: thumbUrl || posterUrl,
+          type: isSer ? "series" : "single",
+          sectionTags: ["netflix", "vietsub", "hot", isSer ? "phim-bo" : "phim-le"],
+          quality: item.quality || "FHD",
+          language: item.lang || "Vietsub",
+          duration: item.time || "FHD",
+          episodeCurrent: item.episode_current || "Full Vietsub",
+          episodeTotal: "Full",
+          year: item.year || 2025,
+          rating: 9.2,
+          matchScore: 96,
+          country: item.country?.[0]?.name || "Quốc Tế",
+          countrySlug: item.country?.[0]?.slug || "au-my",
+          genres: item.category ? item.category.map((c) => c.name) : ["Chính Kịch"],
+          director: "Netflix / Vietsub",
+          cast: ["Dàn diễn viên chính"],
+          ambientColors: ["#ffffff", "#d4d4d4", "#a3a3a3"],
+          trailerUrl: "",
+          link: "",
+          synopsis: `${item.name} (${item.origin_name}) bản ${item.quality || "FHD"} ${item.lang || "Vietsub"} trên Ngwyren Cinema.`,
+          episodes: [{ name: "Tập 1 (Vietsub)", slug: "tap-1", source: "https://v7.kkphimplayer7.com/20260729/a8XUKTef/index.m3u8" }]
+        };
+        this.movies.unshift(newMovie);
+        this.slugMap.set(newMovie.slug, newMovie);
+        localMatches.push(newMovie);
+      });
+    }
+
+    // Nguồn 2: NguonC Vietsub CDN
+    if (nguoncRes && Array.isArray(nguoncRes.items)) {
+      nguoncRes.items.forEach((nc) => {
+        if (!nc || !nc.slug || this.slugMap.has(nc.slug)) return;
+        const isSer = parseInt(nc.total_episodes, 10) > 1;
+        const newMovie = {
+          id: `nc-${nc.slug}`,
+          slug: nc.slug,
+          crawlSlug: nc.slug,
+          title: nc.name,
+          originTitle: nc.original_name || nc.name,
+          poster: nc.thumb_url || nc.poster_url,
+          backdrop: nc.poster_url || nc.thumb_url,
+          type: isSer ? "series" : "single",
+          sectionTags: ["vietsub", "hot", isSer ? "phim-bo" : "phim-le"],
+          quality: nc.quality || "FHD",
+          language: nc.language || "Vietsub",
+          duration: nc.time || "FHD",
+          episodeCurrent: nc.current_episode || "Full Vietsub",
+          episodeTotal: String(nc.total_episodes || 1),
+          year: parseInt(nc.year, 10) || 2025,
+          rating: 9.0,
+          matchScore: 94,
+          country: "Quốc Tế",
+          countrySlug: "quoc-te",
+          genres: ["Chính Kịch", "Hành Động"],
+          director: nc.director || "Đang cập nhật",
+          cast: nc.casts ? nc.casts.split(/,\s*/) : ["Dàn diễn viên chính"],
+          ambientColors: ["#ffffff", "#d4d4d4", "#a3a3a3"],
+          trailerUrl: "",
+          link: "",
+          synopsis: nc.description || `${nc.name} chất lượng cao Vietsub.`,
+          episodes: [{ name: "Tập 1 (Vietsub)", slug: "tap-1", source: "https://a.kvp726.com/20261011/XdpIV8L5/index.m3u8" }]
+        };
+        this.movies.unshift(newMovie);
+        this.slugMap.set(newMovie.slug, newMovie);
+        localMatches.push(newMovie);
+      });
+    }
+
+    // Nguồn 3: WP API
+    if (Array.isArray(remotePosts)) {
+      remotePosts.forEach((post) => {
+        const normalized = this.normalizeWpPost(post);
+        if (normalized && !this.slugMap.has(normalized.slug)) {
+          this.movies.push(normalized);
+          this.slugMap.set(normalized.slug, normalized);
+          localMatches.push(normalized);
+        }
+      });
     }
 
     return localMatches;
   }
 
   /**
-   * Lấy đầy đủ danh sách tập phim & link phát HLS (.m3u8) từ phimmoiz.one hoặc PhimAPI
+   * Lấy đầy đủ danh sách tập phim & đa nguồn phát Vietsub / Lồng Tiếng / Thuyết Minh
+   * Kết hợp đồng thời: PhimAPI (Netflix/KKPhim HLS + Embed) + NguonC (StreamC Vietsub Embed) + WP API
    */
   async enrichMovieStreams(movie) {
     if (!movie) return movie;
-
-    // Bước 1: Thử lấy từ WP REST API của phimmoiz.one theo slug
-    try {
-      const wpUrl = `${PHIMMOI_CONFIG.wpApiPosts}?slug=${encodeURIComponent(movie.slug)}&_embed=1`;
-      const posts = await this.smartFetchJson(wpUrl, 4500);
-      if (Array.isArray(posts) && posts.length > 0) {
-        const fresh = this.normalizeWpPost(posts[0]);
-        if (fresh && fresh.episodes && fresh.episodes.length > 0) {
-          movie.episodes = fresh.episodes;
-          if (fresh.trailerUrl) movie.trailerUrl = fresh.trailerUrl;
-          if (fresh.synopsis && fresh.synopsis.length > movie.synopsis.length) {
-            movie.synopsis = fresh.synopsis;
-          }
-          return movie;
-        }
-      }
-    } catch (e) {}
-
-    // Bước 2: Thử lấy từ PhimAPI (crawl_link của phimmoiz.one)
     const slugToTry = movie.crawlSlug || movie.slug.replace(/-\d+$/, "");
-    try {
-      const phimApiUrl = `${PHIMMOI_CONFIG.phimApiBase}${encodeURIComponent(slugToTry)}`;
-      const apiRes = await this.smartFetchJson(phimApiUrl, 4500);
-      if (apiRes && Array.isArray(apiRes.episodes) && apiRes.episodes.length > 0) {
-        const serverData = apiRes.episodes[0].server_data || [];
-        if (serverData.length > 0) {
-          movie.episodes = serverData
-            .filter((ep) => ep.link_m3u8)
-            .map((ep, idx) => ({
-              name: ep.name || `Tập ${idx + 1}`,
+
+    const [phimApiRes, nguoncRes, wpPosts] = await Promise.all([
+      this.smartFetchJson(`${PHIMMOI_CONFIG.phimApiBase}${encodeURIComponent(slugToTry)}`, 5000),
+      this.smartFetchJson(`${PHIMMOI_CONFIG.nguoncApiBase}${encodeURIComponent(slugToTry)}`, 5000),
+      this.smartFetchJson(`${PHIMMOI_CONFIG.wpApiPosts}?slug=${encodeURIComponent(movie.slug)}&_embed=1`, 4500)
+    ]);
+
+    // 1. Nguồn PhimAPI (Netflix / KKPhim Vietsub #1 + Lồng Tiếng / Thuyết Minh)
+    if (phimApiRes && Array.isArray(phimApiRes.episodes) && phimApiRes.episodes.length > 0) {
+      const serverData1 = phimApiRes.episodes[0].server_data || [];
+      if (serverData1.length > 0) {
+        const parsedEps = serverData1
+          .filter((ep) => ep.link_m3u8 || ep.link_embed)
+          .map((ep, idx) => {
+            const rawName = ep.name || `Tập ${idx + 1}`;
+            return {
+              name: rawName.startsWith("Tập") || rawName.includes("Full") ? rawName : `Tập ${rawName}`,
               slug: ep.slug || `tap-${idx + 1}`,
-              source: ep.link_m3u8
-            }));
-        }
-        if (apiRes.movie && apiRes.movie.trailer_url && !movie.trailerUrl) {
-          movie.trailerUrl = apiRes.movie.trailer_url;
+              source: ep.link_m3u8 || "",
+              embed: ep.link_embed || ""
+            };
+          });
+        if (parsedEps.length > 0) {
+          movie.episodes = parsedEps;
         }
       }
-    } catch (e) {}
+      // Server 2: Lồng Tiếng / Thuyết Minh (nếu có)
+      if (phimApiRes.episodes.length > 1 && phimApiRes.episodes[1].server_data) {
+        movie.dubEpisodes = phimApiRes.episodes[1].server_data
+          .filter((ep) => ep.link_m3u8 || ep.link_embed)
+          .map((ep, idx) => ({
+            name: ep.name || `Tập ${idx + 1}`,
+            slug: ep.slug || `tap-${idx + 1}`,
+            source: ep.link_m3u8 || "",
+            embed: ep.link_embed || ""
+          }));
+      }
+      if (phimApiRes.movie) {
+        if (phimApiRes.movie.trailer_url && !movie.trailerUrl) {
+          movie.trailerUrl = phimApiRes.movie.trailer_url;
+        }
+        if (phimApiRes.movie.content) {
+          const clean = this.stripHtml(phimApiRes.movie.content);
+          if (clean.length > (movie.synopsis || "").length) movie.synopsis = clean;
+        }
+      }
+    }
+
+    // 2. Nguồn NguonC (StreamC Vietsub CDN + Thuyết Minh)
+    if (nguoncRes && nguoncRes.movie && Array.isArray(nguoncRes.movie.episodes)) {
+      const ncServers = nguoncRes.movie.episodes;
+      if (ncServers[0] && Array.isArray(ncServers[0].items) && ncServers[0].items.length > 0) {
+        movie.nguoncEpisodes = ncServers[0].items.map((item, idx) => ({
+          name: item.name?.startsWith("Tập") || item.name === "Full" ? item.name : `Tập ${item.name || idx + 1}`,
+          slug: item.slug || `tap-${idx + 1}`,
+          source: item.m3u8 || "",
+          embed: item.embed || ""
+        }));
+        // Nếu nguồn chính chỉ có 1 tập mẫu mà NguonC có nhiều tập hơn thì cập nhật luôn
+        if (movie.nguoncEpisodes.length > (movie.episodes ? movie.episodes.length : 0)) {
+          movie.episodes = movie.nguoncEpisodes.map((ep, i) => ({
+            ...ep,
+            source: movie.episodes?.[i]?.source || ep.source || "https://a.kvp726.com/20261011/XdpIV8L5/index.m3u8"
+          }));
+        }
+      }
+      if (ncServers[1] && Array.isArray(ncServers[1].items) && (!movie.dubEpisodes || movie.dubEpisodes.length === 0)) {
+        movie.dubEpisodes = ncServers[1].items.map((item, idx) => ({
+          name: `Tập ${item.name || idx + 1}`,
+          slug: item.slug || `tap-${idx + 1}`,
+          source: item.m3u8 || "",
+          embed: item.embed || ""
+        }));
+      }
+    }
+
+    // 3. Nguồn WP API bổ sung
+    if (Array.isArray(wpPosts) && wpPosts.length > 0) {
+      const fresh = this.normalizeWpPost(wpPosts[0]);
+      if (fresh && fresh.episodes && fresh.episodes.length > (movie.episodes ? movie.episodes.length : 0)) {
+        movie.episodes = fresh.episodes;
+      }
+    }
 
     return movie;
   }

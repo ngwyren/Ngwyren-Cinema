@@ -154,7 +154,8 @@ class AppleCinemaApp {
       container.innerHTML = `
         ${this.renderHeroHTML()}
         ${this.renderGenreChipsHTML()}
-        ${this.renderCarouselSection("Phim Đề Cử Hôm Nay", "Tuyển chọn những tác phẩm nổi bật nhất", this.getMoviesByTag("de-cu"), "moi-cap-nhat")}
+        ${this.renderCarouselSection("Phim Độc Quyền Netflix (Vietsub & Lồng Tiếng)", "Tuyển tập Netflix Originals đình đám chất lượng Full HD", this.getMoviesByTag("netflix"), "netflix")}
+        ${this.renderCarouselSection("Phim Đề Cử Hôm Nay", "Tuyển chọn những tác phẩm Vietsub nổi bật nhất", this.getMoviesByTag("de-cu"), "moi-cap-nhat")}
         ${this.renderTop10RankedSection()}
         ${this.renderAppleCharts3ColSection()}
         ${this.renderCarouselSection("Phim Hàn Quốc Thịnh Hành", "K-Drama kịch tính, lãng mạn & hành động đặc sắc", this.getMoviesByCountry("han-quoc"), "han-quoc")}
@@ -243,6 +244,16 @@ class AppleCinemaApp {
     let subtitle = "Kho phim chất lượng cao Ngwyren Cinema";
 
     switch (this.currentNav) {
+      case "netflix":
+        base = this.getMoviesByTag("netflix");
+        title = "Phim Độc Quyền Netflix";
+        subtitle = "Kho phim Netflix Originals bản FHD Vietsub & Lồng Tiếng";
+        break;
+      case "vietsub":
+        base = base.filter((m) => (m.language || "").toLowerCase().includes("vietsub") || (m.sectionTags && m.sectionTags.includes("vietsub")));
+        title = "Kho Phim Vietsub Chất Lượng Cao";
+        subtitle = "Tổng hợp đa nguồn phát Vietsub FHD mượt mà";
+        break;
       case "moi-cap-nhat":
         title = "Tất Cả Phim Mới Cập Nhật";
         subtitle = "Toàn bộ danh sách phim mới nhất trên hệ thống";
@@ -706,23 +717,31 @@ class AppleCinemaApp {
         </div>
       </div>
 
-      <!-- Server & Stream Switcher Toolbar -->
+      <!-- Server & Stream Switcher Toolbar (Multi-Source Netflix & Vietsub) -->
       <div class="player-toolbar">
         <div class="player-toolbar-left">
-          <span class="server-label"><i class="fas fa-server"></i> Máy chủ phát:</span>
+          <span class="server-label"><i class="fas fa-server"></i> Nguồn phát Vietsub:</span>
           <button class="server-btn ${this.currentServerMode === "hls-1" ? "active" : ""}" id="srvBtnHls1"
                   onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'hls-1')">
-            <i class="fas fa-bolt"></i> Server VIP #1 (HLS)
+            <i class="fas fa-circle-play"></i> Netflix Vietsub #1 (HLS)
           </button>
-          <button class="server-btn ${this.currentServerMode === "hls-2" ? "active" : ""}" id="srvBtnHls2"
-                  onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'hls-2')">
-            <i class="fas fa-cloud"></i> Server FHD #2
+          <button class="server-btn ${this.currentServerMode === "embed-1" ? "active" : ""}" id="srvBtnEmbed1"
+                  onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'embed-1')">
+            <i class="fas fa-closed-captioning"></i> Vietsub #2 (Embed FHD)
+          </button>
+          <button class="server-btn ${this.currentServerMode === "nguonc-1" ? "active" : ""}" id="srvBtnNguonc1"
+                  onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'nguonc-1')">
+            <i class="fas fa-cloud"></i> Vietsub #3 (StreamC)
+          </button>
+          <button class="server-btn ${this.currentServerMode === "dub-1" ? "active" : ""}" id="srvBtnDub1"
+                  onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'dub-1')">
+            <i class="fas fa-microphone-lines"></i> Lồng Tiếng / Thuyết Minh
           </button>
           ${
             movie.trailerUrl
               ? `<button class="server-btn ${this.currentServerMode === "trailer" ? "active" : ""}" id="srvBtnTrailer"
                         onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'trailer')">
-                  <i class="fab fa-youtube"></i> Trailer Chính Thức
+                  <i class="fab fa-youtube"></i> Trailer
                 </button>`
               : ""
           }
@@ -864,7 +883,7 @@ class AppleCinemaApp {
       .map(
         (ep, idx) => `
       <button class="ep-pill-btn ${idx === this.currentEpisodeIndex ? "active" : ""}"
-              onclick="app.startVideoPlayback(app.selectedMovie, ${idx}, 'hls-1')">
+              onclick="app.startVideoPlayback(app.selectedMovie, ${idx}, app.currentServerMode || 'hls-1')">
         <span>${ep.name}</span>
         <i class="fas ${idx === this.currentEpisodeIndex ? "fa-volume-high" : "fa-play"}" style="font-size: 0.72rem;"></i>
       </button>
@@ -913,11 +932,15 @@ class AppleCinemaApp {
 
     // Highlight server buttons & episode buttons
     document.getElementById("srvBtnHls1")?.classList.toggle("active", serverMode === "hls-1");
-    document.getElementById("srvBtnHls2")?.classList.toggle("active", serverMode === "hls-2");
+    document.getElementById("srvBtnEmbed1")?.classList.toggle("active", serverMode === "embed-1");
+    document.getElementById("srvBtnNguonc1")?.classList.toggle("active", serverMode === "nguonc-1");
+    document.getElementById("srvBtnDub1")?.classList.toggle("active", serverMode === "dub-1");
     document.getElementById("srvBtnTrailer")?.classList.toggle("active", serverMode === "trailer");
     this.refreshEpisodesInModal(movie);
 
     const episode = movie.episodes[epIndex] || movie.episodes[0];
+    const dubEp = movie.dubEpisodes?.[epIndex] || movie.dubEpisodes?.[0] || episode;
+    const ncEp = movie.nguoncEpisodes?.[epIndex] || movie.nguoncEpisodes?.[0] || episode;
 
     // Chế độ phát Trailer YouTube
     if (serverMode === "trailer" && movie.trailerUrl) {
@@ -936,7 +959,32 @@ class AppleCinemaApp {
       return;
     }
 
-    // Chế độ phát HLS (.m3u8) từ Phimmoiz.one
+    // Chế độ phát Nguồn Vietsub #2 (Embed FHD) hoặc Nguồn Vietsub #3 (StreamC)
+    const embedUrlToUse =
+      serverMode === "embed-1"
+        ? episode?.embed || ncEp?.embed
+        : serverMode === "nguonc-1"
+        ? ncEp?.embed || episode?.embed
+        : serverMode === "dub-1" && !dubEp?.source && dubEp?.embed
+        ? dubEp.embed
+        : !episode?.source && episode?.embed
+        ? episode.embed
+        : "";
+
+    if (embedUrlToUse) {
+      this.destroyHls();
+      if (videoEl) {
+        videoEl.pause();
+        videoEl.style.display = "none";
+      }
+      if (iframeEl) {
+        iframeEl.src = embedUrlToUse;
+        iframeEl.style.display = "block";
+      }
+      return;
+    }
+
+    // Chế độ phát HLS (.m3u8) trực tiếp (Netflix Vietsub #1 hoặc Lồng Tiếng/Thuyết Minh)
     if (iframeEl) {
       iframeEl.src = "";
       iframeEl.style.display = "none";
@@ -951,8 +999,10 @@ class AppleCinemaApp {
       "https://a.kvp726.com/20261011/cSOFRRA3/index.m3u8"
     ];
     let streamUrl = (episode && episode.source) || fallbackStreams[0];
-    if (serverMode === "hls-2") {
-      streamUrl = fallbackStreams[(epIndex + 1) % fallbackStreams.length];
+    if (serverMode === "dub-1") {
+      streamUrl = (dubEp && dubEp.source) || fallbackStreams[(epIndex + 1) % fallbackStreams.length];
+    } else if (serverMode === "nguonc-1" || serverMode === "embed-1") {
+      streamUrl = (ncEp && ncEp.source) || (episode && episode.source) || fallbackStreams[(epIndex + 1) % fallbackStreams.length];
     }
 
     this.destroyHls();
