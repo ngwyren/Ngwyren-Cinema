@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Ngwyren Cinema</title>
   <meta name="description" content="Ngwyren Cinema" />
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
@@ -36,6 +36,28 @@
 
   <!-- Toast Notifications -->
   <div class="apple-toast-container" id="toastContainer"></div>
+
+  <!-- Hardware-Accelerated 4K / 2K Cinema Clarity SVG Filters -->
+  <svg width="0" height="0" style="position: absolute; pointer-events: none;" aria-hidden="true">
+    <defs>
+      <filter id="ngwyren-4k-upscale" color-interpolation-filters="sRGB">
+        <feConvolveMatrix order="3" kernelMatrix="0 -0.45 0 -0.45 2.8 -0.45 0 -0.45 0" preserveAlpha="true" />
+        <feComponentTransfer>
+          <feFuncR type="linear" slope="1.05" intercept="-0.02" />
+          <feFuncG type="linear" slope="1.05" intercept="-0.02" />
+          <feFuncB type="linear" slope="1.05" intercept="-0.02" />
+        </feComponentTransfer>
+      </filter>
+      <filter id="ngwyren-2k-upscale" color-interpolation-filters="sRGB">
+        <feConvolveMatrix order="3" kernelMatrix="0 -0.25 0 -0.25 2.0 -0.25 0 -0.25 0" preserveAlpha="true" />
+      </filter>
+      <filter id="apple-liquid-refract" x="-10%" y="-10%" width="120%" height="120%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.014 0.018" numOctaves="2" seed="7" result="noise" />
+        <feGaussianBlur in="noise" stdDeviation="2.5" result="smoothNoise" />
+        <feDisplacementMap in="SourceGraphic" in2="smoothNoise" scale="6" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </defs>
+  </svg>
 
   <!-- ========================================================================
        APP SHELL (APPLE MUSIC SIDEBAR + MAIN VIEWPORT)
@@ -113,6 +135,7 @@
               <i class="fas fa-wand-magic-sparkles"></i>
               <span>Anime</span>
             </div>
+            <span class="nav-count" id="animeMoviesCountBadge">HOT</span>
           </li>
         </ul>
       </div>
@@ -168,28 +191,18 @@
           </li>
         </ul>
       </div>
-
-      <!-- Minimal Sync Button -->
-      <div class="source-status-card">
-        <div class="source-status-top">
-          <div class="status-dot-wrap">
-            <span class="status-pulse"></span>
-            <span id="liveStatusText">Kho phim trực tuyến</span>
-          </div>
-        </div>
-        <button class="btn-sync-now" id="btnSyncPhimmoi" onclick="app.syncLivePhimmoi(true)">
-          <i class="fas fa-rotate"></i> Cập Nhật Tất Cả Phim
-        </button>
-      </div>
     </aside>
+
+    <!-- Mobile & Tablet Sidebar Backdrop -->
+    <div class="sidebar-mobile-backdrop" id="sidebarMobileBackdrop" onclick="app.toggleMobileSidebar(false)"></div>
 
     <!-- MAIN CONTENT VIEWPORT -->
     <div class="main-viewport">
 
       <!-- TOP FROSTED GLASS HEADER -->
-      <header class="apple-topbar">
+      <header class="apple-topbar liquid-glass-surface">
         <div class="topbar-left">
-          <button class="mobile-menu-btn" onclick="document.getElementById('appleSidebar').classList.toggle('mobile-open')" aria-label="Menu">
+          <button class="mobile-menu-btn" onclick="app.toggleMobileSidebar()" aria-label="Menu">
             <i class="fas fa-bars"></i>
           </button>
 
@@ -295,6 +308,32 @@
       </button>
     </div>
   </footer>
+
+  <!-- ========================================================================
+       APPLE TV / iOS LIQUID GLASS FLOATING BOTTOM DOCK (MOBILE & TABLET)
+       ======================================================================== -->
+  <nav class="liquid-mobile-dock" id="liquidMobileDock" aria-label="Điều hướng nhanh">
+    <button class="dock-tab-btn active" data-nav="kham-pha" onclick="app.setNavigation('kham-pha')">
+      <i class="fas fa-compass"></i>
+      <span>Khám Phá</span>
+    </button>
+    <button class="dock-tab-btn" data-nav="netflix" onclick="app.setNavigation('netflix')">
+      <i class="fas fa-circle-play"></i>
+      <span>Netflix</span>
+    </button>
+    <button class="dock-tab-btn" data-nav="anime" onclick="app.setNavigation('anime')">
+      <i class="fas fa-wand-magic-sparkles"></i>
+      <span>Anime</span>
+    </button>
+    <button class="dock-tab-btn" data-nav="vietsub" onclick="app.setNavigation('vietsub')">
+      <i class="fas fa-closed-captioning"></i>
+      <span>Vietsub</span>
+    </button>
+    <button class="dock-tab-btn" data-nav="yeu-thich" onclick="app.setNavigation('yeu-thich')">
+      <i class="fas fa-bookmark"></i>
+      <span>Đã Lưu</span>
+    </button>
+  </nav>
 
   <!-- ========================================================================
        NETFLIX-STYLE EXPANDABLE MOVIE DETAIL & HLS PLAYER MODAL

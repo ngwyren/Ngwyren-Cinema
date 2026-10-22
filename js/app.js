@@ -18,7 +18,8 @@ class AppleCinemaApp {
     this.selectedMovie = null;
     this.playingMovie = null;
     this.currentEpisodeIndex = 0;
-    this.currentServerMode = "hls-1"; // hls-1 | hls-2 | trailer
+    this.currentServerMode = "hls-1"; // hls-1 | embed-1 | nguonc-1 | dub-1 | trailer
+    this.currentQuality = "4K"; // 4K | 2K | 1080p | 720p | Auto
     this.ActiveModalTab = "related"; // related | episodes | trailer | details
     this.isPlaying = false;
     this.lightsOff = false;
@@ -128,18 +129,30 @@ class AppleCinemaApp {
   /* ==========================================================================
      NAVIGATION & VIEW RENDERING
      ========================================================================== */
+  toggleMobileSidebar(forceState = null) {
+    const sidebar = document.getElementById("appleSidebar");
+    const backdrop = document.getElementById("sidebarMobileBackdrop");
+    if (!sidebar) return;
+    const isOpen = forceState !== null ? forceState : !sidebar.classList.contains("mobile-open");
+    sidebar.classList.toggle("mobile-open", isOpen);
+    if (backdrop) backdrop.classList.toggle("open", isOpen);
+  }
+
   setNavigation(navKey, customTitle = null) {
     this.currentNav = navKey;
     this.customFilterTitle = customTitle;
     this.visibleGridLimit = 60;
 
-    // Highlight sidebar
+    // Highlight sidebar & mobile liquid glass dock
     document.querySelectorAll(".nav-item[data-nav]").forEach((el) => {
+      el.classList.toggle("active", el.dataset.nav === navKey);
+    });
+    document.querySelectorAll(".dock-tab-btn[data-nav]").forEach((el) => {
       el.classList.toggle("active", el.dataset.nav === navKey);
     });
 
     // Đóng sidebar mobile nếu đang mở
-    document.getElementById("appleSidebar")?.classList.remove("mobile-open");
+    this.toggleMobileSidebar(false);
 
     // Cuộn mượt lên đầu trang
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -154,6 +167,7 @@ class AppleCinemaApp {
       container.innerHTML = `
         ${this.renderHeroHTML()}
         ${this.renderGenreChipsHTML()}
+        ${this.renderCarouselSection("Thế Giới Anime & Hoạt Hình Đỉnh Cao", "Tuyển tập hơn 320+ bộ Anime Nhật Bản 4K / FHD Vietsub & Thuyết Minh", this.getMoviesByTag("anime").slice(0, 24), "anime")}
         ${this.renderCarouselSection("Phim Độc Quyền Netflix (Vietsub & Lồng Tiếng)", "Tuyển tập Netflix Originals đình đám chất lượng Full HD", this.getMoviesByTag("netflix"), "netflix")}
         ${this.renderCarouselSection("Phim Đề Cử Hôm Nay", "Tuyển chọn những tác phẩm Vietsub nổi bật nhất", this.getMoviesByTag("de-cu"), "moi-cap-nhat")}
         ${this.renderTop10RankedSection()}
@@ -162,7 +176,6 @@ class AppleCinemaApp {
         ${this.renderCarouselSection("Hoa Ngữ & Cổ Trang Đặc Sắc", "Kỳ án, tu tiên huyền huyễn & ngôn tình chọn lọc", this.getMoviesByCountry("trung-quoc"), "trung-quoc")}
         ${this.renderCarouselSection("Điện Ảnh Việt Nam Chọn Lọc", "Phim chiếu rạp Việt Nam doanh thu trăm tỷ", this.getMoviesByCountry("viet-nam"), "viet-nam")}
         ${this.renderCarouselSection("Bom Tấn Âu Mỹ Đỉnh Cao", "Hành động gián điệp, viễn tưởng & kinh dị Hollywood", this.getMoviesByCountry("au-my"), "au-my")}
-        ${this.renderCarouselSection("Thế Giới Anime & Hoạt Hình", "Ufotable, MAPPA & hoạt hình điện ảnh chất lượng FHD", this.getMoviesByTag("anime"), "anime")}
         <section class="movie-section">
           <div class="section-header">
             <div class="section-title-wrap">
@@ -326,12 +339,21 @@ class AppleCinemaApp {
       base = base.filter((m) => m.type === "single");
     }
 
-    // Lọc theo thể loại (Genre chip)
+    // Lọc theo thể loại hoặc độ phân giải (Genre / Quality chip)
     if (this.activeGenreFilter && this.activeGenreFilter !== "Tất cả") {
-      base = base.filter((m) =>
-        m.genres.some((g) => g.toLowerCase() === this.activeGenreFilter.toLowerCase())
-      );
-      title = `Thể loại: ${this.activeGenreFilter}`;
+      if (this.activeGenreFilter === "4K / 2K") {
+        base = base.filter(
+          (m) =>
+            (m.quality && (m.quality.includes("4K") || m.quality.includes("2K") || m.quality.includes("FHD"))) ||
+            (m.sectionTags && m.sectionTags.includes("netflix"))
+        );
+        title = "Kho Phim Chất Lượng 4K / 2K Ultra HD";
+      } else {
+        base = base.filter((m) =>
+          m.genres.some((g) => g.toLowerCase() === this.activeGenreFilter.toLowerCase())
+        );
+        title = `Thể loại: ${this.activeGenreFilter}`;
+      }
     }
 
     return { title, subtitle, list: base };
@@ -416,6 +438,7 @@ class AppleCinemaApp {
   renderGenreChipsHTML() {
     const genres = [
       { label: "Tất cả", icon: "fa-sparkles" },
+      { label: "4K / 2K", icon: "fa-tv" },
       { label: "Hành Động", icon: "fa-fire" },
       { label: "Bí Ẩn", icon: "fa-user-secret" },
       { label: "Cổ Trang", icon: "fa-scroll" },
@@ -712,12 +735,16 @@ class AppleCinemaApp {
 
         <!-- Active Video Container -->
         <div class="active-video-container ${isPlayingNow ? "playing" : ""}" id="activeVideoContainer">
-          <video id="hlsVideoElement" controls playsinline poster="${movie.backdrop || movie.poster}"></video>
+          <div class="player-quality-floating-badge" id="playerFloatingQualityBadge">
+            <i class="fas fa-sliders"></i>
+            <span id="playerFloatingQualityText">${this.getQualityLabel(this.currentQuality)}</span>
+          </div>
+          <video id="hlsVideoElement" class="${this.getQualityVideoClass(this.currentQuality)}" controls playsinline poster="${movie.backdrop || movie.poster}"></video>
           <iframe id="trailerIframeElement" style="display: none;" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
         </div>
       </div>
 
-      <!-- Server & Stream Switcher Toolbar (Multi-Source Netflix & Vietsub) -->
+      <!-- Server & Stream Switcher Toolbar (Multi-Source Netflix, Vietsub & 4K/2K Quality Switcher) -->
       <div class="player-toolbar">
         <div class="player-toolbar-left">
           <span class="server-label"><i class="fas fa-server"></i> Nguồn phát Vietsub:</span>
@@ -745,6 +772,23 @@ class AppleCinemaApp {
                 </button>`
               : ""
           }
+        </div>
+
+        <div class="player-toolbar-right">
+          <span class="server-label"><i class="fas fa-sliders"></i> Chất lượng:</span>
+          <div class="quality-selector-group" role="group" aria-label="Chọn độ phân giải">
+            ${["4K", "2K", "1080p", "720p", "Auto"]
+              .map(
+                (q) => `
+              <button class="quality-pill-btn ${this.currentQuality === q ? "active" : ""}"
+                      data-quality="${q}"
+                      onclick="app.setVideoQuality('${q}', true)">
+                ${q === "4K" ? "4K UHD" : q === "2K" ? "2K QHD" : q}
+              </button>
+            `
+              )
+              .join("")}
+          </div>
         </div>
       </div>
 
@@ -1010,11 +1054,16 @@ class AppleCinemaApp {
     if (window.Hls && window.Hls.isSupported()) {
       this.hlsInstance = new window.Hls({
         enableWorker: true,
-        lowLatencyMode: true
+        lowLatencyMode: true,
+        capLevelToPlayerSize: false,
+        maxBufferLength: 60,
+        maxMaxBufferLength: 120,
+        abrEwmaDefaultEstimate: 25000000
       });
       this.hlsInstance.loadSource(streamUrl);
       this.hlsInstance.attachMedia(videoEl);
       this.hlsInstance.on(window.Hls.Events.MANIFEST_PARSED, () => {
+        this.applyHlsQualityLevel();
         videoEl.play().catch(() => {});
       });
       this.hlsInstance.on(window.Hls.Events.ERROR, (_, data) => {
@@ -1029,6 +1078,8 @@ class AppleCinemaApp {
       });
     }
 
+    this.applyVideoQualityVisuals();
+
     // Đồng bộ thanh thời gian với Apple Music Now Playing Bar
     videoEl.ontimeupdate = () => {
       if (!videoEl.duration) return;
@@ -1040,6 +1091,78 @@ class AppleCinemaApp {
       if (curTime) curTime.textContent = this.formatSeconds(videoEl.currentTime);
       if (totTime) totTime.textContent = this.formatSeconds(videoEl.duration);
     };
+  }
+
+  getQualityLabel(q) {
+    switch (q) {
+      case "4K":
+        return "4K ULTRA HD • 2160p HDR";
+      case "2K":
+        return "2K QHD • 1440p";
+      case "1080p":
+        return "FULL HD • 1080p";
+      case "720p":
+        return "HD • 720p";
+      default:
+        return "AUTO • ADAPTIVE FHD";
+    }
+  }
+
+  getQualityVideoClass(q) {
+    if (q === "4K") return "quality-4k";
+    if (q === "2K") return "quality-2k";
+    if (q === "720p") return "quality-720p";
+    return "";
+  }
+
+  setVideoQuality(qualityMode, showNotification = true) {
+    this.currentQuality = qualityMode;
+    document.querySelectorAll(".quality-pill-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.quality === qualityMode);
+    });
+
+    this.applyHlsQualityLevel();
+    this.applyVideoQualityVisuals();
+
+    if (this.playingMovie) {
+      this.setNowPlayingBar(this.playingMovie, this.currentEpisodeIndex, this.isPlaying);
+    }
+
+    if (showNotification) {
+      this.showToast(`Đã chuyển chất lượng phát sang ${this.getQualityLabel(qualityMode)}`);
+    }
+  }
+
+  applyHlsQualityLevel() {
+    if (!this.hlsInstance || !this.hlsInstance.levels || this.hlsInstance.levels.length === 0) return;
+    const levels = this.hlsInstance.levels;
+    const maxIdx = levels.length - 1;
+
+    if (this.currentQuality === "Auto") {
+      this.hlsInstance.currentLevel = -1;
+      return;
+    }
+
+    if (this.currentQuality === "4K" || this.currentQuality === "2K" || this.currentQuality === "1080p") {
+      // Khóa ở mức bitrate / độ phân giải cao nhất trong luồng m3u8
+      this.hlsInstance.currentLevel = maxIdx;
+      this.hlsInstance.nextLevel = maxIdx;
+    } else if (this.currentQuality === "720p") {
+      this.hlsInstance.currentLevel = 0;
+    }
+  }
+
+  applyVideoQualityVisuals() {
+    const videoEl = document.getElementById("hlsVideoElement");
+    if (videoEl) {
+      videoEl.classList.remove("quality-4k", "quality-2k", "quality-720p");
+      const cls = this.getQualityVideoClass(this.currentQuality);
+      if (cls) videoEl.classList.add(cls);
+    }
+    const badgeText = document.getElementById("playerFloatingQualityText");
+    if (badgeText) {
+      badgeText.textContent = this.getQualityLabel(this.currentQuality);
+    }
   }
 
   stopModalVideo() {
@@ -1294,9 +1417,11 @@ class AppleCinemaApp {
     const favCount = document.getElementById("myListCountBadge");
     const hisCount = document.getElementById("historyCountBadge");
     const totCount = document.getElementById("totalMoviesCountBadge");
+    const animeCount = document.getElementById("animeMoviesCountBadge");
     if (favCount) favCount.textContent = this.myList.length;
     if (hisCount) hisCount.textContent = this.watchHistory.length;
     if (totCount) totCount.textContent = this.service.movies.length;
+    if (animeCount) animeCount.textContent = this.getMoviesByTag("anime").length;
   }
 
   /* ==========================================================================
@@ -1428,11 +1553,50 @@ class AppleCinemaApp {
         topInput?.focus();
       } else if (e.key === "Escape") {
         document.getElementById("searchDropdown")?.classList.remove("open");
+        this.toggleMobileSidebar(false);
         if (document.getElementById("movieDetailModal")?.classList.contains("open")) {
           this.closeMovieModal();
         }
       }
     });
+
+    // Apple TV 3D Parallax Tilt & Liquid Glass Specular Glare Tracking (60/120fps GPU Smooth)
+    if (window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      let activeCard = null;
+      let rafId = null;
+
+      document.addEventListener(
+        " pointermove".trim(),
+        (e) => {
+          const card = e.target.closest(".movie-card");
+          if (!card) {
+            if (activeCard) {
+              activeCard.style.setProperty("--rx", "0deg");
+              activeCard.style.setProperty("--ry", "0deg");
+              activeCard = null;
+            }
+            return;
+          }
+          activeCard = card;
+          const clientX = e.clientX;
+          const clientY = e.clientY;
+          if (rafId) cancelAnimationFrame(rafId);
+          rafId = requestAnimationFrame(() => {
+            if (!activeCard) return;
+            const rect = activeCard.getBoundingClientRect();
+            const px = Math.max(0, Math.min(1, (clientX - rect.left) / (rect.width || 1)));
+            const py = Math.max(0, Math.min(1, (clientY - rect.top) / (rect.height || 1)));
+            const ry = ((px - 0.5) * 11).toFixed(2);
+            const rx = ((0.5 - py) * 11).toFixed(2);
+            activeCard.style.setProperty("--rx", `${rx}deg`);
+            activeCard.style.setProperty("--ry", `${ry}deg`);
+            activeCard.style.setProperty("--glare-x", `${(px * 100).toFixed(1)}%`);
+            activeCard.style.setProperty("--glare-y", `${(py * 100).toFixed(1)}%`);
+          });
+        },
+        { passive: true }
+      );
+    }
   }
 }
 
