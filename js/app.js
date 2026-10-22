@@ -9,6 +9,7 @@ class AppleCinemaApp {
     this.currentNav = "kham-pha";
     this.currentSegment = "all"; // all | series | single
     this.activeGenreFilter = "Tất cả";
+    this.visibleGridLimit = 60;
     this.heroMovies = [];
     this.heroIndex = 0;
     this.heroTimer = null;
@@ -130,6 +131,7 @@ class AppleCinemaApp {
   setNavigation(navKey, customTitle = null) {
     this.currentNav = navKey;
     this.customFilterTitle = customTitle;
+    this.visibleGridLimit = 60;
 
     // Highlight sidebar
     document.querySelectorAll(".nav-item[data-nav]").forEach((el) => {
@@ -164,12 +166,18 @@ class AppleCinemaApp {
           <div class="section-header">
             <div class="section-title-wrap">
               <h2 class="section-title">Toàn Bộ Kho Phim (${this.service.movies.length} phim)</h2>
-              <p class="section-subtitle">Tất cả phim điện ảnh và phim bộ đã được cập nhật đầy đủ</p>
+              <p class="section-subtitle">Đang hiển thị ${Math.min(this.visibleGridLimit, this.service.movies.length)} / ${this.service.movies.length} bộ phim đã cập nhật</p>
+            </div>
+            <div class="section-controls">
+              <button class="btn-see-all" onclick="app.setNavigation('moi-cap-nhat')">
+                Xem danh sách đầy đủ <i class="fas fa-chevron-right" style="font-size: 0.72rem;"></i>
+              </button>
             </div>
           </div>
           <div class="movie-grid">
-            ${this.service.movies.map((m) => this.renderMovieCardHTML(m)).join("")}
+            ${this.service.movies.slice(0, this.visibleGridLimit).map((m) => this.renderMovieCardHTML(m)).join("")}
           </div>
+          ${this.renderLoadMoreButtonsHTML(this.service.movies.length)}
         </section>
       `;
       this.updateAmbientBackdrop(this.heroMovies[this.heroIndex] || this.service.movies[0]);
@@ -178,13 +186,14 @@ class AppleCinemaApp {
 
     // Chế độ danh mục hoặc bộ lọc
     const { title, subtitle, list } = this.getFilteredCatalog();
+    const visibleList = list.slice(0, this.visibleGridLimit);
     container.innerHTML = `
       ${this.renderGenreChipsHTML()}
       <section class="movie-section">
         <div class="section-header">
           <div class="section-title-wrap">
             <h1 class="section-title" style="font-size: 1.75rem;">${title}</h1>
-            <p class="section-subtitle">${subtitle} • Hiển thị ${list.length} bộ phim</p>
+            <p class="section-subtitle">${subtitle} • Hiển thị ${visibleList.length} / ${list.length} bộ phim</p>
           </div>
           <div class="section-controls">
             <button class="btn-glass-secondary" style="padding: 8px 16px; font-size: 0.82rem;" onclick="app.resetAllFilters()">
@@ -193,8 +202,9 @@ class AppleCinemaApp {
           </div>
         </div>
         ${
-          list.length > 0
-            ? `<div class="movie-grid">${list.map((m) => this.renderMovieCardHTML(m)).join("")}</div>`
+          visibleList.length > 0
+            ? `<div class="movie-grid">${visibleList.map((m) => this.renderMovieCardHTML(m)).join("")}</div>
+               ${this.renderLoadMoreButtonsHTML(list.length)}`
             : `<div style="padding: 60px 20px; text-align: center; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-subtle);">
                 <i class="fas fa-film" style="font-size: 2.5rem; color: #ffffff; margin-bottom: 12px;"></i>
                 <h3 style="margin-bottom: 6px;">Chưa có phim trong mục này</h3>
@@ -205,6 +215,26 @@ class AppleCinemaApp {
       </section>
     `;
     if (list[0]) this.updateAmbientBackdrop(list[0]);
+  }
+
+  renderLoadMoreButtonsHTML(totalCount) {
+    if (this.visibleGridLimit >= totalCount) return "";
+    const remaining = totalCount - this.visibleGridLimit;
+    return `
+      <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 24px;">
+        <button class="btn-primary-play" onclick="app.loadMoreMovies(120)">
+          <i class="fas fa-plus"></i> Xem Thêm Phim (+${Math.min(120, remaining)} phim)
+        </button>
+        <button class="btn-glass-secondary" onclick="app.loadMoreMovies(${totalCount})">
+          Hiển Thị Tất Cả (${totalCount} phim)
+        </button>
+      </div>
+    `;
+  }
+
+  loadMoreMovies(step = 120) {
+    this.visibleGridLimit += step;
+    this.renderMainView();
   }
 
   getFilteredCatalog() {

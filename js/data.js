@@ -1084,8 +1084,34 @@ class PhimmoiService {
 
     this.slugMap = new Map();
     this.movies.forEach((m) => this.slugMap.set(m.slug, m));
+
+    // Tự động nạp toàn bộ kho phim đầy đủ (1400+ phim) từ js/movies-catalog.js
+    if (Array.isArray(window.NGWYREN_FULL_CATALOG)) {
+      window.NGWYREN_FULL_CATALOG.forEach((item) => {
+        if (!item || !item.slug) return;
+        const normalizedItem = {
+          ...item,
+          genres: Array.isArray(item.genres) ? item.genres : [item.genres || "Chính Kịch"],
+          cast: Array.isArray(item.cast) ? item.cast : [item.cast || "Dàn diễn viên chính"],
+          sectionTags: Array.isArray(item.sectionTags) ? item.sectionTags : ["hot"],
+          episodes: Array.isArray(item.episodes)
+            ? item.episodes
+            : [item.episodes || { name: "Full FHD", slug: "full", source: streamPool[0] }]
+        };
+        if (this.slugMap.has(normalizedItem.slug)) {
+          const existing = this.slugMap.get(normalizedItem.slug);
+          if (normalizedItem.episodes.length > existing.episodes.length) {
+            existing.episodes = normalizedItem.episodes;
+          }
+        } else {
+          this.movies.push(normalizedItem);
+          this.slugMap.set(normalizedItem.slug, normalizedItem);
+        }
+      });
+    }
+
     this.isLiveConnected = true;
-    this.lastSyncedCount = 0;
+    this.lastSyncedCount = this.movies.length;
   }
 
   /**
