@@ -956,12 +956,19 @@ class AppleCinemaApp {
   /* ==========================================================================
      HLS (.M3U8) & YOUTUBE TRAILER STREAMING ENGINE
      ========================================================================== */
-  startVideoPlayback(movie, epIndex = 0, serverMode = "hls-1") {
+  async startVideoPlayback(movie, epIndex = 0, serverMode = "hls-1") {
     if (!movie) return;
     this.selectedMovie = movie;
     this.playingMovie = movie;
     this.currentEpisodeIndex = epIndex;
     this.currentServerMode = serverMode;
+
+    // Nếu tập phim chưa có luồng thật (mới tìm kiếm trực tuyến), tự động nạp luồng thật của đúng bộ phim đó trước khi phát
+    const initialEp = movie.episodes?.[epIndex] || movie.episodes?.[0];
+    if (initialEp?.needsEnrich || (!initialEp?.source && !initialEp?.embed)) {
+      await this.service.enrichMovieStreams(movie);
+      this.refreshEpisodesInModal(movie);
+    }
 
     // Lưu vào Lịch sử xem tiếp
     this.recordWatchHistory(movie.slug, epIndex);
@@ -1029,7 +1036,7 @@ class AppleCinemaApp {
       return;
     }
 
-    // Chế độ phát HLS (.m3u8) trực tiếp (Netflix Vietsub #1 hoặc Lồng Tiếng/Thuyết Minh)
+    // Chế độ phát HLS (.m3u8) trực tiếp của đúng bộ phim đang chọn (Tuyệt đối không dùng stream của phim khác)
     if (iframeEl) {
       iframeEl.src = "";
       iframeEl.style.display = "none";
@@ -1037,17 +1044,20 @@ class AppleCinemaApp {
     if (!videoEl) return;
     videoEl.style.display = "block";
 
-    // Chọn nguồn m3u8
-    const fallbackStreams = [
-      "https://v7.kkphimplayer7.com/20260729/a8XUKTef/index.m3u8",
-      "https://a.kvp726.com/20261011/XdpIV8L5/index.m3u8",
-      "https://a.kvp726.com/20261011/cSOFRRA3/index.m3u8"
-    ];
-    let streamUrl = (episode && episode.source) || fallbackStreams[0];
+    let streamUrl = (episode && episode.source) || "";
     if (serverMode === "dub-1") {
-      streamUrl = (dubEp && dubEp.source) || fallbackStreams[(epIndex + 1) % fallbackStreams.length];
+      streamUrl = (dubEp && dubEp.source) || (episode && episode.source) || "";
     } else if (serverMode === "nguonc-1" || serverMode === "embed-1") {
-      streamUrl = (ncEp && ncEp.source) || (episode && episode.source) || fallbackStreams[(epIndex + 1) % fallbackStreams.length];
+      streamUrl = (ncEp && ncEp.source) || (episode && episode.source) || "";
+    }
+
+    if (!streamUrl && (episode?.embed || ncEp?.embed)) {
+      videoEl.style.display = "none";
+      if (iframeEl) {
+        iframeEl.src = episode?.embed || ncEp?.embed;
+        iframeEl.style.display = "block";
+      }
+      return;
     }
 
     this.destroyHls();
@@ -1084,8 +1094,13 @@ class AppleCinemaApp {
         }
       });
       this.hlsInstance.on(window.Hls.Events.ERROR, (_, data) => {
-        if (data.fatal && streamUrl !== fallbackStreams[0]) {
-          this.hlsInstance.loadSource(fallbackStreams[0]);
+        if (data.fatal && (episode?.embed || ncEp?.embed)) {
+          this.destroyHls();
+          videoEl.style.display = "none";
+          if (iframeEl) {
+            iframeEl.src = episode?.embed || ncEp?.embed;
+            iframeEl.style.display = "block";
+          }
         }
       });
     } else if (videoEl.canPlayType("application/vnd.apple.mpegurl")) {

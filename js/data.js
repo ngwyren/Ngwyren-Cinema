@@ -1062,25 +1062,17 @@ class PhimmoiService {
     ];
 
     this.movies = PHIMMOI_SEED_MOVIES.map((m) => {
-      // Đảm bảo tất cả các phim bộ đều có đầy đủ danh sách tập để phát ngay
-      if (m.type === "series") {
-        const currentMatch = (m.episodeCurrent || "").match(/(\d+)/);
-        const targetCount = Math.min(
-          40,
-          Math.max(
-            m.episodes ? m.episodes.length : 1,
-            currentMatch ? parseInt(currentMatch[1], 10) : parseInt(m.episodeTotal, 10) || 12
-          )
-        );
-        const existingEps = Array.isArray(m.episodes) ? [...m.episodes] : [];
-        for (let i = existingEps.length + 1; i <= targetCount; i++) {
-          existingEps.push({
-            name: `Tập ${i}`,
-            slug: `tap-${String(i).padStart(2, "0")}`,
-            source: streamPool[(i - 1) % streamPool.length]
-          });
-        }
-        m.episodes = existingEps;
+      const isStreamOwner =
+        m.slug === "thanh-guom-diet-quy-vo-han-thanh-465645" ||
+        m.slug === "matchbox-phim-dien-anh" ||
+        m.slug === "9-1-1-phan-9";
+      if (!isStreamOwner && Array.isArray(m.episodes)) {
+        m.episodes = m.episodes.map((ep) => {
+          if (streamPool.includes(ep.source)) {
+            return { ...ep, source: "", needsEnrich: true };
+          }
+          return ep;
+        });
       }
       m.ambientColors = ["#ffffff", "#d4d4d4", "#a3a3a3"];
       if (!m.sectionTags.includes("vietsub")) m.sectionTags.push("vietsub");
@@ -1093,7 +1085,7 @@ class PhimmoiService {
     this.slugMap = new Map();
     this.movies.forEach((m) => this.slugMap.set(m.slug, m));
 
-    // Tự động nạp toàn bộ kho phim đầy đủ (1400+ phim) từ js/movies-catalog.js
+    // Tự động nạp toàn bộ kho phim đầy đủ (1739+ phim) từ js/movies-catalog.js với 100% luồng .m3u8 thật
     if (Array.isArray(window.NGWYREN_FULL_CATALOG)) {
       window.NGWYREN_FULL_CATALOG.forEach((item) => {
         if (!item || !item.slug) return;
@@ -1104,12 +1096,15 @@ class PhimmoiService {
           sectionTags: Array.isArray(item.sectionTags) ? item.sectionTags : ["hot"],
           episodes: Array.isArray(item.episodes)
             ? item.episodes
-            : [item.episodes || { name: "Full FHD", slug: "full", source: streamPool[0] }]
+            : [item.episodes || { name: "Tập 1 (Vietsub)", slug: "tap-1", source: "", needsEnrich: true }]
         };
         if (this.slugMap.has(normalizedItem.slug)) {
           const existing = this.slugMap.get(normalizedItem.slug);
-          if (normalizedItem.episodes.length > existing.episodes.length) {
+          if (normalizedItem.episodes && normalizedItem.episodes.length > 0 && normalizedItem.episodes[0].source) {
             existing.episodes = normalizedItem.episodes;
+          }
+          if (normalizedItem.dubEpisodes && normalizedItem.dubEpisodes.length > 0) {
+            existing.dubEpisodes = normalizedItem.dubEpisodes;
           }
         } else {
           this.movies.push(normalizedItem);
@@ -1235,7 +1230,7 @@ class PhimmoiService {
       synopsis: cleanSynopsis || "Phim điện ảnh và truyền hình chất lượng cao Full HD Vietsub trên Ngwyren Cinema.",
       episodes: uniqueEps.length
         ? uniqueEps
-        : [{ name: "Full FHD", slug: "full", source: streamPool[0] }]
+        : [{ name: "Tập 1 (Vietsub)", slug: "tap-1", source: "", embed: "", needsEnrich: true }]
     };
   }
 
@@ -1373,7 +1368,7 @@ class PhimmoiService {
           trailerUrl: "",
           link: "",
           synopsis: `${item.name} (${item.origin_name}) bản ${item.quality || "FHD"} ${item.lang || "Vietsub"} trên Ngwyren Cinema.`,
-          episodes: [{ name: "Tập 1 (Vietsub)", slug: "tap-1", source: "https://v7.kkphimplayer7.com/20260729/a8XUKTef/index.m3u8" }]
+          episodes: [{ name: "Tập 1 (Vietsub)", slug: "tap-1", source: "", embed: "", needsEnrich: true }]
         };
         this.movies.unshift(newMovie);
         this.slugMap.set(newMovie.slug, newMovie);
@@ -1413,7 +1408,7 @@ class PhimmoiService {
           trailerUrl: "",
           link: "",
           synopsis: nc.description || `${nc.name} chất lượng cao Vietsub.`,
-          episodes: [{ name: "Tập 1 (Vietsub)", slug: "tap-1", source: "https://a.kvp726.com/20261011/XdpIV8L5/index.m3u8" }]
+          episodes: [{ name: "Tập 1 (Vietsub)", slug: "tap-1", source: "", embed: "", needsEnrich: true }]
         };
         this.movies.unshift(newMovie);
         this.slugMap.set(newMovie.slug, newMovie);
