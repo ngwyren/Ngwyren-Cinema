@@ -27,12 +27,22 @@ class AppleCinemaApp {
     this.lightsOff = false;
     this.hlsInstance = null;
 
-    // Lưu trữ cá nhân (Danh sách của tôi & Lịch sử xem)
+    // Lưu trữ cá nhân (Danh sách của tôi, Lịch sử xem & Cài đặt hệ thống)
     this.myList = this.loadStorage("apple_cinema_mylist", ["pm-1", "pm-2", "pm-4"]);
     this.watchHistory = this.loadStorage("apple_cinema_history", [
       { slug: "thanh-guom-diet-quy-vo-han-thanh-465645", epIndex: 0, progress: 38, timestamp: Date.now() - 3600000 },
       { slug: "matchbox-phim-dien-anh", epIndex: 0, progress: 64, timestamp: Date.now() - 7200000 }
     ]);
+    this.settings = this.loadStorage("apple_cinema_settings", {
+      defaultServer: "hls-1",
+      defaultQuality: "native-max",
+      autoPlayOnOpen: false,
+      autoNextEpisode: true,
+      defaultLightsOff: false,
+      heroAutoRotate: true
+    });
+    this.currentServerMode = this.settings.defaultServer || "hls-1";
+    this.currentQuality = this.settings.defaultQuality || "native-max";
 
     this.searchDebounce = null;
     this.tagCache = new Map();
@@ -174,6 +184,8 @@ class AppleCinemaApp {
   setNavigation(navKey, customTitle = null) {
     this.currentNav = navKey;
     this.customFilterTitle = customTitle;
+    this.activeGenreFilter = "Tất cả";
+    this.currentSegment = "all";
     this.visibleGridLimit = 36;
 
     // Highlight left floating icon dock, top category pills & mobile bottom dock
@@ -181,32 +193,8 @@ class AppleCinemaApp {
       el.classList.toggle("active", el.dataset.nav === navKey);
     });
 
-    // Hiệu ứng trượt giọt nước (Liquid Pill Indicator) trên thanh Dock bên trái
-    const dockEl = document.getElementById("appleSidebar");
-    const dockIndicator = document.getElementById("visionDockIndicator");
-    if (dockEl) {
-      const dockMap = {
-        "kham-pha": 0,
-        "yeu-thich": 1,
-        "lich-su": 2,
-        "anime": 3,
-        "moi-cap-nhat": 4,
-        "phim-le": 4,
-        "phim-bo": 4,
-        "netflix": 4,
-        "vietsub": 4
-      };
-      const targetIdx = dockMap[navKey] !== undefined ? dockMap[navKey] : 0;
-      dockEl.style.setProperty("--dock-idx", String(targetIdx));
-      document.querySelectorAll(".vision-dock-icon").forEach((btn) => {
-        btn.classList.toggle("active", Number(btn.dataset.dockIdx) === targetIdx);
-      });
-      if (dockIndicator) {
-        dockIndicator.classList.remove("dock-morph");
-        void dockIndicator.offsetWidth;
-        dockIndicator.classList.add("dock-morph");
-      }
-    }
+    // Đồng bộ chính xác thanh Dock bên trái với trang lớn
+    this.syncLeftDockIndicator(navKey);
 
     // Đóng sidebar mobile nếu đang mở
     this.toggleMobileSidebar(false);
@@ -215,6 +203,34 @@ class AppleCinemaApp {
     window.scrollTo({ top: 0, behavior: "smooth" });
     this.renderMainView();
     this.triggerPageTransition();
+  }
+
+  syncLeftDockIndicator(navKey) {
+    const dockEl = document.getElementById("appleSidebar");
+    const dockIndicator = document.getElementById("visionDockIndicator");
+    if (!dockEl) return;
+    const dockMap = {
+      "kham-pha": 0,
+      "phim-le": 0,
+      "phim-bo": 0,
+      "netflix": 0,
+      "vietsub": 0,
+      "moi-cap-nhat": 0,
+      "yeu-thich": 1,
+      "lich-su": 2,
+      "anime": 3,
+      "cai-dat": 4
+    };
+    const targetIdx = dockMap[navKey] !== undefined ? dockMap[navKey] : 0;
+    dockEl.style.setProperty("--dock-idx", String(targetIdx));
+    document.querySelectorAll(".vision-dock-icon").forEach((btn) => {
+      btn.classList.toggle("active", Number(btn.dataset.dockIdx) === targetIdx);
+    });
+    if (dockIndicator) {
+      dockIndicator.classList.remove("dock-morph");
+      void dockIndicator.offsetWidth;
+      dockIndicator.classList.add("dock-morph");
+    }
   }
 
   triggerPageTransition() {
@@ -232,8 +248,8 @@ class AppleCinemaApp {
     }
   }
 
-  renderLeftSideColumnHTML(contextMovies = null) {
-    const sourceTrailers = (contextMovies && contextMovies.length >= 3 ? contextMovies : this.service.movies).slice(0, 5);
+  renderLeftSideColumnHTML(contextMovies = null, panelTitle = "🔥 Phim & Trailer Mới") {
+    const sourceTrailers = (contextMovies && contextMovies.length >= 2 ? contextMovies : this.service.movies).slice(0, 5);
     const continueItems = this.watchHistory
       .map((h) => ({ movie: this.findMovie(h.slug), epIndex: h.epIndex || 0 }))
       .filter((x) => x.movie);
@@ -244,7 +260,7 @@ class AppleCinemaApp {
       <aside class="vision-side-col">
         <div class="vision-glass-panel">
           <div class="vision-panel-header">
-            <span class="vision-panel-title">🔥 Phim & Trailer Mới</span>
+            <span class="vision-panel-title">${panelTitle}</span>
             <span class="vision-panel-sort">Sort by: <strong>Today ⇅</strong></span>
           </div>
           <div class="vision-trailer-stack">
@@ -265,9 +281,224 @@ class AppleCinemaApp {
     `;
   }
 
+  pickDistinctCategoryHero(list, navKey) {
+    if (!list || list.length === 0) return this.heroMovies[0] || this.service.movies[0];
+    const homeHeroSlug = this.heroMovies[0]?.slug || "thanh-guom-diet-quy-vo-han-thanh-465645";
+    const preferredByNav = {
+      "phim-le": "matchbox-phim-dien-anh",
+      "phim-bo": "squid-game-3-765752",
+      "anime": "one-piece-dao-hai-tac",
+      "netflix": "squid-game-3-765752",
+      "vietsub": "tai-xe-an-danh-phan-3",
+      "moi-cap-nhat": "nhiem-vu-bat-kha-thi-nghiep-bao-phan-2-1"
+    };
+    const prefSlug = preferredByNav[navKey];
+    if (prefSlug) {
+      const foundPref = list.find((m) => m.slug === prefSlug) || this.findMovie(prefSlug);
+      if (foundPref) return foundPref;
+    }
+    return list.find((m) => m.slug !== homeHeroSlug) || list[0];
+  }
+
+  renderSettingsViewHTML() {
+    const s = this.settings || {};
+    return `
+      <div class="vision-dashboard-grid">
+        ${this.renderLeftSideColumnHTML(this.service.movies, "🔥 Phim & Trailer Mới")}
+
+        <div class="vision-main-col vision-col-transition">
+          <!-- Spatial Settings Hero Header -->
+          <section class="vision-settings-banner">
+            <div class="vision-settings-banner-left">
+              <span class="vision-trending-pill"><i class="fas fa-gear"></i> visionOS Control Center</span>
+              <h1 class="vision-hero-title" style="margin-top: 8px;">Cài Đặt Hệ Thống</h1>
+              <p class="vision-hero-desc" style="max-width: 620px;">
+                Tùy chỉnh chất lượng luồng phát Full HD 1080p gốc, máy chủ Vietsub/Thuyết minh ưu tiên, chế độ Rạp Phim và quản lý dữ liệu cá nhân trên Ngwyren Cinema.
+              </p>
+            </div>
+            <div class="vision-settings-banner-actions">
+              <button class="vision-btn-watch" onclick="app.syncLivePhimmoi(true)">
+                <i class="fas fa-rotate"></i> Đồng Bộ Kho Phim (${this.service.movies.length})
+              </button>
+              <button class="vision-btn-outline" onclick="app.resetDefaultSettings()">
+                <i class="fas fa-sliders"></i> Mặc Định
+              </button>
+            </div>
+          </section>
+
+          <!-- Settings Grid (2-Column Glass Cards inside Main Column) -->
+          <div class="vision-settings-grid">
+            <!-- Card 1: Chất lượng & Nguồn phát -->
+            <div class="vision-settings-card">
+              <div class="vision-settings-card-header">
+                <i class="fas fa-film"></i>
+                <div>
+                  <h3>Chất Lượng & Nguồn Phát Mặc Định</h3>
+                  <p>Áp dụng tự động khi bạn bấm xem bất kỳ bộ phim nào</p>
+                </div>
+              </div>
+
+              <div class="vision-setting-row">
+                <div class="vision-setting-info">
+                  <strong>Chất lượng luồng video</strong>
+                  <span>Luôn khóa ở mức Bitrate & độ phân giải gốc cao nhất từ CDN</span>
+                </div>
+                <div class="vision-setting-pills">
+                  <button class="filter-chip ${s.defaultQuality !== "Auto" ? "active" : ""}" onclick="app.updateSetting('defaultQuality', 'native-max')">
+                    ★ Tốt nhất (Full HD 1080p)
+                  </button>
+                  <button class="filter-chip ${s.defaultQuality === "Auto" ? "active" : ""}" onclick="app.updateSetting('defaultQuality', 'Auto')">
+                    Auto ABR
+                  </button>
+                </div>
+              </div>
+
+              <div class="vision-setting-row">
+                <div class="vision-setting-info">
+                  <strong>Máy chủ phát ưu tiên</strong>
+                  <span>Chọn nguồn phát mặc định khi mở trình phát</span>
+                </div>
+                <div class="vision-setting-pills">
+                  <button class="filter-chip ${s.defaultServer === "hls-1" ? "active" : ""}" onclick="app.updateSetting('defaultServer', 'hls-1')">
+                    Netflix Vietsub #1 (HLS)
+                  </button>
+                  <button class="filter-chip ${s.defaultServer === "embed-1" ? "active" : ""}" onclick="app.updateSetting('defaultServer', 'embed-1')">
+                    Vietsub #2 (Embed)
+                  </button>
+                  <button class="filter-chip ${s.defaultServer === "dub-1" ? "active" : ""}" onclick="app.updateSetting('defaultServer', 'dub-1')">
+                    Lồng Tiếng / Thuyết Minh
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2: Trải nghiệm Rạp Phim & Tự động phát -->
+            <div class="vision-settings-card">
+              <div class="vision-settings-card-header">
+                <i class="fas fa-wand-magic-sparkles"></i>
+                <div>
+                  <h3>Trải Nghiệm Rạp Phim & Chuyển Động</h3>
+                  <p>Tùy chỉnh hành vi tự động phát và hiệu ứng không gian visionOS</p>
+                </div>
+              </div>
+
+              <div class="vision-setting-row">
+                <div class="vision-setting-info">
+                  <strong>Tự động phát ngay khi mở phim</strong>
+                  <span>Bắt đầu phát tập phim ngay khi bấm vào thẻ phim</span>
+                </div>
+                <button class="vision-toggle-btn ${s.autoPlayOnOpen ? "on" : ""}" onclick="app.updateSetting('autoPlayOnOpen', ${!s.autoPlayOnOpen})">
+                  <span>${s.autoPlayOnOpen ? "Đang Bật" : "Đang Tắt"}</span>
+                </button>
+              </div>
+
+              <div class="vision-setting-row">
+                <div class="vision-setting-info">
+                  <strong>Tự động bật Tắt Đèn Rạp</strong>
+                  <span>Làm tối không gian xung quanh khi mở cửa sổ xem phim</span>
+                </div>
+                <button class="vision-toggle-btn ${s.defaultLightsOff ? "on" : ""}" onclick="app.updateSetting('defaultLightsOff', ${!s.defaultLightsOff})">
+                  <span>${s.defaultLightsOff ? "Đang Bật" : "Đang Tắt"}</span>
+                </button>
+              </div>
+
+              <div class="vision-setting-row">
+                <div class="vision-setting-info">
+                  <strong>Tự động xoay vòng Banner Trang Chủ</strong>
+                  <span>Chuyển đổi poster phim nổi bật mỗi 9 giây ở trang Khám Phá</span>
+                </div>
+                <button class="vision-toggle-btn ${s.heroAutoRotate !== false ? "on" : ""}" onclick="app.updateSetting('heroAutoRotate', ${s.heroAutoRotate === false})">
+                  <span>${s.heroAutoRotate !== false ? "Đang Bật" : "Đang Tắt"}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Card 3: Quản lý Dữ liệu Cá nhân -->
+            <div class="vision-settings-card" style="grid-column: 1 / -1;">
+              <div class="vision-settings-card-header">
+                <i class="fas fa-database"></i>
+                <div>
+                  <h3>Quản Lý Dữ Liệu Cá Nhân & Bộ Nhớ Đệm</h3>
+                  <p>Đang lưu ${this.myList.length} phim yêu thích • ${this.watchHistory.length} phim trong lịch sử xem tiếp</p>
+                </div>
+              </div>
+
+              <div class="vision-setting-actions-row">
+                <button class="vision-btn-outline" onclick="app.setNavigation('yeu-thich')">
+                  <i class="fas fa-heart"></i> Xem Phim Đã Lưu (${this.myList.length})
+                </button>
+                <button class="vision-btn-outline" onclick="app.setNavigation('lich-su')">
+                  <i class="fas fa-clock-rotate-left"></i> Xem Lịch Sử (${this.watchHistory.length})
+                </button>
+                <button class="vision-btn-outline" onclick="app.clearWatchHistory()">
+                  <i class="fas fa-trash-can"></i> Xóa Lịch Sử Xem
+                </button>
+                <button class="vision-btn-outline" onclick="app.clearMyList()">
+                  <i class="fas fa-folder-minus"></i> Làm Trống Danh Sách Lưu
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  updateSetting(key, value) {
+    this.settings[key] = value;
+    this.saveStorage("apple_cinema_settings", this.settings);
+    if (key === "defaultServer") this.currentServerMode = value;
+    if (key === "defaultQuality") this.currentQuality = value;
+    if (key === "defaultLightsOff") this.lightsOff = Boolean(value);
+    if (this.currentNav === "cai-dat") {
+      this.renderMainView();
+    }
+    this.showToast("Đã lưu thay đổi cài đặt hệ thống");
+  }
+
+  resetDefaultSettings() {
+    this.settings = {
+      defaultServer: "hls-1",
+      defaultQuality: "native-max",
+      autoPlayOnOpen: false,
+      autoNextEpisode: true,
+      defaultLightsOff: false,
+      heroAutoRotate: true
+    };
+    this.saveStorage("apple_cinema_settings", this.settings);
+    this.currentServerMode = "hls-1";
+    this.currentQuality = "native-max";
+    if (this.currentNav === "cai-dat") {
+      this.renderMainView();
+    }
+    this.showToast("Đã khôi phục cài đặt mặc định");
+  }
+
+  clearWatchHistory() {
+    this.watchHistory = [];
+    this.saveStorage("apple_cinema_history", this.watchHistory);
+    this.updateSidebarCounts();
+    this.renderMainView();
+    this.showToast("Đã xóa toàn bộ lịch sử xem phim");
+  }
+
+  clearMyList() {
+    this.myList = [];
+    this.saveStorage("apple_cinema_mylist", this.myList);
+    this.updateSidebarCounts();
+    this.renderMainView();
+    this.showToast("Đã làm trống danh sách phim đã lưu");
+  }
+
   renderMainView() {
     const container = document.getElementById("mainContentWrapper");
     if (!container) return;
+
+    // Trang Cài Đặt Hệ Thống (Khi bấm icon bánh răng ở thanh bên trái)
+    if (this.currentNav === "cai-dat") {
+      container.innerHTML = this.renderSettingsViewHTML();
+      return;
+    }
 
     const isDefaultExplore =
       this.currentNav === "kham-pha" &&
@@ -282,7 +513,7 @@ class AppleCinemaApp {
 
       container.innerHTML = `
         <div class="vision-dashboard-grid">
-          ${this.renderLeftSideColumnHTML(this.service.movies)}
+          ${this.renderLeftSideColumnHTML(this.service.movies, "🔥 Phim & Trailer Mới")}
 
           <!-- RIGHT MAIN COLUMN: HERO BANNER + YOU MIGHT LIKE + CURATED ROWS -->
           <div class="vision-main-col vision-col-transition">
@@ -346,17 +577,46 @@ class AppleCinemaApp {
       return;
     }
 
-    // Chế độ danh mục hoặc bộ lọc: GIỮ NGUYÊN 100% SHAPE 2 CỘT VISION OS DASHBOARD
+    // Chế độ danh mục (Đã Lưu, Lịch Sử, Anime, Movies, TV Series, Netflix, Vietsub...)
+    // GIỮ NGUYÊN 100% SHAPE 2 CỘT VISION OS NHƯNG THAY ĐỔI RÕ RÀNG NỘI DUNG TỪNG TRANG
     const { title, subtitle, list } = this.getFilteredCatalog();
     const visibleList = list.slice(0, this.visibleGridLimit);
-    const categoryHeroMovie = list[0] || this.heroMovies[this.heroIndex] || this.service.movies[0];
+    const distinctListForLeft = list.filter((m) => m.slug !== "thanh-guom-diet-quy-vo-han-thanh-465645");
+    const categoryHeroMovie = this.pickDistinctCategoryHero(list, this.currentNav);
+    const isPersonalPage = this.currentNav === "yeu-thich" || this.currentNav === "lich-su";
 
     container.innerHTML = `
       <div class="vision-dashboard-grid">
-        ${this.renderLeftSideColumnHTML(list)}
+        ${this.renderLeftSideColumnHTML(distinctListForLeft.length >= 2 ? distinctListForLeft : list, `🎬 Đề Cử: ${title}`)}
 
         <div class="vision-main-col vision-col-transition">
-          ${this.renderHeroHTML(categoryHeroMovie, `🔥 ${title}`)}
+          <!-- Category Header Banner / Hero -->
+          ${
+            isPersonalPage
+              ? `<section class="vision-settings-banner">
+                   <div class="vision-settings-banner-left">
+                     <span class="vision-trending-pill">
+                       <i class="fas ${this.currentNav === "yeu-thich" ? "fa-heart" : "fa-clock-rotate-left"}"></i>
+                       Thư Viện Cá Nhân
+                     </span>
+                     <h1 class="vision-hero-title" style="margin-top: 8px;">${title} (${list.length} phim)</h1>
+                     <p class="vision-hero-desc">${subtitle}</p>
+                   </div>
+                   <div class="vision-settings-banner-actions">
+                     ${
+                       this.currentNav === "yeu-thich" && list.length > 0
+                         ? `<button class="vision-btn-outline" onclick="app.clearMyList()"><i class="fas fa-trash-can"></i> Xóa Danh Sách</button>`
+                         : this.currentNav === "lich-su" && list.length > 0
+                         ? `<button class="vision-btn-outline" onclick="app.clearWatchHistory()"><i class="fas fa-trash-can"></i> Xóa Lịch Sử</button>`
+                         : ""
+                     }
+                     <button class="vision-btn-watch" onclick="app.resetAllFilters()">
+                       <i class="fas fa-house"></i> Về Khám Phá
+                     </button>
+                   </div>
+                 </section>`
+              : this.renderHeroHTML(categoryHeroMovie, `🔥 ${title} (${list.length} phim)`)
+          }
 
           ${this.renderGenreChipsHTML()}
 
@@ -828,18 +1088,23 @@ class AppleCinemaApp {
     const movie = this.findMovie(slug);
     if (!movie) return;
 
+    const shouldAutoPlay = Boolean(autoPlay || this.settings?.autoPlayOnOpen);
+    const defaultSrv = this.settings?.defaultServer || "hls-1";
+
     this.stopModalVideo();
     this.selectedMovie = movie;
     this.currentEpisodeIndex = epIndex;
-    this.currentQuality = "native-max";
+    this.currentQuality = this.settings?.defaultQuality || "native-max";
+    this.lightsOff = Boolean(this.settings?.defaultLightsOff);
     this.ActiveModalTab = "related"; // Luôn ưu tiên hiển thị Nội dung tương tự kiểu Netflix + Tập phim
     this.updateAmbientBackdrop(movie);
 
     const modalBackdrop = document.getElementById("movieDetailModal");
     if (!modalBackdrop) return;
 
-    this.renderModalContent(movie, autoPlay);
+    this.renderModalContent(movie, shouldAutoPlay);
     modalBackdrop.classList.add("open");
+    modalBackdrop.classList.toggle("lights-off", this.lightsOff);
     document.body.style.overflow = "hidden";
 
     // Tự động kéo mượt lên đầu Modal khi bấm chọn phim khác ở mục Nội Dung Tương Tự / Cùng Thể Loại
@@ -854,8 +1119,8 @@ class AppleCinemaApp {
 
     const prevEpSource = movie.episodes?.[epIndex]?.source || "";
 
-    if (autoPlay) {
-      this.startVideoPlayback(movie, epIndex, "hls-1");
+    if (shouldAutoPlay) {
+      this.startVideoPlayback(movie, epIndex, defaultSrv);
     }
 
     // Tự động lấy thêm danh sách tập phim & luồng chất lượng thật từ PhimAPI / NguonC / WP API
@@ -1740,14 +2005,24 @@ class AppleCinemaApp {
   }
 
   selectGenreChip(genreLabel) {
+    if (genreLabel === "Anime") {
+      this.setNavigation("anime");
+      return;
+    }
     this.activeGenreFilter = genreLabel;
+    this.syncLeftDockIndicator(this.currentNav);
     this.renderMainView();
     this.triggerPageTransition();
   }
 
   filterByGenreFromModal(genreLabel) {
     this.closeMovieModal();
+    if (genreLabel === "Anime") {
+      this.setNavigation("anime");
+      return;
+    }
     this.activeGenreFilter = genreLabel;
+    this.syncLeftDockIndicator(this.currentNav);
     window.scrollTo({ top: 0, behavior: "smooth" });
     this.renderMainView();
     this.triggerPageTransition();
@@ -1757,6 +2032,7 @@ class AppleCinemaApp {
     this.closeMovieModal();
     this.customFilterValue = personName;
     this.currentNav = "person-filter";
+    this.syncLeftDockIndicator("kham-pha");
     window.scrollTo({ top: 0, behavior: "smooth" });
     this.renderMainView();
     this.triggerPageTransition();
@@ -1824,6 +2100,7 @@ class AppleCinemaApp {
     clearInterval(this.heroTimer);
     this.heroTimer = setInterval(() => {
       if (
+        this.settings?.heroAutoRotate !== false &&
         this.currentNav === "kham-pha" &&
         !document.hidden &&
         window.scrollY < 320 &&
