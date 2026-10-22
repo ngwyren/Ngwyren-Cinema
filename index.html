@@ -19,7 +19,7 @@
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css?v=2.3" />
 </head>
 <body>
 
@@ -28,23 +28,6 @@
 
   <!-- Toast Notifications -->
   <div class="apple-toast-container" id="toastContainer"></div>
-
-  <!-- Hardware-Accelerated 4K / 2K Cinema Clarity SVG Filters -->
-  <svg width="0" height="0" style="position: absolute; pointer-events: none;" aria-hidden="true">
-    <defs>
-      <filter id="ngwyren-4k-upscale" color-interpolation-filters="sRGB">
-        <feConvolveMatrix order="3" kernelMatrix="0 -0.45 0 -0.45 2.8 -0.45 0 -0.45 0" preserveAlpha="true" />
-        <feComponentTransfer>
-          <feFuncR type="linear" slope="1.05" intercept="-0.02" />
-          <feFuncG type="linear" slope="1.05" intercept="-0.02" />
-          <feFuncB type="linear" slope="1.05" intercept="-0.02" />
-        </feComponentTransfer>
-      </filter>
-      <filter id="ngwyren-2k-upscale" color-interpolation-filters="sRGB">
-        <feConvolveMatrix order="3" kernelMatrix="0 -0.25 0 -0.25 2.0 -0.25 0 -0.25 0" preserveAlpha="true" />
-      </filter>
-    </defs>
-  </svg>
 
   <!-- ========================================================================
        VISION PRO SPATIAL STAGE (LEFT FLOATING ICON PILL + MAIN GLASS WINDOW)
@@ -226,8 +209,8 @@
   </div>
 
   <!-- Scripts -->
-  <script src="js/movies-catalog.js"></script>
-  <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/movies-catalog.js?v=2.3"></script>
+  <script src="js/data.js?v=2.3"></script>
+  <script src="js/app.js?v=2.3"></script>
 </body>
 </html>

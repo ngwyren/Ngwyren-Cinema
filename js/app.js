@@ -211,29 +211,70 @@ class AppleCinemaApp {
     // Đóng sidebar mobile nếu đang mở
     this.toggleMobileSidebar(false);
 
-    // Cuộn mượt lên đầu trang & hiệu ứng chuyển trang
+    // Cuộn mượt lên đầu trang & hiệu ứng chuyển trang không gian visionOS
     window.scrollTo({ top: 0, behavior: "smooth" });
     this.renderMainView();
+    this.triggerPageTransition();
+  }
+
+  triggerPageTransition() {
     const container = document.getElementById("mainContentWrapper");
     if (container) {
       container.classList.remove("vision-view-enter");
       void container.offsetWidth;
       container.classList.add("vision-view-enter");
     }
+    const mainCol = container?.querySelector(".vision-main-col");
+    if (mainCol) {
+      mainCol.classList.remove("vision-col-transition");
+      void mainCol.offsetWidth;
+      mainCol.classList.add("vision-col-transition");
+    }
+  }
+
+  renderLeftSideColumnHTML(contextMovies = null) {
+    const sourceTrailers = (contextMovies && contextMovies.length >= 3 ? contextMovies : this.service.movies).slice(0, 5);
+    const continueItems = this.watchHistory
+      .map((h) => ({ movie: this.findMovie(h.slug), epIndex: h.epIndex || 0 }))
+      .filter((x) => x.movie);
+    const fallbackContinue = this.service.movies.slice(5, 10).map((m) => ({ movie: m, epIndex: 0 }));
+    const finalContinue = [...continueItems, ...fallbackContinue].slice(0, 5);
+
+    return `
+      <aside class="vision-side-col">
+        <div class="vision-glass-panel">
+          <div class="vision-panel-header">
+            <span class="vision-panel-title">🔥 Phim & Trailer Mới</span>
+            <span class="vision-panel-sort">Sort by: <strong>Today ⇅</strong></span>
+          </div>
+          <div class="vision-trailer-stack">
+            ${sourceTrailers.map((m) => this.renderVisionTrailerCardHTML(m)).join("")}
+          </div>
+        </div>
+
+        <div class="vision-glass-panel">
+          <div class="vision-panel-header">
+            <span class="vision-panel-title">Continue Watching</span>
+            <button class="vision-see-all-pill" onclick="app.setNavigation('lich-su')">Lịch sử</button>
+          </div>
+          <div class="vision-continue-list">
+            ${finalContinue.map((item) => this.renderVisionContinueItemHTML(item.movie, item.epIndex)).join("")}
+          </div>
+        </div>
+      </aside>
+    `;
   }
 
   renderMainView() {
     const container = document.getElementById("mainContentWrapper");
     if (!container) return;
 
-    if (this.currentNav === "kham-pha" && this.activeGenreFilter === "Tất cả" && this.currentSegment === "all") {
-      const trailerMovies = this.service.movies.slice(0, 5);
-      const continueItems = this.watchHistory
-        .map((h) => ({ movie: this.findMovie(h.slug), epIndex: h.epIndex || 0 }))
-        .filter((x) => x.movie);
-      const fallbackContinue = this.service.movies.slice(5, 10).map((m) => ({ movie: m, epIndex: 0 }));
-      const finalContinue = [...continueItems, ...fallbackContinue].slice(0, 5);
+    const isDefaultExplore =
+      this.currentNav === "kham-pha" &&
+      this.activeGenreFilter === "Tất cả" &&
+      this.currentSegment === "all";
 
+    if (isDefaultExplore) {
       const youMightLike = this.service.movies.slice(1, 5);
       const animeFeatured = this.getMoviesByTag("anime").slice(0, 8);
       const netflixFeatured = this.getMoviesByTag("netflix").slice(0, 8);
@@ -241,31 +282,10 @@ class AppleCinemaApp {
 
       container.innerHTML = `
         <div class="vision-dashboard-grid">
-          <!-- LEFT COLUMN: NEW TRAILERS & CONTINUE WATCHING -->
-          <aside class="vision-side-col">
-            <div class="vision-glass-panel">
-              <div class="vision-panel-header">
-                <span class="vision-panel-title">🔥 Phim & Trailer Mới</span>
-                <span class="vision-panel-sort">Sort by: <strong>Today ⇅</strong></span>
-              </div>
-              <div class="vision-trailer-stack">
-                ${trailerMovies.map((m) => this.renderVisionTrailerCardHTML(m)).join("")}
-              </div>
-            </div>
-
-            <div class="vision-glass-panel">
-              <div class="vision-panel-header">
-                <span class="vision-panel-title">Continue Watching</span>
-                <button class="vision-see-all-pill" onclick="app.setNavigation('lich-su')">Lịch sử</button>
-              </div>
-              <div class="vision-continue-list">
-                ${finalContinue.map((item) => this.renderVisionContinueItemHTML(item.movie, item.epIndex)).join("")}
-              </div>
-            </div>
-          </aside>
+          ${this.renderLeftSideColumnHTML(this.service.movies)}
 
           <!-- RIGHT MAIN COLUMN: HERO BANNER + YOU MIGHT LIKE + CURATED ROWS -->
-          <div class="vision-main-col">
+          <div class="vision-main-col vision-col-transition">
             ${this.renderHeroHTML()}
 
             <!-- You might like (4-column visionOS cards) -->
@@ -326,33 +346,44 @@ class AppleCinemaApp {
       return;
     }
 
-    // Chế độ danh mục hoặc bộ lọc
+    // Chế độ danh mục hoặc bộ lọc: GIỮ NGUYÊN 100% SHAPE 2 CỘT VISION OS DASHBOARD
     const { title, subtitle, list } = this.getFilteredCatalog();
     const visibleList = list.slice(0, this.visibleGridLimit);
+    const categoryHeroMovie = list[0] || this.heroMovies[this.heroIndex] || this.service.movies[0];
+
     container.innerHTML = `
-      ${this.renderGenreChipsHTML()}
-      <section class="vision-shelf-section">
-        <div class="vision-shelf-header" style="margin-bottom: 18px;">
-          <div>
-            <h1 class="vision-shelf-title" style="font-size: 1.55rem;">${title}</h1>
-            <p class="section-subtitle">${subtitle} • Hiển thị ${visibleList.length} / ${list.length} bộ phim</p>
-          </div>
-          <button class="vision-see-all-pill" onclick="app.resetAllFilters()">
-            <i class="fas fa-rotate-left"></i> Về Khám Phá
-          </button>
+      <div class="vision-dashboard-grid">
+        ${this.renderLeftSideColumnHTML(list)}
+
+        <div class="vision-main-col vision-col-transition">
+          ${this.renderHeroHTML(categoryHeroMovie, `🔥 ${title}`)}
+
+          ${this.renderGenreChipsHTML()}
+
+          <section class="vision-shelf-section">
+            <div class="vision-shelf-header">
+              <div>
+                <h2 class="vision-shelf-title">${title}</h2>
+                <p class="section-subtitle">${subtitle} • Hiển thị ${visibleList.length} / ${list.length} bộ phim</p>
+              </div>
+              <button class="vision-see-all-pill" onclick="app.resetAllFilters()">
+                <i class="fas fa-rotate-left"></i> Về Khám Phá
+              </button>
+            </div>
+            ${
+              visibleList.length > 0
+                ? `<div class="vision-cards-grid-4">${visibleList.map((m) => this.renderVisionFeatureCardHTML(m)).join("")}</div>
+                   ${this.renderLoadMoreButtonsHTML(list.length)}`
+                : `<div style="padding: 60px 20px; text-align: center; background: rgba(255,255,255,0.04); border-radius: 26px; border: 1px solid rgba(255,255,255,0.12);">
+                    <i class="fas fa-film" style="font-size: 2.5rem; color: #ffffff; margin-bottom: 12px;"></i>
+                    <h3 style="margin-bottom: 6px;">Chưa có phim trong mục này</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px;">Hãy thử chọn thể loại khác hoặc khám phá kho phim đề cử.</p>
+                    <button class="vision-btn-watch" onclick="app.resetAllFilters()">Khám Phá Kho Phim</button>
+                  </div>`
+            }
+          </section>
         </div>
-        ${
-          visibleList.length > 0
-            ? `<div class="vision-catalog-grid">${visibleList.map((m) => this.renderVisionFeatureCardHTML(m)).join("")}</div>
-               ${this.renderLoadMoreButtonsHTML(list.length)}`
-            : `<div style="padding: 60px 20px; text-align: center; background: rgba(255,255,255,0.04); border-radius: 26px; border: 1px solid rgba(255,255,255,0.12);">
-                <i class="fas fa-film" style="font-size: 2.5rem; color: #ffffff; margin-bottom: 12px;"></i>
-                <h3 style="margin-bottom: 6px;">Chưa có phim trong mục này</h3>
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px;">Hãy thử chọn thể loại khác hoặc khám phá kho phim đề cử.</p>
-                <button class="vision-btn-watch" onclick="app.resetAllFilters()">Khám Phá Kho Phim</button>
-              </div>`
-        }
-      </section>
+      </div>
     `;
   }
 
@@ -464,21 +495,12 @@ class AppleCinemaApp {
       base = base.filter((m) => m.type === "single");
     }
 
-    // Lọc theo thể loại hoặc độ phân giải (Genre / Quality chip)
+    // Lọc theo thể loại (Genre chip)
     if (this.activeGenreFilter && this.activeGenreFilter !== "Tất cả") {
-      if (this.activeGenreFilter === "4K / 2K") {
-        base = base.filter(
-          (m) =>
-            (m.quality && (m.quality.includes("4K") || m.quality.includes("2K") || m.quality.includes("FHD"))) ||
-            (m.sectionTags && m.sectionTags.includes("netflix"))
-        );
-        title = "Kho Phim Chất Lượng 4K / 2K Ultra HD";
-      } else {
-        base = base.filter((m) =>
-          m.genres.some((g) => g.toLowerCase() === this.activeGenreFilter.toLowerCase())
-        );
-        title = `Thể loại: ${this.activeGenreFilter}`;
-      }
+      base = base.filter((m) =>
+        m.genres.some((g) => g.toLowerCase() === this.activeGenreFilter.toLowerCase())
+      );
+      title = `Thể loại: ${this.activeGenreFilter}`;
     }
 
     return { title, subtitle, list: base };
@@ -497,8 +519,8 @@ class AppleCinemaApp {
   /* ==========================================================================
      VISION OS SPATIAL HTML BUILDERS (HERO, TRAILER STACK, CONTINUE & CARDS)
      ========================================================================== */
-  renderHeroHTML() {
-    const movie = this.heroMovies[this.heroIndex] || this.service.movies[0];
+  renderHeroHTML(customMovie = null, customKicker = "🔥 Now Trending") {
+    const movie = customMovie || this.heroMovies[this.heroIndex] || this.service.movies[0];
     if (!movie) return "";
     const inMyList = this.isInMyList(movie);
     const prevIdx = (this.heroIndex - 1 + this.heroMovies.length) % this.heroMovies.length;
@@ -510,7 +532,7 @@ class AppleCinemaApp {
         <div class="vision-hero-overlay"></div>
 
         <div class="vision-hero-top">
-          <span class="vision-trending-pill">🔥 Now Trending</span>
+          <span class="vision-trending-pill">${customKicker}</span>
         </div>
 
         <div class="vision-hero-bottom">
@@ -610,7 +632,6 @@ class AppleCinemaApp {
   renderGenreChipsHTML() {
     const genres = [
       { label: "Tất cả", icon: "fa-sparkles" },
-      { label: "4K / 2K", icon: "fa-tv" },
       { label: "Hành Động", icon: "fa-fire" },
       { label: "Bí Ẩn", icon: "fa-user-secret" },
       { label: "Cổ Trang", icon: "fa-scroll" },
@@ -807,8 +828,10 @@ class AppleCinemaApp {
     const movie = this.findMovie(slug);
     if (!movie) return;
 
+    this.stopModalVideo();
     this.selectedMovie = movie;
     this.currentEpisodeIndex = epIndex;
+    this.currentQuality = "native-max";
     this.ActiveModalTab = "related"; // Luôn ưu tiên hiển thị Nội dung tương tự kiểu Netflix + Tập phim
     this.updateAmbientBackdrop(movie);
 
@@ -818,6 +841,16 @@ class AppleCinemaApp {
     this.renderModalContent(movie, autoPlay);
     modalBackdrop.classList.add("open");
     document.body.style.overflow = "hidden";
+
+    // Tự động kéo mượt lên đầu Modal khi bấm chọn phim khác ở mục Nội Dung Tương Tự / Cùng Thể Loại
+    modalBackdrop.scrollTo({ top: 0, behavior: "smooth" });
+    const sheet = document.getElementById("movieDetailSheet");
+    if (sheet) {
+      sheet.scrollTo({ top: 0, behavior: "smooth" });
+      sheet.classList.remove("modal-movie-switch");
+      void sheet.offsetWidth;
+      sheet.classList.add("modal-movie-switch");
+    }
 
     const prevEpSource = movie.episodes?.[epIndex]?.source || "";
 
@@ -1132,6 +1165,12 @@ class AppleCinemaApp {
     this.currentEpisodeIndex = epIndex;
     this.currentServerMode = serverMode;
 
+    // Tự động kéo mượt lên đầu Modal để thấy ngay khung phát video khi bấm chọn tập phim ở dưới
+    const modalBackdrop = document.getElementById("movieDetailModal");
+    const sheet = document.getElementById("movieDetailSheet");
+    modalBackdrop?.scrollTo({ top: 0, behavior: "smooth" });
+    sheet?.scrollTo({ top: 0, behavior: "smooth" });
+
     // Nếu tập phim chưa có luồng thật (mới tìm kiếm trực tuyến), tự động nạp luồng thật của đúng bộ phim đó trước khi phát
     const initialEp = movie.episodes?.[epIndex] || movie.episodes?.[0];
     if (initialEp?.needsEnrich || (!initialEp?.source && !initialEp?.embed)) {
@@ -1341,13 +1380,11 @@ class AppleCinemaApp {
 
   resolveResolutionTier(w, h) {
     const maxDim = Math.max(w || 0, h || 0);
-    if (maxDim >= 3600 || h >= 2000) return "4K UHD";
-    if (maxDim >= 2400 || h >= 1350) return "2K QHD";
-    if (maxDim >= 1800 || h >= 1000) return "1080p";
-    if (maxDim >= 1200 || h >= 680) return "720p";
+    if (maxDim >= 1800 || h >= 1000) return "Full HD 1080p";
+    if (maxDim >= 1200 || h >= 680) return "HD 720p";
     if (maxDim >= 800 || h >= 460) return "480p";
     if (maxDim > 0) return `${h}p`;
-    return "1080p";
+    return "Full HD 1080p";
   }
 
   buildQualityButtonsHTML() {
@@ -1360,10 +1397,11 @@ class AppleCinemaApp {
       // Phim có nhiều mức chất lượng thật trong luồng .m3u8 (Multi-variant HLS)
       for (let i = levels.length - 1; i >= 0; i--) {
         const l = levels[i];
-        const key = `level-${l.index}`;
+        const isBest = i === levels.length - 1;
+        const key = isBest ? "native-max" : `level-${l.index}`;
         buttons.push({
           key,
-          label: l.shortLabel,
+          label: isBest ? `★ Tốt nhất (${l.shortLabel})` : l.shortLabel,
           title: `Chuyển sang luồng gốc ${l.detailLabel}`
         });
       }
@@ -1373,15 +1411,15 @@ class AppleCinemaApp {
         title: "Tự động điều chỉnh chất lượng theo tốc độ mạng"
       });
     } else {
-      // Luồng .m3u8 có 1 độ phân giải gốc (ví dụ 1920x1080 3.5 Mbps)
+      // Luồng .m3u8 chỉ hiển thị chất lượng gốc tốt nhất (Full HD 1080p)
       const w = this.actualVideoRes.width || 1920;
       const h = this.actualVideoRes.height || 1080;
       const mbps = this.actualVideoRes.bitrateMbps || 3.5;
       const nativeTier = this.resolveResolutionTier(w, h);
       buttons.push({
         key: "native-max",
-        label: `${nativeTier} Gốc (${w}×${h} • ${mbps}M)`,
-        title: `Phát luồng .m3u8 nguyên bản từ CDN (${w}×${h}, ${mbps} Mbps)`
+        label: `★ Chất lượng tốt nhất: ${nativeTier} (${w}×${h} • ${mbps}M)`,
+        title: `Đang phát ở chất lượng gốc tốt nhất từ CDN (${w}×${h}, ${mbps} Mbps)`
       });
     }
 
@@ -1395,18 +1433,6 @@ class AppleCinemaApp {
         });
       });
     }
-
-    // Tùy chọn nâng cấp độ nét quang học (Cinema Super-Resolution Upscale) tách bạch rõ ràng với luồng gốc
-    buttons.push({
-      key: "2K-upscale",
-      label: "2K Upscale",
-      title: "Khóa luồng gốc cao nhất + Bộ lọc làm nét 2K QHD"
-    });
-    buttons.push({
-      key: "4K-upscale",
-      label: "4K Upscale",
-      title: "Khóa luồng gốc cao nhất + Bộ lọc tương phản 4K Cinema Clarity"
-    });
 
     return buttons
       .map(
@@ -1434,14 +1460,8 @@ class AppleCinemaApp {
     const h = this.actualVideoRes.height || 1080;
     const mbps = this.actualVideoRes.bitrateMbps || 3.5;
     const nativeTier = this.resolveResolutionTier(w, h);
-    const nativeInfo = `${nativeTier} GỐC (${w}×${h} • ${mbps} Mbps)`;
+    const nativeInfo = `${nativeTier.toUpperCase()} (${w}×${h} • ${mbps} Mbps)`;
 
-    if (q === "4K-upscale" || q === "4K") {
-      return `LUỒNG ${nativeInfo} → 4K UHD UPSCALE`;
-    }
-    if (q === "2K-upscale" || q === "2K") {
-      return `LUỒNG ${nativeInfo} → 2K QHD UPSCALE`;
-    }
     if (q && q.startsWith("level-")) {
       const idx = parseInt(q.replace("level-", ""), 10);
       const lvl = this.detectedHlsLevels.find((l) => l.index === idx);
@@ -1450,12 +1470,10 @@ class AppleCinemaApp {
     if (q === "Auto") {
       return `AUTO ABR • ĐANG PHÁT ${nativeInfo}`;
     }
-    return `LUỒNG ${nativeInfo}`;
+    return `CHẤT LƯỢNG TỐT NHẤT • ${nativeInfo}`;
   }
 
-  getQualityVideoClass(q) {
-    if (q === "4K-upscale" || q === "4K") return "quality-4k";
-    if (q === "2K-upscale" || q === "2K") return "quality-2k";
+  getQualityVideoClass() {
     return "";
   }
 
@@ -1704,7 +1722,9 @@ class AppleCinemaApp {
     this.lastSearchQuery = query;
     this.lastSearchResults = await this.service.searchMovies(query);
     this.currentNav = "search-results";
+    window.scrollTo({ top: 0, behavior: "smooth" });
     this.renderMainView();
+    this.triggerPageTransition();
   }
 
   clearSearch() {
@@ -1722,19 +1742,24 @@ class AppleCinemaApp {
   selectGenreChip(genreLabel) {
     this.activeGenreFilter = genreLabel;
     this.renderMainView();
+    this.triggerPageTransition();
   }
 
   filterByGenreFromModal(genreLabel) {
     this.closeMovieModal();
     this.activeGenreFilter = genreLabel;
+    window.scrollTo({ top: 0, behavior: "smooth" });
     this.renderMainView();
+    this.triggerPageTransition();
   }
 
   filterByPerson(personName) {
     this.closeMovieModal();
     this.customFilterValue = personName;
     this.currentNav = "person-filter";
+    window.scrollTo({ top: 0, behavior: "smooth" });
     this.renderMainView();
+    this.triggerPageTransition();
   }
 
   toggleMyList(slug, event) {
@@ -1814,6 +1839,12 @@ class AppleCinemaApp {
     const heroEl = document.getElementById("heroShowcase");
     if (heroEl) {
       heroEl.outerHTML = this.renderHeroHTML();
+      const newHero = document.getElementById("heroShowcase");
+      if (newHero) {
+        newHero.classList.remove("vision-hero-slide-anim");
+        void newHero.offsetWidth;
+        newHero.classList.add("vision-hero-slide-anim");
+      }
     }
   }
 
