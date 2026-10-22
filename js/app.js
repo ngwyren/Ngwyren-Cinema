@@ -174,13 +174,10 @@ class AppleCinemaApp {
   setNavigation(navKey, customTitle = null) {
     this.currentNav = navKey;
     this.customFilterTitle = customTitle;
-    this.visibleGridLimit = 60;
+    this.visibleGridLimit = 36;
 
-    // Highlight sidebar & mobile liquid glass dock
-    document.querySelectorAll(".nav-item[data-nav]").forEach((el) => {
-      el.classList.toggle("active", el.dataset.nav === navKey);
-    });
-    document.querySelectorAll(".dock-tab-btn[data-nav]").forEach((el) => {
+    // Highlight left floating icon dock, top category pills & mobile bottom dock
+    document.querySelectorAll("[data-nav]").forEach((el) => {
       el.classList.toggle("active", el.dataset.nav === navKey);
     });
 
@@ -197,37 +194,102 @@ class AppleCinemaApp {
     if (!container) return;
 
     if (this.currentNav === "kham-pha" && this.activeGenreFilter === "Tất cả" && this.currentSegment === "all") {
+      const trailerMovies = this.service.movies.slice(0, 5);
+      const continueItems = this.watchHistory
+        .map((h) => ({ movie: this.findMovie(h.slug), epIndex: h.epIndex || 0 }))
+        .filter((x) => x.movie);
+      const fallbackContinue = this.service.movies.slice(5, 10).map((m) => ({ movie: m, epIndex: 0 }));
+      const finalContinue = [...continueItems, ...fallbackContinue].slice(0, 5);
+
+      const youMightLike = this.service.movies.slice(1, 5);
+      const animeFeatured = this.getMoviesByTag("anime").slice(0, 8);
+      const netflixFeatured = this.getMoviesByTag("netflix").slice(0, 8);
+      const koreanFeatured = this.getMoviesByCountry("han-quoc").slice(0, 8);
+
       container.innerHTML = `
-        ${this.renderHeroHTML()}
-        ${this.renderGenreChipsHTML()}
-        ${this.renderCarouselSection("Thế Giới Anime & Hoạt Hình Đỉnh Cao", "Tuyển tập hơn 320+ bộ Anime Nhật Bản 4K / FHD Vietsub & Thuyết Minh", this.getMoviesByTag("anime").slice(0, 24), "anime")}
-        ${this.renderCarouselSection("Phim Độc Quyền Netflix (Vietsub & Lồng Tiếng)", "Tuyển tập Netflix Originals đình đám chất lượng Full HD", this.getMoviesByTag("netflix"), "netflix")}
-        ${this.renderCarouselSection("Phim Đề Cử Hôm Nay", "Tuyển chọn những tác phẩm Vietsub nổi bật nhất", this.getMoviesByTag("de-cu"), "moi-cap-nhat")}
-        ${this.renderTop10RankedSection()}
-        ${this.renderAppleCharts3ColSection()}
-        ${this.renderCarouselSection("Phim Hàn Quốc Thịnh Hành", "K-Drama kịch tính, lãng mạn & hành động đặc sắc", this.getMoviesByCountry("han-quoc"), "han-quoc")}
-        ${this.renderCarouselSection("Hoa Ngữ & Cổ Trang Đặc Sắc", "Kỳ án, tu tiên huyền huyễn & ngôn tình chọn lọc", this.getMoviesByCountry("trung-quoc"), "trung-quoc")}
-        ${this.renderCarouselSection("Điện Ảnh Việt Nam Chọn Lọc", "Phim chiếu rạp Việt Nam doanh thu trăm tỷ", this.getMoviesByCountry("viet-nam"), "viet-nam")}
-        ${this.renderCarouselSection("Bom Tấn Âu Mỹ Đỉnh Cao", "Hành động gián điệp, viễn tưởng & kinh dị Hollywood", this.getMoviesByCountry("au-my"), "au-my")}
-        <section class="movie-section">
-          <div class="section-header">
-            <div class="section-title-wrap">
-              <h2 class="section-title">Toàn Bộ Kho Phim (${this.service.movies.length} phim)</h2>
-              <p class="section-subtitle">Đang hiển thị ${Math.min(this.visibleGridLimit, this.service.movies.length)} / ${this.service.movies.length} bộ phim đã cập nhật</p>
+        <div class="vision-dashboard-grid">
+          <!-- LEFT COLUMN: NEW TRAILERS & CONTINUE WATCHING -->
+          <aside class="vision-side-col">
+            <div class="vision-glass-panel">
+              <div class="vision-panel-header">
+                <span class="vision-panel-title">🔥 Phim & Trailer Mới</span>
+                <span class="vision-panel-sort">Sort by: <strong>Today ⇅</strong></span>
+              </div>
+              <div class="vision-trailer-stack">
+                ${trailerMovies.map((m) => this.renderVisionTrailerCardHTML(m)).join("")}
+              </div>
             </div>
-            <div class="section-controls">
-              <button class="btn-see-all" onclick="app.setNavigation('moi-cap-nhat')">
-                Xem danh sách đầy đủ <i class="fas fa-chevron-right" style="font-size: 0.72rem;"></i>
-              </button>
+
+            <div class="vision-glass-panel">
+              <div class="vision-panel-header">
+                <span class="vision-panel-title">Continue Watching</span>
+                <button class="vision-see-all-pill" onclick="app.setNavigation('lich-su')">Lịch sử</button>
+              </div>
+              <div class="vision-continue-list">
+                ${finalContinue.map((item) => this.renderVisionContinueItemHTML(item.movie, item.epIndex)).join("")}
+              </div>
             </div>
+          </aside>
+
+          <!-- RIGHT MAIN COLUMN: HERO BANNER + YOU MIGHT LIKE + CURATED ROWS -->
+          <div class="vision-main-col">
+            ${this.renderHeroHTML()}
+
+            <!-- You might like (4-column visionOS cards) -->
+            <section class="vision-shelf-section">
+              <div class="vision-shelf-header">
+                <h2 class="vision-shelf-title">You might like</h2>
+                <button class="vision-see-all-pill" onclick="app.setNavigation('moi-cap-nhat')">See all</button>
+              </div>
+              <div class="vision-cards-grid-4">
+                ${youMightLike.map((m) => this.renderVisionFeatureCardHTML(m)).join("")}
+              </div>
+            </section>
+
+            <!-- Quick Genre Chips -->
+            ${this.renderGenreChipsHTML()}
+
+            <!-- Anime Row -->
+            <section class="vision-shelf-section">
+              <div class="vision-shelf-header">
+                <h2 class="vision-shelf-title">Animation & Anime Đỉnh Cao</h2>
+                <button class="vision-see-all-pill" onclick="app.setNavigation('anime')">
+                  See all (${this.getMoviesByTag("anime").length})
+                </button>
+              </div>
+              <div class="vision-cards-grid-4">
+                ${animeFeatured.map((m) => this.renderVisionFeatureCardHTML(m)).join("")}
+              </div>
+            </section>
+
+            <!-- Netflix Row -->
+            <section class="vision-shelf-section">
+              <div class="vision-shelf-header">
+                <h2 class="vision-shelf-title">Phim Độc Quyền Netflix</h2>
+                <button class="vision-see-all-pill" onclick="app.setNavigation('netflix')">
+                  See all (${this.getMoviesByTag("netflix").length})
+                </button>
+              </div>
+              <div class="vision-cards-grid-4">
+                ${netflixFeatured.map((m) => this.renderVisionFeatureCardHTML(m)).join("")}
+              </div>
+            </section>
+
+            <!-- Korean Row -->
+            <section class="vision-shelf-section">
+              <div class="vision-shelf-header">
+                <h2 class="vision-shelf-title">Phim Hàn Quốc Thịnh Hành</h2>
+                <button class="vision-see-all-pill" onclick="app.setNavigation('han-quoc')">
+                  See all (${this.getMoviesByCountry("han-quoc").length})
+                </button>
+              </div>
+              <div class="vision-cards-grid-4">
+                ${koreanFeatured.map((m) => this.renderVisionFeatureCardHTML(m)).join("")}
+              </div>
+            </section>
           </div>
-          <div class="movie-grid">
-            ${this.service.movies.slice(0, this.visibleGridLimit).map((m) => this.renderMovieCardHTML(m)).join("")}
-          </div>
-          ${this.renderLoadMoreButtonsHTML(this.service.movies.length)}
-        </section>
+        </div>
       `;
-      this.updateAmbientBackdrop(this.heroMovies[this.heroIndex] || this.service.movies[0]);
       return;
     }
 
@@ -236,32 +298,29 @@ class AppleCinemaApp {
     const visibleList = list.slice(0, this.visibleGridLimit);
     container.innerHTML = `
       ${this.renderGenreChipsHTML()}
-      <section class="movie-section">
-        <div class="section-header">
-          <div class="section-title-wrap">
-            <h1 class="section-title" style="font-size: 1.75rem;">${title}</h1>
+      <section class="vision-shelf-section">
+        <div class="vision-shelf-header" style="margin-bottom: 18px;">
+          <div>
+            <h1 class="vision-shelf-title" style="font-size: 1.55rem;">${title}</h1>
             <p class="section-subtitle">${subtitle} • Hiển thị ${visibleList.length} / ${list.length} bộ phim</p>
           </div>
-          <div class="section-controls">
-            <button class="btn-glass-secondary" style="padding: 8px 16px; font-size: 0.82rem;" onclick="app.resetAllFilters()">
-              <i class="fas fa-rotate-left"></i> Về Khám Phá
-            </button>
-          </div>
+          <button class="vision-see-all-pill" onclick="app.resetAllFilters()">
+            <i class="fas fa-rotate-left"></i> Về Khám Phá
+          </button>
         </div>
         ${
           visibleList.length > 0
-            ? `<div class="movie-grid">${visibleList.map((m) => this.renderMovieCardHTML(m)).join("")}</div>
+            ? `<div class="vision-catalog-grid">${visibleList.map((m) => this.renderVisionFeatureCardHTML(m)).join("")}</div>
                ${this.renderLoadMoreButtonsHTML(list.length)}`
-            : `<div style="padding: 60px 20px; text-align: center; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-subtle);">
+            : `<div style="padding: 60px 20px; text-align: center; background: rgba(255,255,255,0.04); border-radius: 26px; border: 1px solid rgba(255,255,255,0.12);">
                 <i class="fas fa-film" style="font-size: 2.5rem; color: #ffffff; margin-bottom: 12px;"></i>
                 <h3 style="margin-bottom: 6px;">Chưa có phim trong mục này</h3>
                 <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px;">Hãy thử chọn thể loại khác hoặc khám phá kho phim đề cử.</p>
-                <button class="btn-primary-play" onclick="app.resetAllFilters()">Khám Phá Kho Phim</button>
+                <button class="vision-btn-watch" onclick="app.resetAllFilters()">Khám Phá Kho Phim</button>
               </div>`
         }
       </section>
     `;
-    if (list[0]) this.updateAmbientBackdrop(list[0]);
   }
 
   renderLoadMoreButtonsHTML(totalCount) {
@@ -403,68 +462,115 @@ class AppleCinemaApp {
   }
 
   /* ==========================================================================
-     HTML BUILDERS FOR SECTIONS & CARDS
+     VISION OS SPATIAL HTML BUILDERS (HERO, TRAILER STACK, CONTINUE & CARDS)
      ========================================================================== */
   renderHeroHTML() {
     const movie = this.heroMovies[this.heroIndex] || this.service.movies[0];
     if (!movie) return "";
     const inMyList = this.isInMyList(movie);
+    const prevIdx = (this.heroIndex - 1 + this.heroMovies.length) % this.heroMovies.length;
+    const nextIdx = (this.heroIndex + 1) % this.heroMovies.length;
 
     return `
-      <section class="hero-showcase" id="heroShowcase">
-        <div class="hero-backdrop-layer">
-          <img class="hero-backdrop-img" src="${movie.backdrop || movie.poster}" alt="${movie.title}" />
+      <section class="vision-hero-banner" id="heroShowcase">
+        <img class="vision-hero-bg" src="${movie.backdrop || movie.poster}" alt="${movie.title}" decoding="async" />
+        <div class="vision-hero-overlay"></div>
+
+        <div class="vision-hero-top">
+          <span class="vision-trending-pill">🔥 Now Trending</span>
         </div>
-        <div class="hero-gradient-overlay"></div>
 
-        <div class="hero-content-grid">
-          <div class="hero-info">
-            <div class="hero-kicker">
-              <i class="fas fa-film"></i> NGWYREN CINEMA ĐỀ CỬ #${this.heroIndex + 1}
-            </div>
-            <h1 class="hero-title">${movie.title}</h1>
-            <div class="hero-origin-title">${movie.originTitle} (${movie.year})</div>
-
-            <div class="hero-meta-pills">
-              <span class="meta-pill match">${movie.matchScore}% Phù hợp</span>
-              <span class="meta-pill quality">${movie.quality} • ${movie.language}</span>
-              <span class="meta-pill">${movie.duration}</span>
-              <span class="meta-pill">${movie.country}</span>
-              ${movie.genres.slice(0, 3).map((g) => `<span class="meta-pill">${g}</span>`).join("")}
+        <div class="vision-hero-bottom">
+          <div class="vision-hero-info">
+            <div class="vision-hero-genres">
+              ${movie.genres.slice(0, 3).map((g) => `<span class="vision-genre-tag">${g}</span>`).join("")}
+              <span class="vision-genre-tag">${movie.quality} • ${movie.language}</span>
             </div>
 
-            <p class="hero-desc">${movie.synopsis}</p>
+            <h1 class="vision-hero-title">${movie.title}</h1>
+            <p class="vision-hero-desc">${movie.synopsis}</p>
 
-            <div class="hero-actions">
-              <button class="btn-primary-play" onclick="app.openMovieModal('${movie.slug}', true)">
-                <i class="fas fa-play"></i> Xem Phim Ngay
+            <div class="vision-hero-actions">
+              <button class="vision-btn-watch" onclick="app.openMovieModal('${movie.slug}', true)">
+                <i class="fas fa-play"></i> Watch
               </button>
-              <button class="btn-glass-secondary" onclick="app.openMovieModal('${movie.slug}', false)">
-                <i class="fas fa-clone"></i> Chi Tiết & Nội Dung Liên Quan
+              <button class="vision-btn-outline" onclick="app.toggleMyList('${movie.slug}', event)">
+                <i class="fas ${inMyList ? "fa-check" : "fa-download"}"></i>
+                ${inMyList ? "Đã Lưu" : "Lưu Phim"}
               </button>
-              <button class="btn-glass-secondary" onclick="app.toggleMyList('${movie.slug}', event)">
-                <i class="fas ${inMyList ? "fa-check" : "fa-plus"}"></i>
-                ${inMyList ? "Đã Lưu" : "Danh Sách"}
+              <button class="vision-btn-dots" onclick="app.openMovieModal('${movie.slug}', false)" title="Chi tiết & Tập phim">
+                <i class="fas fa-ellipsis"></i>
               </button>
             </div>
           </div>
 
-          <div class="hero-right-panel">
-            <div class="hero-floating-poster" onclick="app.openMovieModal('${movie.slug}', false)" title="Xem chi tiết ${movie.title}">
-              <img src="${movie.poster}" alt="${movie.title}" />
-            </div>
-            <div class="hero-indicators">
-              ${this.heroMovies
-                .map(
-                  (_, idx) => `
-                <button class="hero-dot ${idx === this.heroIndex ? "active" : ""}" onclick="app.setHeroSlide(${idx})" aria-label="Slide ${idx + 1}"></button>
-              `
-                )
-                .join("")}
-            </div>
+          <div class="vision-hero-arrows">
+            <button class="vision-arrow-btn" onclick="app.setHeroSlide(${prevIdx})" aria-label="Slide trước">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="vision-arrow-btn" onclick="app.setHeroSlide(${nextIdx})" aria-label="Slide tiếp">
+              <i class="fas fa-chevron-right"></i>
+            </button>
           </div>
         </div>
       </section>
+    `;
+  }
+
+  renderVisionTrailerCardHTML(movie) {
+    return `
+      <article class="vision-trailer-card" onclick="app.openMovieModal('${movie.slug}', true)">
+        <img src="${movie.backdrop || movie.poster}" alt="${movie.title}" loading="lazy" decoding="async"
+             onerror="this.src='https://phimmoiz.one/wp-content/uploads/2026/10/matchbox-phim-dien-anh-poster.webp'" />
+        <div class="vision-trailer-overlay">
+          <div class="vision-trailer-title">${movie.title}</div>
+          <button class="vision-trailer-play" onclick="event.stopPropagation(); app.openMovieModal('${movie.slug}', true)" aria-label="Phát">
+            <i class="fas fa-play"></i>
+          </button>
+        </div>
+      </article>
+    `;
+  }
+
+  renderVisionContinueItemHTML(movie, epIndex = 0) {
+    const epName = movie.episodes?.[epIndex]?.name || movie.episodeCurrent || "Tập 1";
+    return `
+      <div class="vision-continue-item" onclick="app.openMovieModal('${movie.slug}', true, ${epIndex})">
+        <img class="vision-continue-thumb" src="${movie.poster}" alt="${movie.title}" loading="lazy" decoding="async" />
+        <div class="vision-continue-text">
+          <div class="vision-continue-title">${movie.title}</div>
+          <div class="vision-continue-sub">${epName} • ${movie.quality}</div>
+        </div>
+        <button class="vision-continue-play" aria-label="Phát tiếp">
+          <i class="fas fa-play"></i>
+        </button>
+      </div>
+    `;
+  }
+
+  renderVisionFeatureCardHTML(movie) {
+    const mainGenre = movie.genres?.[0] || "Cinema";
+    return `
+      <article class="vision-feature-card" onclick="app.openMovieModal('${movie.slug}', false)">
+        <img class="vision-feature-img" src="${movie.poster}" alt="${movie.title}" loading="lazy" decoding="async"
+             onerror="this.src='https://phimmoiz.one/wp-content/uploads/2026/10/matchbox-phim-dien-anh-poster.webp'" />
+        <div class="vision-feature-shade"></div>
+
+        <button class="vision-card-more" onclick="event.stopPropagation(); app.toggleMyList('${movie.slug}', event)" title="Lưu vào danh sách">
+          <i class="fas ${this.isInMyList(movie) ? "fa-check" : "fa-ellipsis"}"></i>
+        </button>
+
+        <div class="vision-feature-bottom">
+          <div class="vision-feature-meta">
+            <span class="vision-card-genre">${mainGenre}</span>
+            <h3 class="vision-card-title" title="${movie.title}">${movie.title}</h3>
+            <p class="vision-card-desc">${movie.originTitle} (${movie.year}) • ${movie.episodeCurrent || movie.quality}</p>
+          </div>
+          <button class="vision-card-play-white" onclick="event.stopPropagation(); app.openMovieModal('${movie.slug}', true)" title="Xem ngay">
+            <i class="fas fa-play"></i>
+          </button>
+        </div>
+      </article>
     `;
   }
 

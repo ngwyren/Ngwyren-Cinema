@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Ngwyren Cinema</title>
-  <meta name="description" content="Ngwyren Cinema" />
+  <meta name="description" content="Ngwyren Cinema — Spatial Glass Streaming" />
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' fill='none'%3E%3Crect width='64' height='64' rx='16' fill='%23000000'/%3E%3Crect x='2' y='2' width='60' height='60' rx='14' stroke='%23FFFFFF' stroke-opacity='0.4' stroke-width='2.5'/%3E%3Cpath d='M25 19.5C25 18.3 26.34 17.58 27.34 18.25L46.09 30.75C46.98 31.34 46.98 32.66 46.09 33.25L27.34 45.75C26.34 46.42 25 45.7 25 44.5V19.5Z' fill='%23FFFFFF'/%3E%3C/svg%3E" />
   <link rel="apple-touch-icon" href="favicon.svg" />
@@ -15,7 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-  <!-- HLS.js for playing .m3u8 streams from Phimmoiz.one -->
+  <!-- HLS.js for playing .m3u8 streams -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
   <!-- Main Stylesheet -->
@@ -23,16 +23,8 @@
 </head>
 <body>
 
-  <!-- ========================================================================
-       DYNAMIC AMBIENT ARTWORK GLOW (APPLE MUSIC MOTION GRAPHIC BACKDROP)
-       ======================================================================== -->
-  <div class="ambient-canvas" aria-hidden="true">
-    <div class="ambient-artwork-blur" id="ambientArtworkBlur"></div>
-    <div class="ambient-orb ambient-orb-1"></div>
-    <div class="ambient-orb ambient-orb-2"></div>
-    <div class="ambient-orb ambient-orb-3"></div>
-    <div class="ambient-vignette"></div>
-  </div>
+  <!-- Spatial Environment Backdrop (Static Zero-Lag Soft Room Lighting) -->
+  <div class="spatial-room-bg" aria-hidden="true"></div>
 
   <!-- Toast Notifications -->
   <div class="apple-toast-container" id="toastContainer"></div>
@@ -51,210 +43,98 @@
       <filter id="ngwyren-2k-upscale" color-interpolation-filters="sRGB">
         <feConvolveMatrix order="3" kernelMatrix="0 -0.25 0 -0.25 2.0 -0.25 0 -0.25 0" preserveAlpha="true" />
       </filter>
-      <filter id="apple-liquid-refract" x="-10%" y="-10%" width="120%" height="120%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.014 0.018" numOctaves="2" seed="7" result="noise" />
-        <feGaussianBlur in="noise" stdDeviation="2.5" result="smoothNoise" />
-        <feDisplacementMap in="SourceGraphic" in2="smoothNoise" scale="6" xChannelSelector="R" yChannelSelector="G" />
-      </filter>
     </defs>
   </svg>
 
   <!-- ========================================================================
-       APP SHELL (APPLE MUSIC SIDEBAR + MAIN VIEWPORT)
+       VISION PRO SPATIAL STAGE (LEFT FLOATING ICON PILL + MAIN GLASS WINDOW)
        ======================================================================== -->
-  <div class="app-shell">
+  <div class="vision-stage">
 
-    <!-- LEFT SIDEBAR (MINIMAL MONOCHROME GLASS SIDEBAR) -->
-    <aside class="apple-sidebar" id="appleSidebar">
-      <div class="sidebar-header">
-        <a class="brand-logo" onclick="app.resetAllFilters()">
-          <div class="brand-icon">
-            <i class="fas fa-play" style="color: #fff; font-size: 0.9rem; margin-left: 2px;"></i>
-          </div>
-          <div class="brand-text">
-            <div class="brand-title">
-              Ngwyren Cinema
-            </div>
-          </div>
-        </a>
-      </div>
-
-      <!-- Sidebar Quick Search -->
-      <div class="sidebar-search-trigger">
-        <div class="sidebar-search-input-wrap">
-          <i class="fas fa-search" style="color: #fff; font-size: 0.82rem;"></i>
-          <input type="text" id="sidebarSearchInput" placeholder="Tìm kiếm..." autocomplete="off" />
-          <span class="shortcut-kbd">⌘K</span>
-        </div>
-      </div>
-
-      <!-- Khám Phá Chính -->
-      <div class="nav-group">
-        <div class="nav-group-label">Menu</div>
-        <ul class="nav-list">
-          <li class="nav-item active" data-nav="kham-pha" onclick="app.setNavigation('kham-pha')">
-            <div class="nav-item-left">
-              <i class="fas fa-compass"></i>
-              <span>Khám Phá</span>
-            </div>
-          </li>
-          <li class="nav-item" data-nav="netflix" onclick="app.setNavigation('netflix')">
-            <div class="nav-item-left">
-              <i class="fas fa-circle-play"></i>
-              <span>Phim Netflix</span>
-            </div>
-            <span class="nav-count">FHD</span>
-          </li>
-          <li class="nav-item" data-nav="vietsub" onclick="app.setNavigation('vietsub')">
-            <div class="nav-item-left">
-              <i class="fas fa-closed-captioning"></i>
-              <span>Phim Vietsub</span>
-            </div>
-          </li>
-          <li class="nav-item" data-nav="moi-cap-nhat" onclick="app.setNavigation('moi-cap-nhat')">
-            <div class="nav-item-left">
-              <i class="fas fa-bolt"></i>
-              <span>Tất Cả Phim Mới</span>
-            </div>
-            <span class="nav-count" id="totalMoviesCountBadge">1426</span>
-          </li>
-          <li class="nav-item" data-nav="phim-bo" onclick="app.setNavigation('phim-bo')">
-            <div class="nav-item-left">
-              <i class="fas fa-tv"></i>
-              <span>Phim Bộ</span>
-            </div>
-          </li>
-          <li class="nav-item" data-nav="phim-le" onclick="app.setNavigation('phim-le')">
-            <div class="nav-item-left">
-              <i class="fas fa-film"></i>
-              <span>Phim Lẻ</span>
-            </div>
-          </li>
-          <li class="nav-item" data-nav="anime" onclick="app.setNavigation('anime')">
-            <div class="nav-item-left">
-              <i class="fas fa-wand-magic-sparkles"></i>
-              <span>Anime</span>
-            </div>
-            <span class="nav-count" id="animeMoviesCountBadge">HOT</span>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Quốc Gia Nổi Bật -->
-      <div class="nav-group">
-        <div class="nav-group-label">Quốc Gia</div>
-        <ul class="nav-list">
-          <li class="nav-item" data-nav="viet-nam" onclick="app.setNavigation('viet-nam')">
-            <div class="nav-item-left">
-              <i class="fas fa-star"></i>
-              <span>Việt Nam</span>
-            </div>
-          </li>
-          <li class="nav-item" data-nav="han-quoc" onclick="app.setNavigation('han-quoc')">
-            <div class="nav-item-left">
-              <i class="fas fa-heart"></i>
-              <span>Hàn Quốc</span>
-            </div>
-          </li>
-          <li class="nav-item" data-nav="trung-quoc" onclick="app.setNavigation('trung-quoc')">
-            <div class="nav-item-left">
-              <i class="fas fa-clapperboard"></i>
-              <span>Trung Quốc</span>
-            </div>
-          </li>
-          <li class="nav-item" data-nav="au-my" onclick="app.setNavigation('au-my')">
-            <div class="nav-item-left">
-              <i class="fas fa-globe"></i>
-              <span>Âu Mỹ</span>
-            </div>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Thư Viện Cá Nhân -->
-      <div class="nav-group">
-        <div class="nav-group-label">Thư Viện</div>
-        <ul class="nav-list">
-          <li class="nav-item" data-nav="yeu-thich" onclick="app.setNavigation('yeu-thich')">
-            <div class="nav-item-left">
-              <i class="fas fa-bookmark"></i>
-              <span>Đã Lưu</span>
-            </div>
-            <span class="nav-count" id="myListCountBadge">3</span>
-          </li>
-          <li class="nav-item" data-nav="lich-su" onclick="app.setNavigation('lich-su')">
-            <div class="nav-item-left">
-              <i class="fas fa-clock-rotate-left"></i>
-              <span>Lịch Sử</span>
-            </div>
-            <span class="nav-count" id="historyCountBadge">2</span>
-          </li>
-        </ul>
-      </div>
+    <!-- FLOATING LEFT VERTICAL ICON PILL DOCK (LIKE VISION OS) -->
+    <aside class="vision-left-dock" id="appleSidebar" aria-label="Thanh điều hướng nhanh">
+      <button class="vision-dock-icon active" data-nav="kham-pha" onclick="app.resetAllFilters()" title="Trang chủ Khám Phá">
+        <i class="fas fa-house"></i>
+      </button>
+      <button class="vision-dock-icon" data-nav="yeu-thich" onclick="app.setNavigation('yeu-thich')" title="Danh sách Đã Lưu">
+        <i class="fas fa-heart"></i>
+      </button>
+      <button class="vision-dock-icon" data-nav="lich-su" onclick="app.setNavigation('lich-su')" title="Lịch Sử Xem Tiếp">
+        <i class="fas fa-download"></i>
+      </button>
+      <button class="vision-dock-icon" data-nav="anime" onclick="app.setNavigation('anime')" title="Kho Phim Anime">
+        <i class="fas fa-wand-magic-sparkles"></i>
+      </button>
+      <button class="vision-dock-icon" data-nav="moi-cap-nhat" onclick="app.setNavigation('moi-cap-nhat')" title="Toàn Bộ Kho Phim">
+        <i class="fas fa-gear"></i>
+      </button>
     </aside>
 
-    <!-- Mobile & Tablet Sidebar Backdrop -->
-    <div class="sidebar-mobile-backdrop" id="sidebarMobileBackdrop" onclick="app.toggleMobileSidebar(false)"></div>
+    <!-- MAIN SPATIAL GLASS WINDOW -->
+    <div class="vision-window">
 
-    <!-- MAIN CONTENT VIEWPORT -->
-    <div class="main-viewport">
-
-      <!-- TOP FROSTED GLASS HEADER -->
-      <header class="apple-topbar liquid-glass-surface">
-        <div class="topbar-left">
-          <button class="mobile-menu-btn" onclick="app.toggleMobileSidebar()" aria-label="Menu">
-            <i class="fas fa-bars"></i>
-          </button>
-
-          <div class="segmented-control" role="tablist" aria-label="Phân loại phim">
-            <button class="segment-btn active" data-segment="all">Tất Cả</button>
-            <button class="segment-btn" data-segment="series">Phim Bộ</button>
-            <button class="segment-btn" data-segment="single">Phim Lẻ</button>
-          </div>
-        </div>
-
-        <!-- Instant Spotlight Search Bar -->
+      <!-- TOP SPATIAL NAVIGATION BAR -->
+      <header class="vision-topbar">
+        <!-- Left Search Pill -->
         <div class="topbar-search-container">
-          <div class="topbar-search-box">
-            <i class="fas fa-magnifying-glass" style="color: #ffffff;"></i>
+          <div class="vision-search-pill">
+            <i class="fas fa-magnifying-glass"></i>
             <input
               type="text"
               id="topSearchInput"
-              placeholder="Tìm tên phim, tên tiếng Anh, diễn viên, thể loại..."
+              placeholder="Tìm kiếm phim, anime, diễn viên..."
               autocomplete="off"
             />
             <button class="search-clear-btn" id="searchClearBtn" onclick="app.clearSearch()" title="Xóa tìm kiếm">
               <i class="fas fa-times"></i>
             </button>
           </div>
-
           <!-- Instant Search Results Glass Dropdown -->
           <div class="search-dropdown" id="searchDropdown"></div>
         </div>
 
-        <div class="topbar-right">
-          <button class="icon-btn" onclick="app.setNavigation('yeu-thich')" title="Danh sách phim đã lưu">
-            <i class="fas fa-bookmark"></i>
+        <!-- Center Category Pills (Movies | TV Series | Animation | Mystery | More) -->
+        <nav class="vision-nav-pills" aria-label="Danh mục chính">
+          <button class="vision-nav-pill active" data-nav="kham-pha" onclick="app.resetAllFilters()">Khám Phá</button>
+          <button class="vision-nav-pill" data-nav="phim-le" onclick="app.setNavigation('phim-le')">Movies</button>
+          <button class="vision-nav-pill" data-nav="phim-bo" onclick="app.setNavigation('phim-bo')">TV Series</button>
+          <button class="vision-nav-pill" data-nav="anime" onclick="app.setNavigation('anime')">Animation</button>
+          <button class="vision-nav-pill" data-nav="netflix" onclick="app.setNavigation('netflix')">Netflix</button>
+          <button class="vision-nav-pill" data-nav="vietsub" onclick="app.setNavigation('vietsub')">Vietsub</button>
+          <button class="vision-nav-pill" data-nav="moi-cap-nhat" onclick="app.setNavigation('moi-cap-nhat')">
+            More <span class="vision-count-tag" id="totalMoviesCountBadge">1739</span>
           </button>
-          <button class="icon-btn" onclick="app.syncLivePhimmoi(true)" title="Cập nhật tất cả phim">
-            <i class="fas fa-rotate"></i>
+        </nav>
+
+        <!-- Right Notification & User Profile Pill -->
+        <div class="vision-topbar-right">
+          <button class="vision-circle-btn" onclick="app.setNavigation('yeu-thich')" title="Phim đã lưu">
+            <i class="fas fa-bell"></i>
+            <span class="vision-notif-dot"></span>
           </button>
-          <div class="user-pill" onclick="app.setNavigation('lich-su')" title="Xem lịch sử phát">
-            <div class="user-avatar"><i class="fas fa-user" style="font-size: 0.72rem; color: #fff;"></i></div>
-            <span class="user-name">Ngwyren</span>
+          <div class="vision-profile-pill" onclick="app.setNavigation('lich-su')" title="Lịch sử xem phim">
+            <div class="vision-avatar">
+              <i class="fas fa-film"></i>
+            </div>
+            <div class="vision-profile-text">
+              <span class="vision-profile-name">Ngwyren Cinema</span>
+              <span class="vision-profile-handle">@ngwyren</span>
+            </div>
+            <i class="fas fa-chevron-down vision-profile-arrow"></i>
           </div>
         </div>
       </header>
 
-      <!-- DYNAMIC MAIN CONTENT -->
-      <main class="content-wrapper" id="mainContentWrapper">
+      <!-- DYNAMIC MAIN CONTENT (2-COLUMN VISION OS DASHBOARD OR CATEGORY GRID) -->
+      <main class="vision-content-area" id="mainContentWrapper">
         <!-- Rendered instantly by js/app.js -->
       </main>
+
     </div>
   </div>
 
   <!-- ========================================================================
-       APPLE MUSIC FLOATING "NOW PLAYING" BOTTOM MINI-PLAYER BAR
+       FLOATING MINI-PLAYER BAR (COMPACT VISION OS PILL)
        ======================================================================== -->
   <footer class="apple-player-bar" id="applePlayerBar">
     <div class="player-now-info" onclick="app.openMovieModal(app.playingMovie?.slug || 'thanh-guom-diet-quy-vo-han-thanh-465645', false)">
@@ -310,33 +190,33 @@
   </footer>
 
   <!-- ========================================================================
-       APPLE TV / iOS LIQUID GLASS FLOATING BOTTOM DOCK (MOBILE & TABLET)
+       MOBILE & TABLET FLOATING BOTTOM DOCK
        ======================================================================== -->
   <nav class="liquid-mobile-dock" id="liquidMobileDock" aria-label="Điều hướng nhanh">
-    <button class="dock-tab-btn active" data-nav="kham-pha" onclick="app.setNavigation('kham-pha')">
-      <i class="fas fa-compass"></i>
+    <button class="dock-tab-btn active" data-nav="kham-pha" onclick="app.resetAllFilters()">
+      <i class="fas fa-house"></i>
       <span>Khám Phá</span>
     </button>
-    <button class="dock-tab-btn" data-nav="netflix" onclick="app.setNavigation('netflix')">
-      <i class="fas fa-circle-play"></i>
-      <span>Netflix</span>
+    <button class="dock-tab-btn" data-nav="phim-le" onclick="app.setNavigation('phim-le')">
+      <i class="fas fa-film"></i>
+      <span>Movies</span>
     </button>
     <button class="dock-tab-btn" data-nav="anime" onclick="app.setNavigation('anime')">
       <i class="fas fa-wand-magic-sparkles"></i>
       <span>Anime</span>
     </button>
-    <button class="dock-tab-btn" data-nav="vietsub" onclick="app.setNavigation('vietsub')">
-      <i class="fas fa-closed-captioning"></i>
-      <span>Vietsub</span>
+    <button class="dock-tab-btn" data-nav="netflix" onclick="app.setNavigation('netflix')">
+      <i class="fas fa-circle-play"></i>
+      <span>Netflix</span>
     </button>
     <button class="dock-tab-btn" data-nav="yeu-thich" onclick="app.setNavigation('yeu-thich')">
-      <i class="fas fa-bookmark"></i>
+      <i class="fas fa-heart"></i>
       <span>Đã Lưu</span>
     </button>
   </nav>
 
   <!-- ========================================================================
-       NETFLIX-STYLE EXPANDABLE MOVIE DETAIL & HLS PLAYER MODAL
+       MOVIE DETAIL & HLS PLAYER MODAL
        ======================================================================== -->
   <div class="detail-modal-backdrop" id="movieDetailModal" onclick="if(event.target === this) app.closeMovieModal()">
     <div class="detail-modal-sheet" id="movieDetailSheet">
