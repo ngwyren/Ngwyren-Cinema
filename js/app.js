@@ -918,7 +918,7 @@ class AppleCinemaApp {
               ? `<section class="vision-settings-banner">
                    <div class="vision-settings-banner-left">
                      <span class="vision-trending-pill">
-                       <i class="fas ${this.currentNav === "yeu-thich" ? "fa-heart" : "fa-clock-rotate-left"}"></i>
+                       <i class="fas ${this.currentNav === "yeu-thich" ? "fa-star" : "fa-clock-rotate-left"}"></i>
                        Thư Viện Cá Nhân
                      </span>
                      <h1 class="vision-hero-title" style="margin-top: 8px;">${title} (${list.length} phim)</h1>
