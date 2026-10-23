@@ -881,7 +881,7 @@ class AppleCinemaApp {
           "phim-le": "Đề Cử Phim Lẻ",
           "phim-bo": "Đề Cử Phim Bộ",
           "netflix": "Đề Cử Netflix",
-          "vietsub": "Đề Cử Vietsub"
+          "vietsub": "Đề Cử"
         };
         const shortTitle = shortMap[this.currentNav] || "Đề Cử";
         return this.renderLeftSideColumnHTML(distinctListForLeft.length >= 2 ? distinctListForLeft : list, shortTitle);
