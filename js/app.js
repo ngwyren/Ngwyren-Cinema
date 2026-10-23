@@ -2667,8 +2667,24 @@ class AppleCinemaApp {
       try {
         window.google.accounts.id.initialize({
           client_id: this.googleClientId,
-          callback: (response) => this.handleGoogleCredentialResponse(response)
+          callback: (response) => this.handleGoogleCredentialResponse(response),
+          auto_select: false,
+          cancel_on_tap_outside: true
         });
+
+        const btnContainer = document.getElementById("googleButtonContainer");
+        if (btnContainer) {
+          btnContainer.innerHTML = "";
+          window.google.accounts.id.renderButton(btnContainer, {
+            theme: "filled_blue",
+            size: "large",
+            text: "continue_with",
+            shape: "pill",
+            width: 320
+          });
+          const customBtn = document.getElementById("btnCustomGoogleLogin");
+          if (customBtn) customBtn.style.display = "none";
+        }
       } catch (e) {
         console.warn("GIS Init error:", e);
       }
@@ -2701,7 +2717,7 @@ class AppleCinemaApp {
       this.updateProfileUI();
       this.syncToCloud(true);
       this.closeAuthModal();
-      this.showToast(`🎉 Đăng nhập Google thật thành công! Chào mừng ${payload.name}`);
+      this.showToast(`🎉 Đăng nhập Google thành công! Chào mừng ${payload.name}`);
     } catch (e) {
       console.error("JWT Decode error:", e);
       this.showToast("⚠️ Không thể giải mã tài khoản Google.");
@@ -2712,13 +2728,22 @@ class AppleCinemaApp {
     const nameEl = document.getElementById("topProfileName");
     const handleEl = document.getElementById("topProfileHandle");
     const avatarEl = document.getElementById("topProfileAvatar");
-    if (nameEl) nameEl.textContent = this.userProfile.name;
-    if (handleEl) handleEl.textContent = this.userProfile.handle;
+
+    const isGoogle = this.userProfile.type === "google";
+
+    if (nameEl) {
+      nameEl.textContent = isGoogle ? this.userProfile.name : "Đăng Nhập";
+    }
+    if (handleEl) {
+      handleEl.textContent = isGoogle ? this.userProfile.handle : "Bằng Google";
+    }
     if (avatarEl) {
-      if (this.userProfile.avatarType === "image" && this.userProfile.avatarUrl) {
+      if (isGoogle && this.userProfile.avatarType === "image" && this.userProfile.avatarUrl) {
         avatarEl.innerHTML = `<img src="${this.userProfile.avatarUrl}" alt="Avatar" class="profile-avatar-img" />`;
+      } else if (isGoogle) {
+        avatarEl.innerHTML = `<div class="profile-avatar-letter">${(this.userProfile.name || "G").charAt(0).toUpperCase()}</div>`;
       } else {
-        avatarEl.innerHTML = `<span class="profile-avatar-emoji">${this.userProfile.avatar || "🎬"}</span>`;
+        avatarEl.innerHTML = `<i class="fab fa-google" style="color: #4285f4; font-size: 1.05rem;"></i>`;
       }
     }
   }
@@ -2728,273 +2753,168 @@ class AppleCinemaApp {
     const sheet = document.getElementById("authSheet");
     if (!modal || !sheet) return;
 
-    this.selectedGuestAvatar = this.userProfile.avatar || "🎬";
-    this.customUploadedAvatar = this.userProfile.avatarType === "image" ? this.userProfile.avatarUrl : null;
-    const avatars = ["🎬", "🍿", "🐱", "🦊", "🚀", "🕶️", "👑", "🎧"];
-    const displayCloudCode = this.cloudObjId || this.cloudSyncKey;
+    const isGoogle = this.userProfile.type === "google";
 
-    sheet.innerHTML = `
-      <div class="auth-header">
-        <h3><i class="fas fa-user-circle"></i> Hồ Sơ & Đăng Nhập</h3>
-        <button class="modal-ctrl-btn icon-only" onclick="app.closeAuthModal()" aria-label="Đóng">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
+    if (isGoogle) {
+      // Đã đăng nhập Google -> Thẻ hồ sơ tinh gọn, nút Đăng xuất
+      sheet.innerHTML = `
+        <div class="auth-header simple">
+          <h3><i class="fab fa-google" style="color: #4285f4;"></i> Tài Khoản Google</h3>
+          <button class="modal-ctrl-btn icon-only" onclick="app.closeAuthModal()" aria-label="Đóng">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
 
-      <!-- Thẻ Hồ sơ hiện tại với nút Camera đổi ảnh -->
-      <div class="auth-profile-badge">
-        <div class="auth-avatar-large-container">
-          <div class="auth-avatar-large" id="authAvatarPreview">
+        <div class="auth-logged-card">
+          <div class="auth-avatar-logged">
             ${
               this.userProfile.avatarType === "image" && this.userProfile.avatarUrl
                 ? `<img src="${this.userProfile.avatarUrl}" alt="Avatar" />`
-                : `<span>${this.userProfile.avatar || "🎬"}</span>`
+                : `<div class="avatar-letter">${(this.userProfile.name || "G").charAt(0).toUpperCase()}</div>`
             }
           </div>
-          <label for="avatarUploadInput" class="btn-avatar-upload-trigger" title="Tải ảnh lên (Mọi định dạng, tối đa 6MB)">
-            <i class="fas fa-camera"></i>
-          </label>
-          <input type="file" id="avatarUploadInput" accept="image/*" style="display:none;" onchange="app.handleAvatarUpload(event)" />
-        </div>
-        <div class="auth-info">
-          <div class="auth-info-name">${this.userProfile.name}</div>
-          <div class="auth-info-handle">${this.userProfile.handle}</div>
-        </div>
-        <span class="auth-tag">${this.userProfile.type === "google" ? "Google" : "Khách (Guest)"}</span>
-      </div>
-
-      <!-- Thẻ Quản Lý Đồng Bộ Đám Mây (Cloud Database) Xuyên Thiết Bị -->
-      <div class="cloud-sync-card">
-        <div class="cloud-sync-header">
-          <div class="cloud-sync-title">
-            <i class="fas fa-cloud-arrow-up"></i> Lưu Trữ Đám Mây (Cloud Database)
-          </div>
-          <div class="cloud-status-badge" id="cloudSyncStatusBadge">
-            <i class="fas fa-check-circle"></i> Đã kết nối
+          <div class="auth-logged-details">
+            <div class="auth-logged-name">${this.userProfile.name}</div>
+            <div class="auth-logged-email">${this.userProfile.handle}</div>
+            <span class="auth-verified-badge"><i class="fas fa-check-circle"></i> Đang hoạt động</span>
           </div>
         </div>
-        <div class="cloud-sync-code-box">
-          <span class="cloud-code-text" id="cloudSyncCodeDisplay" title="Mã đồng bộ thiết bị của bạn">${displayCloudCode}</span>
-          <button class="cloud-copy-btn" onclick="app.copyCloudKey()" title="Sao chép mã đồng bộ">
-            <i class="fas fa-copy"></i> Copy Mã
-          </button>
-        </div>
-        <div class="cloud-btn-group">
-          <button class="cloud-action-btn primary" onclick="app.syncToCloud(true)" title="Sao lưu ngay lập tức lên đám mây">
-            <i class="fas fa-cloud"></i> Sao Lưu Lên Cloud
-          </button>
-          <button class="cloud-action-btn" onclick="app.promptImportCloudData()" title="Nhập mã từ Điện thoại, iPad, hoặc máy tính khác">
-            <i class="fas fa-mobile-screen"></i> Đồng Bộ Thiết Bị Khác
-          </button>
-        </div>
-      </div>
 
-      <!-- Đăng nhập bằng Google -->
-      <button class="btn-google-login" onclick="app.loginWithGoogle()">
-        <svg width="20" height="20" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-        </svg>
-        ${this.userProfile.type === "google" ? "Đã liên kết Google • Đổi tài khoản" : "Đăng nhập nhanh bằng Google"}
-      </button>
-
-      <!-- Form nhập Gmail thật trực tiếp -->
-      <div class="google-login-form-box" id="googleLoginFormBox">
-        <h4><i class="fab fa-google"></i> Đăng Nhập Bằng Gmail Thật 100%</h4>
-        <p>Nhập địa chỉ Gmail của bạn để gắn tên thật và tự động lưu danh sách phim lên máy chủ Đám Mây:</p>
-        <input type="email" id="realGoogleEmailInput" class="real-google-input" placeholder="Nhập địa chỉ Gmail của bạn (vd: yourname@gmail.com)" value="${this.userProfile.type === "google" && this.userProfile.handle.includes("@") ? this.userProfile.handle : ""}" />
-        <input type="text" id="realGoogleNameInput" class="real-google-input" placeholder="Họ và tên hiển thị (vd: Nguyễn Văn A)" value="${this.userProfile.type === "google" ? this.userProfile.name : ""}" />
-        <button class="btn-confirm-real-google" onclick="app.submitRealGoogleLogin()">
-          <i class="fas fa-check-circle"></i> Xác Nhận Đăng Nhập & Đồng Bộ Đám Mây
+        <button class="btn-google-signout" onclick="app.logoutProfile()">
+          <i class="fas fa-arrow-right-from-bracket"></i> Đăng Xuất Tài Khoản
         </button>
-      </div>
-
-      <div class="auth-divider">HOẶC DÙNG DẠNG KHÁCH (GUEST)</div>
-
-      <!-- Tùy chỉnh Hồ sơ Khách -->
-      <div class="guest-form-group">
-        <label for="guestNameInput"><i class="fas fa-id-card"></i> Tên người xem (Guest mặc định: "Khách")</label>
-        <input type="text" id="guestNameInput" class="guest-name-input" value="${this.userProfile.type === "guest" ? this.userProfile.name : "Khách"}" placeholder="Nhập tên người xem..." maxlength="30" />
-      </div>
-
-      <div class="guest-form-group">
-        <label><i class="fas fa-icons"></i> Chọn Avatar đại diện hoặc Tải ảnh lên</label>
-        <div class="avatar-grid">
-          ${avatars.map((av) => `
-            <button class="avatar-option-btn ${!this.customUploadedAvatar && av === this.selectedGuestAvatar ? "selected" : ""}" onclick="app.selectGuestAvatar('${av}', this)">
-              ${av}
-            </button>
-          `).join("")}
-        </div>
-
-        <!-- Nút Tải ảnh lên mọi định dạng tối đa 6MB -->
-        <label for="avatarUploadInput" class="btn-custom-upload-bar">
-          <i class="fas fa-cloud-arrow-up"></i> Tải ảnh từ thiết bị (Mọi định dạng, tối đa 6MB)
-        </label>
-      </div>
-
-      <button class="btn-save-guest" onclick="app.saveGuestProfile()">
-        <i class="fas fa-check-circle"></i> Lưu Hồ Sơ Khách
-      </button>
-
-      <!-- Mục cấu hình Google Cloud / Client ID thật -->
-      <div class="google-config-box">
-        <div class="google-config-toggle" onclick="app.toggleGoogleConfig()">
-          <span><i class="fab fa-google"></i> Cấu hình Google Cloud thật (OAuth 2.0)</span>
-          <i class="fas fa-chevron-down" id="googleConfigArrow"></i>
-        </div>
-        <div class="google-config-content" id="googleConfigContent">
-          <p style="color: rgba(255,255,255,0.7); margin: 0 0 8px; line-height: 1.4;">
-            Kích hoạt popup đăng nhập Google chính chủ của Google bằng <strong>Google Client ID</strong>:
-          </p>
-          <a href="https://console.cloud.google.com/apis/credentials/oauthclient" target="_blank" rel="noopener noreferrer" class="btn-open-console">
-            <i class="fas fa-external-link-alt"></i> 1-Click Mở Google Cloud Console
-          </a>
-          <button class="btn-open-console" onclick="navigator.clipboard.writeText('https://ngwyren.github.io'); app.showToast('📋 Đã copy https://ngwyren.github.io')">
-            <i class="fas fa-copy"></i> Copy Link Web Đặt Vào Origins
+      `;
+    } else {
+      // Chưa đăng nhập -> Chỉ hiện Đăng nhập Google chuẩn như web lớn
+      sheet.innerHTML = `
+        <div class="auth-header simple">
+          <h3><i class="fab fa-google" style="color: #4285f4;"></i> Đăng Nhập</h3>
+          <button class="modal-ctrl-btn icon-only" onclick="app.closeAuthModal()" aria-label="Đóng">
+            <i class="fas fa-times"></i>
           </button>
-          <input type="text" id="googleClientIdInput" class="google-client-input" value="${this.googleClientId || ""}" placeholder="Dán Client ID (dạng: xxx.apps.googleusercontent.com)" />
-          <button class="btn-save-client-id" onclick="app.saveGoogleClientId()">Lưu Client ID</button>
-          <p style="color: rgba(255,255,255,0.5); font-size: 0.7rem; margin: 8px 0 0;">
-            💡 Đã có sẵn file <code>Tu-Dong-Ket-Noi-Google-OAuth.bat</code> trong thư mục dự án trên máy bạn để tự động hóa 100%!
-          </p>
         </div>
-      </div>
 
-      ${
-        this.userProfile.type === "google"
-          ? `<button class="btn-auth-switch" onclick="app.logoutProfile()"><i class="fas fa-arrow-right-from-bracket"></i> Đăng xuất về Khách Mặc Định</button>`
-          : ""
+        <div class="auth-google-hero">
+          <div class="auth-brand-badge">
+            <span class="auth-brand-icon">🎬</span>
+            <span class="auth-brand-name">Ngwyren Cinema</span>
+          </div>
+          <p class="auth-subtitle">Đăng nhập tài khoản Google để lưu phim yêu thích và xem tiếp trên mọi thiết bị.</p>
+        </div>
+
+        <!-- Vùng chứa nút Google chính thức nếu đã có Client ID -->
+        <div id="googleButtonContainer" class="google-btn-wrapper"></div>
+
+        <!-- Nút Đăng nhập Google trực quan -->
+        <button class="btn-google-login-main" id="btnCustomGoogleLogin" onclick="app.loginWithGoogle()">
+          <svg width="22" height="22" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          <span>Tiếp tục với Google</span>
+        </button>
+
+        ${
+          !this.googleClientId
+            ? `
+          <div class="google-project-connect-card">
+            <div class="google-project-header">
+              <i class="fas fa-key"></i> Kết nối Project Google Cloud: <strong>Ngwyren Cinema</strong>
+            </div>
+            <div class="google-project-input-row">
+              <input type="text" id="googleClientIdQuickInput" placeholder="Dán Client ID (xxx.apps.googleusercontent.com)" class="google-quick-input" />
+              <button class="btn-quick-save-client" onclick="app.saveGoogleClientIdFromModal()">Kết Nối</button>
+            </div>
+            <a href="https://console.cloud.google.com/apis/credentials/oauthclient" target="_blank" rel="noopener noreferrer" class="link-open-gcloud">
+              <i class="fas fa-external-link-alt"></i> Mở trang tạo Client ID của project Ngwyren Cinema
+            </a>
+          </div>
+
+          <div class="google-quick-email-login">
+            <span class="or-separator">hoặc</span>
+            <button class="btn-text-email-toggle" onclick="app.toggleQuickGmailInput()">
+              <i class="fas fa-envelope"></i> Đăng nhập nhanh bằng địa chỉ Gmail
+            </button>
+            <div class="quick-gmail-box" id="quickGmailBox" style="display:none;">
+              <input type="email" id="quickGmailInput" placeholder="Nhập Gmail của bạn..." class="google-quick-input" />
+              <button class="btn-quick-save-client" onclick="app.submitQuickGmail()">Vào Web</button>
+            </div>
+          </div>
+        `
+            : ""
+        }
+
+        <div class="auth-guest-notice">
+          <span class="guest-dot"></span> Đang xem với tư cách Khách
+        </div>
+      `;
+
+      if (this.googleClientId) {
+        setTimeout(() => this.initGoogleIdentity(), 50);
       }
-    `;
+    }
 
     modal.classList.add("open");
     document.body.classList.add("modal-open");
   }
 
-  handleAvatarUpload(event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Giới hạn tối đa 6MB
-    const maxBytes = 6 * 1024 * 1024;
-    if (file.size > maxBytes) {
-      this.showToast("⚠️ Kích thước ảnh vượt quá 6MB! Vui lòng chọn ảnh nhỏ hơn.");
-      event.target.value = "";
+  saveGoogleClientIdFromModal() {
+    const input = document.getElementById("googleClientIdQuickInput");
+    const val = input ? input.value.trim() : "";
+    if (!val) {
+      this.showToast("⚠️ Vui lòng dán mã Google Client ID");
       return;
     }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const rawDataUrl = e.target.result;
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const size = 320;
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext("2d");
-
-        // Cắt vuông tâm ảnh (Center square crop)
-        const minDim = Math.min(img.width, img.height);
-        const sx = (img.width - minDim) / 2;
-        const sy = (img.height - minDim) / 2;
-        ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
-
-        const optimizedUrl = canvas.toDataURL("image/webp", 0.92);
-        this.customUploadedAvatar = optimizedUrl;
-        this.selectedGuestAvatar = null;
-
-        const previewEl = document.getElementById("authAvatarPreview");
-        if (previewEl) {
-          previewEl.innerHTML = `<img src="${optimizedUrl}" alt="Avatar Tải Lên" />`;
-        }
-
-        document.querySelectorAll(".avatar-option-btn").forEach((b) => b.classList.remove("selected"));
-        this.showToast(`📸 Đã nạp ảnh (${(file.size / 1024 / 1024).toFixed(1)}MB). Bấm "Lưu Hồ Sơ Khách" để áp dụng!`);
-      };
-      img.onerror = () => {
-        this.customUploadedAvatar = rawDataUrl;
-        this.selectedGuestAvatar = null;
-        const previewEl = document.getElementById("authAvatarPreview");
-        if (previewEl) {
-          previewEl.innerHTML = `<img src="${rawDataUrl}" alt="Avatar Tải Lên" />`;
-        }
-        document.querySelectorAll(".avatar-option-btn").forEach((b) => b.classList.remove("selected"));
-        this.showToast(`📸 Đã nạp ảnh thành công. Bấm "Lưu Hồ Sơ Khách" để áp dụng!`);
-      };
-      img.src = rawDataUrl;
-    };
-    reader.readAsDataURL(file);
+    this.googleClientId = val;
+    this.saveStorage("ngwyren_google_client_id", val);
+    this.initGoogleIdentity();
+    this.showToast("🔑 Đã kết nối Google Client ID thành công!");
+    this.openAuthModal();
+    setTimeout(() => this.loginWithGoogle(), 400);
   }
 
-  selectGuestAvatar(avatar, btn) {
-    this.selectedGuestAvatar = avatar;
-    this.customUploadedAvatar = null;
-    document.querySelectorAll(".avatar-option-btn").forEach((b) => b.classList.remove("selected"));
-    btn.classList.add("selected");
-    const previewEl = document.getElementById("authAvatarPreview");
-    if (previewEl) {
-      previewEl.innerHTML = `<span>${avatar}</span>`;
+  toggleQuickGmailInput() {
+    const box = document.getElementById("quickGmailBox");
+    if (box) {
+      box.style.display = box.style.display === "none" ? "flex" : "none";
+      const input = document.getElementById("quickGmailInput");
+      if (input && box.style.display !== "none") input.focus();
     }
   }
 
-  saveGuestProfile() {
-    const input = document.getElementById("guestNameInput");
-    const name = input ? input.value.trim() || "Khách" : "Khách";
-
-    let avatarType = "emoji";
-    let avatar = this.selectedGuestAvatar || "🎬";
-    let avatarUrl = "";
-
-    if (this.customUploadedAvatar) {
-      avatarType = "image";
-      avatarUrl = this.customUploadedAvatar;
-      avatar = "🖼️";
+  submitQuickGmail() {
+    const input = document.getElementById("quickGmailInput");
+    const email = input ? input.value.trim() : "";
+    if (!email || !email.includes("@")) {
+      this.showToast("⚠️ Vui lòng nhập đúng định dạng Gmail (vd: tenban@gmail.com)");
+      return;
     }
+    const prefix = email.split("@")[0].replace(/[._-]/g, " ");
+    const name = prefix.charAt(0).toUpperCase() + prefix.slice(1);
 
     this.userProfile = {
-      type: "guest",
+      type: "google",
       name: name,
-      handle: name === "Khách" ? "@guest" : "@" + name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "").slice(0, 15),
-      avatar: avatar,
-      avatarType: avatarType,
-      avatarUrl: avatarUrl
+      handle: email,
+      avatar: "👤",
+      avatarType: "emoji",
+      avatarUrl: ""
     };
     this.saveStorage("ngwyren_user_profile", this.userProfile);
     this.updateProfileUI();
     this.syncToCloud(true);
     this.closeAuthModal();
-    this.showToast(`✨ Đã lưu hồ sơ khách: "${name}"`);
-  }
-
-  toggleGoogleConfig() {
-    const content = document.getElementById("googleConfigContent");
-    const arrow = document.getElementById("googleConfigArrow");
-    if (content) {
-      const isOpen = content.classList.toggle("open");
-      if (arrow) arrow.style.transform = isOpen ? "rotate(180deg)" : "";
-    }
-  }
-
-  saveGoogleClientId() {
-    const input = document.getElementById("googleClientIdInput");
-    const val = input ? input.value.trim() : "";
-    this.googleClientId = val;
-    this.saveStorage("ngwyren_google_client_id", val);
-    this.initGoogleIdentity();
-    this.showToast(val ? "🔑 Đã lưu Google Client ID thành công!" : "ℹ️ Đã xóa Google Client ID.");
+    this.showToast(`🎉 Đăng nhập Google thành công! Chào mừng ${name}`);
   }
 
   loginWithGoogle() {
-    // Nếu có Google Client ID thật và thư viện GIS đã nạp
     if (this.googleClientId && window.google?.accounts?.id) {
       try {
         window.google.accounts.id.prompt((notification) => {
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            this.toggleRealGoogleForm();
+            this.showToast("💡 Vui lòng bấm vào nút Google trên màn hình");
           }
         });
         return;
@@ -3003,50 +2923,13 @@ class AppleCinemaApp {
       }
     }
 
-    this.toggleRealGoogleForm();
-  }
-
-  toggleRealGoogleForm() {
-    const box = document.getElementById("googleLoginFormBox");
-    if (box) {
-      box.classList.toggle("open");
-      const input = document.getElementById("realGoogleEmailInput");
-      if (input && box.classList.contains("open")) {
-        input.focus();
-      }
+    const input = document.getElementById("googleClientIdQuickInput");
+    if (input) {
+      input.focus();
+      this.showToast("🔑 Vui lòng dán Google Client ID từ project 'Ngwyren Cinema'");
+    } else {
+      this.openAuthModal();
     }
-  }
-
-  submitRealGoogleLogin() {
-    const emailInput = document.getElementById("realGoogleEmailInput");
-    const nameInput = document.getElementById("realGoogleNameInput");
-    const email = emailInput ? emailInput.value.trim() : "";
-    let name = nameInput ? nameInput.value.trim() : "";
-
-    if (!email || !email.includes("@")) {
-      this.showToast("⚠️ Vui lòng nhập đúng địa chỉ Gmail của bạn (vd: yourname@gmail.com)");
-      return;
-    }
-
-    if (!name) {
-      const prefix = email.split("@")[0].replace(/[._-]/g, " ");
-      name = prefix.charAt(0).toUpperCase() + prefix.slice(1);
-    }
-
-    this.userProfile = {
-      type: "google",
-      name: name,
-      handle: email,
-      avatar: "👤",
-      avatarType: this.customUploadedAvatar ? "image" : "emoji",
-      avatarUrl: this.customUploadedAvatar || ""
-    };
-
-    this.saveStorage("ngwyren_user_profile", this.userProfile);
-    this.updateProfileUI();
-    this.syncToCloud(true);
-    this.closeAuthModal();
-    this.showToast(`🎉 Đăng nhập Google thật thành công! Chào mừng ${name}`);
   }
 
   logoutProfile() {
@@ -3058,13 +2941,11 @@ class AppleCinemaApp {
       avatarType: "emoji",
       avatarUrl: ""
     };
-    this.customUploadedAvatar = null;
-    this.selectedGuestAvatar = "🎬";
     this.saveStorage("ngwyren_user_profile", this.userProfile);
     this.updateProfileUI();
     this.syncToCloud(true);
     this.closeAuthModal();
-    this.showToast(`👋 Đã trở về chế độ Khách mặc định`);
+    this.showToast(`👋 Đã đăng xuất khỏi tài khoản Google`);
   }
 
   closeAuthModal() {
