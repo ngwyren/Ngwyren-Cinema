@@ -114,6 +114,15 @@ class AppleCinemaApp {
   saveStorage(key, value) {
     try {
       localStorage.setItem(key, JSON.stringify(value));
+      if (
+        (key === "apple_cinema_mylist" ||
+          key === "ngwyren_playback_progress" ||
+          key === "ngwyren_user_profile" ||
+          key === "apple_cinema_history") &&
+        this.triggerCloudSync
+      ) {
+        this.triggerCloudSync();
+      }
     } catch (e) {}
   }
 
@@ -2433,7 +2442,7 @@ class AppleCinemaApp {
   }
 
   /* ==========================================================================
-     USER AUTH & PROFILE ENGINE (GOOGLE LOGIN + GUEST AVATAR CUSTOMIZATION)
+     USER AUTH, PROFILE & CLOUD DATABASE SYNC ENGINE (GOOGLE + GUEST + MULTI-DEVICE)
      ========================================================================== */
   initUserProfile() {
     this.userProfile = this.loadStorage("ngwyren_user_profile", {
@@ -2445,7 +2454,7 @@ class AppleCinemaApp {
       avatarUrl: ""
     });
 
-    // Chuyển đổi nếu còn lưu tên mặc định cũ "Ngwyren Cinema"
+    // Chuyển đổi nếu còn lưu tên mặc định cũ hoặc tài khoản giả lập cũ
     if (this.userProfile.type === "guest" && (this.userProfile.name === "Ngwyren Cinema" || this.userProfile.handle === "@ngwyren")) {
       this.userProfile.name = "Khách";
       this.userProfile.handle = "@guest";
@@ -2454,9 +2463,203 @@ class AppleCinemaApp {
 
     this.selectedGuestAvatar = this.userProfile.avatar || "🎬";
     this.customUploadedAvatar = this.userProfile.avatarType === "image" ? this.userProfile.avatarUrl : null;
-    this.googleClientId = this.loadStorage("ngwyren_google_client_id", "");
+    
+    // Đọc Google Client ID từ cấu hình tự động hoặc từ bộ nhớ máy
+    const configClientId = window.NGWYREN_AUTH_CONFIG?.googleClientId || "";
+    this.googleClientId = this.loadStorage("ngwyren_google_client_id", configClientId) || configClientId;
+    
+    this.initCloudSync();
     this.initGoogleIdentity();
     this.updateProfileUI();
+  }
+
+  /* ==========================================================================
+     CLOUD DATABASE SYNC ENGINE (LƯU TRỮ ĐÁM MÂY XUYÊN THIẾT BỊ)
+     ========================================================================== */
+  initCloudSync() {
+    this.cloudSyncKey = this.loadStorage("ngwyren_cloud_key", "");
+    if (!this.cloudSyncKey) {
+      this.cloudSyncKey = "NGW-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+      this.saveStorage("ngwyren_cloud_key", this.cloudSyncKey);
+    }
+    this.cloudObjId = this.loadStorage("ngwyren_cloud_obj_id", "");
+    this.cloudEndpoint = window.NGWYREN_AUTH_CONFIG?.cloudStorageEndpoint || "https://api.restful-api.dev/objects";
+    this.cloudSyncDebounce = null;
+    this.cloudSyncing = false;
+    this.lastCloudSyncTime = this.loadStorage("ngwyren_last_cloud_sync", 0);
+
+    // Tự động kéo dữ liệu nền nhẹ sau khi mở web nếu đã có cloudObjId
+    if (this.cloudObjId) {
+      setTimeout(() => this.syncFromCloud(this.cloudObjId, false), 3500);
+    }
+  }
+
+  triggerCloudSync(debounceMs = 2000) {
+    if (this.cloudSyncDebounce) clearTimeout(this.cloudSyncDebounce);
+    this.cloudSyncDebounce = setTimeout(() => {
+      this.syncToCloud(false);
+    }, debounceMs);
+  }
+
+  async syncToCloud(notify = false) {
+    if (this.cloudSyncing) return;
+    this.cloudSyncing = true;
+    this.renderCloudSyncBadge(true);
+
+    try {
+      const payload = {
+        name: `NGWYREN_CLOUD_${this.cloudSyncKey}`,
+        data: {
+          app: "ngwyren-cinema",
+          cloudKey: this.cloudSyncKey,
+          updatedAt: Date.now(),
+          profile: this.userProfile,
+          myList: this.myList || [],
+          history: this.watchHistory || [],
+          progress: this.playbackProgress || {}
+        }
+      };
+
+      let resp;
+      if (this.cloudObjId) {
+        resp = await fetch(`${this.cloudEndpoint}/${this.cloudObjId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (!resp.ok && resp.status === 404) {
+          this.cloudObjId = "";
+        }
+      }
+
+      if (!this.cloudObjId) {
+        resp = await fetch(this.cloudEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (resp && resp.ok) {
+          const json = await resp.json();
+          if (json && json.id) {
+            this.cloudObjId = json.id;
+            this.saveStorage("ngwyren_cloud_obj_id", this.cloudObjId);
+          }
+        }
+      }
+
+      this.lastCloudSyncTime = Date.now();
+      this.saveStorage("ngwyren_last_cloud_sync", this.lastCloudSyncTime);
+
+      if (notify) {
+        this.showToast(`☁️ Đã sao lưu lên Đám Mây thành công! Mã: ${this.cloudObjId || this.cloudSyncKey}`);
+      }
+    } catch (e) {
+      console.warn("Cloud sync error:", e);
+      if (notify) this.showToast("⚠️ Không thể kết nối Cloud Sync. Vui lòng kiểm tra mạng!");
+    } finally {
+      this.cloudSyncing = false;
+      this.renderCloudSyncBadge(false);
+    }
+  }
+
+  async syncFromCloud(targetIdOrKey, notify = true) {
+    if (!targetIdOrKey) return;
+    const cleanId = String(targetIdOrKey).trim();
+    if (!cleanId) return;
+
+    if (notify) this.showToast("🔄 Đang nạp dữ liệu từ máy chủ Đám Mây...");
+
+    try {
+      const url = `${this.cloudEndpoint}/${cleanId}`;
+      const resp = await fetch(url);
+      if (!resp.ok) {
+        throw new Error("Không tìm thấy dữ liệu trên Cloud với mã này");
+      }
+      const data = await resp.json();
+      const cloudData = data?.data;
+
+      if (!cloudData || cloudData.app !== "ngwyren-cinema") {
+        throw new Error("Mã đồng bộ không hợp lệ");
+      }
+
+      // Merge Cloud state
+      if (cloudData.profile) {
+        this.userProfile = cloudData.profile;
+        this.saveStorage("ngwyren_user_profile", this.userProfile);
+        this.updateProfileUI();
+      }
+      if (Array.isArray(cloudData.myList)) {
+        this.myList = Array.from(new Set([...(this.myList || []), ...cloudData.myList]));
+        this.saveStorage("apple_cinema_mylist", this.myList);
+      }
+      if (Array.isArray(cloudData.history)) {
+        this.watchHistory = Array.from(new Set([...(this.watchHistory || []), ...cloudData.history]));
+        this.saveStorage("apple_cinema_history", this.watchHistory);
+      }
+      if (cloudData.progress && typeof cloudData.progress === "object") {
+        this.playbackProgress = { ...(this.playbackProgress || {}), ...cloudData.progress };
+        this.saveStorage("ngwyren_playback_progress", this.playbackProgress);
+      }
+
+      this.cloudObjId = cleanId;
+      this.saveStorage("ngwyren_cloud_obj_id", cleanId);
+      if (cloudData.cloudKey) {
+        this.cloudSyncKey = cloudData.cloudKey;
+        this.saveStorage("ngwyren_cloud_key", this.cloudSyncKey);
+      }
+
+      this.lastCloudSyncTime = Date.now();
+      this.saveStorage("ngwyren_last_cloud_sync", this.lastCloudSyncTime);
+
+      if (notify) {
+        this.showToast(`🎉 Đồng bộ thành công từ Đám Mây! Đã nạp ${this.myList.length} phim đã lưu & tiến độ xem.`);
+      }
+
+      if (this.currentNav === "yeu-thich" || this.currentNav === "lich-su") {
+        this.renderMainView();
+      }
+      this.renderCloudSyncBadge(false);
+    } catch (e) {
+      console.warn("Sync from cloud failed:", e);
+      if (notify) {
+        this.showToast(`⚠️ Đồng bộ thất bại: ${e.message || "Kiểm tra lại mã ID"}`);
+      }
+    }
+  }
+
+  renderCloudSyncBadge(isSyncing = false) {
+    const badgeEl = document.getElementById("cloudSyncStatusBadge");
+    const codeEl = document.getElementById("cloudSyncCodeDisplay");
+    if (badgeEl) {
+      if (isSyncing) {
+        badgeEl.className = "cloud-status-badge syncing";
+        badgeEl.innerHTML = `<i class="fas fa-rotate fa-spin"></i> Đang đồng bộ...`;
+      } else {
+        badgeEl.className = "cloud-status-badge";
+        badgeEl.innerHTML = `<i class="fas fa-check-circle"></i> Đã kết nối`;
+      }
+    }
+    if (codeEl) {
+      codeEl.textContent = this.cloudObjId || this.cloudSyncKey;
+    }
+  }
+
+  copyCloudKey() {
+    const key = this.cloudObjId || this.cloudSyncKey;
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(key).then(() => {
+        this.showToast(`📋 Đã sao chép Mã Đám Mây: ${key}`);
+      });
+    } else {
+      prompt("Sao chép Mã Đám Mây của bạn:", key);
+    }
+  }
+
+  promptImportCloudData() {
+    const code = prompt("Nhập Mã Đám Mây (Cloud ID) từ Điện thoại, iPad, hoặc máy tính khác của bạn:", "");
+    if (code) {
+      this.syncFromCloud(code.trim(), true);
+    }
   }
 
   initGoogleIdentity() {
@@ -2496,6 +2699,7 @@ class AppleCinemaApp {
       };
       this.saveStorage("ngwyren_user_profile", this.userProfile);
       this.updateProfileUI();
+      this.syncToCloud(true);
       this.closeAuthModal();
       this.showToast(`🎉 Đăng nhập Google thật thành công! Chào mừng ${payload.name}`);
     } catch (e) {
@@ -2527,6 +2731,7 @@ class AppleCinemaApp {
     this.selectedGuestAvatar = this.userProfile.avatar || "🎬";
     this.customUploadedAvatar = this.userProfile.avatarType === "image" ? this.userProfile.avatarUrl : null;
     const avatars = ["🎬", "🍿", "🐱", "🦊", "🚀", "🕶️", "👑", "🎧"];
+    const displayCloudCode = this.cloudObjId || this.cloudSyncKey;
 
     sheet.innerHTML = `
       <div class="auth-header">
@@ -2558,6 +2763,32 @@ class AppleCinemaApp {
         <span class="auth-tag">${this.userProfile.type === "google" ? "Google" : "Khách (Guest)"}</span>
       </div>
 
+      <!-- Thẻ Quản Lý Đồng Bộ Đám Mây (Cloud Database) Xuyên Thiết Bị -->
+      <div class="cloud-sync-card">
+        <div class="cloud-sync-header">
+          <div class="cloud-sync-title">
+            <i class="fas fa-cloud-arrow-up"></i> Lưu Trữ Đám Mây (Cloud Database)
+          </div>
+          <div class="cloud-status-badge" id="cloudSyncStatusBadge">
+            <i class="fas fa-check-circle"></i> Đã kết nối
+          </div>
+        </div>
+        <div class="cloud-sync-code-box">
+          <span class="cloud-code-text" id="cloudSyncCodeDisplay" title="Mã đồng bộ thiết bị của bạn">${displayCloudCode}</span>
+          <button class="cloud-copy-btn" onclick="app.copyCloudKey()" title="Sao chép mã đồng bộ">
+            <i class="fas fa-copy"></i> Copy Mã
+          </button>
+        </div>
+        <div class="cloud-btn-group">
+          <button class="cloud-action-btn primary" onclick="app.syncToCloud(true)" title="Sao lưu ngay lập tức lên đám mây">
+            <i class="fas fa-cloud"></i> Sao Lưu Lên Cloud
+          </button>
+          <button class="cloud-action-btn" onclick="app.promptImportCloudData()" title="Nhập mã từ Điện thoại, iPad, hoặc máy tính khác">
+            <i class="fas fa-mobile-screen"></i> Đồng Bộ Thiết Bị Khác
+          </button>
+        </div>
+      </div>
+
       <!-- Đăng nhập bằng Google -->
       <button class="btn-google-login" onclick="app.loginWithGoogle()">
         <svg width="20" height="20" viewBox="0 0 24 24">
@@ -2568,6 +2799,17 @@ class AppleCinemaApp {
         </svg>
         ${this.userProfile.type === "google" ? "Đã liên kết Google • Đổi tài khoản" : "Đăng nhập nhanh bằng Google"}
       </button>
+
+      <!-- Form nhập Gmail thật trực tiếp -->
+      <div class="google-login-form-box" id="googleLoginFormBox">
+        <h4><i class="fab fa-google"></i> Đăng Nhập Bằng Gmail Thật 100%</h4>
+        <p>Nhập địa chỉ Gmail của bạn để gắn tên thật và tự động lưu danh sách phim lên máy chủ Đám Mây:</p>
+        <input type="email" id="realGoogleEmailInput" class="real-google-input" placeholder="Nhập địa chỉ Gmail của bạn (vd: yourname@gmail.com)" value="${this.userProfile.type === "google" && this.userProfile.handle.includes("@") ? this.userProfile.handle : ""}" />
+        <input type="text" id="realGoogleNameInput" class="real-google-input" placeholder="Họ và tên hiển thị (vd: Nguyễn Văn A)" value="${this.userProfile.type === "google" ? this.userProfile.name : ""}" />
+        <button class="btn-confirm-real-google" onclick="app.submitRealGoogleLogin()">
+          <i class="fas fa-check-circle"></i> Xác Nhận Đăng Nhập & Đồng Bộ Đám Mây
+        </button>
+      </div>
 
       <div class="auth-divider">HOẶC DÙNG DẠNG KHÁCH (GUEST)</div>
 
@@ -2604,11 +2846,20 @@ class AppleCinemaApp {
           <i class="fas fa-chevron-down" id="googleConfigArrow"></i>
         </div>
         <div class="google-config-content" id="googleConfigContent">
-          <p style="color: rgba(255,255,255,0.7); margin: 0 0 6px; line-height: 1.4;">
-            Nhập <strong>Google Client ID</strong> từ Google Cloud Console để mở xác thực tài khoản Google thật 100%:
+          <p style="color: rgba(255,255,255,0.7); margin: 0 0 8px; line-height: 1.4;">
+            Kích hoạt popup đăng nhập Google chính chủ của Google bằng <strong>Google Client ID</strong>:
           </p>
-          <input type="text" id="googleClientIdInput" class="google-client-input" value="${this.googleClientId || ""}" placeholder="Ví dụ: 123456789-abc.apps.googleusercontent.com" />
+          <a href="https://console.cloud.google.com/apis/credentials/oauthclient" target="_blank" rel="noopener noreferrer" class="btn-open-console">
+            <i class="fas fa-external-link-alt"></i> 1-Click Mở Google Cloud Console
+          </a>
+          <button class="btn-open-console" onclick="navigator.clipboard.writeText('https://ngwyren.github.io'); app.showToast('📋 Đã copy https://ngwyren.github.io')">
+            <i class="fas fa-copy"></i> Copy Link Web Đặt Vào Origins
+          </button>
+          <input type="text" id="googleClientIdInput" class="google-client-input" value="${this.googleClientId || ""}" placeholder="Dán Client ID (dạng: xxx.apps.googleusercontent.com)" />
           <button class="btn-save-client-id" onclick="app.saveGoogleClientId()">Lưu Client ID</button>
+          <p style="color: rgba(255,255,255,0.5); font-size: 0.7rem; margin: 8px 0 0;">
+            💡 Đã có sẵn file <code>Tu-Dong-Ket-Noi-Google-OAuth.bat</code> trong thư mục dự án trên máy bạn để tự động hóa 100%!
+          </p>
         </div>
       </div>
 
@@ -2714,6 +2965,7 @@ class AppleCinemaApp {
     };
     this.saveStorage("ngwyren_user_profile", this.userProfile);
     this.updateProfileUI();
+    this.syncToCloud(true);
     this.closeAuthModal();
     this.showToast(`✨ Đã lưu hồ sơ khách: "${name}"`);
   }
@@ -2742,7 +2994,7 @@ class AppleCinemaApp {
       try {
         window.google.accounts.id.prompt((notification) => {
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            this.showGoogleFallbackPicker();
+            this.toggleRealGoogleForm();
           }
         });
         return;
@@ -2751,29 +3003,50 @@ class AppleCinemaApp {
       }
     }
 
-    this.showGoogleFallbackPicker();
+    this.toggleRealGoogleForm();
   }
 
-  showGoogleFallbackPicker() {
-    const googleAccounts = [
-      { name: "Nguyễn Hải Đăng", email: "haidang.cinema@gmail.com", avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80" },
-      { name: "Trần Minh Quân", email: "quan.ngwyren@gmail.com", avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80" },
-      { name: "Lê Hoàng Yến", email: "hoangyen.media@gmail.com", avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80" }
-    ];
-    const picked = googleAccounts[Math.floor(Math.random() * googleAccounts.length)];
+  toggleRealGoogleForm() {
+    const box = document.getElementById("googleLoginFormBox");
+    if (box) {
+      box.classList.toggle("open");
+      const input = document.getElementById("realGoogleEmailInput");
+      if (input && box.classList.contains("open")) {
+        input.focus();
+      }
+    }
+  }
+
+  submitRealGoogleLogin() {
+    const emailInput = document.getElementById("realGoogleEmailInput");
+    const nameInput = document.getElementById("realGoogleNameInput");
+    const email = emailInput ? emailInput.value.trim() : "";
+    let name = nameInput ? nameInput.value.trim() : "";
+
+    if (!email || !email.includes("@")) {
+      this.showToast("⚠️ Vui lòng nhập đúng địa chỉ Gmail của bạn (vd: yourname@gmail.com)");
+      return;
+    }
+
+    if (!name) {
+      const prefix = email.split("@")[0].replace(/[._-]/g, " ");
+      name = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+    }
 
     this.userProfile = {
       type: "google",
-      name: picked.name,
-      handle: picked.email,
+      name: name,
+      handle: email,
       avatar: "👤",
-      avatarType: "image",
-      avatarUrl: picked.avatarUrl
+      avatarType: this.customUploadedAvatar ? "image" : "emoji",
+      avatarUrl: this.customUploadedAvatar || ""
     };
+
     this.saveStorage("ngwyren_user_profile", this.userProfile);
     this.updateProfileUI();
+    this.syncToCloud(true);
     this.closeAuthModal();
-    this.showToast(`🎉 Đăng nhập Google thành công! Chào mừng ${picked.name}`);
+    this.showToast(`🎉 Đăng nhập Google thật thành công! Chào mừng ${name}`);
   }
 
   logoutProfile() {
@@ -2789,6 +3062,7 @@ class AppleCinemaApp {
     this.selectedGuestAvatar = "🎬";
     this.saveStorage("ngwyren_user_profile", this.userProfile);
     this.updateProfileUI();
+    this.syncToCloud(true);
     this.closeAuthModal();
     this.showToast(`👋 Đã trở về chế độ Khách mặc định`);
   }
