@@ -301,7 +301,7 @@ class AppleCinemaApp {
     }
   }
 
-  renderLeftSideColumnHTML(contextMovies = null, panelTitle = "Trailer Mới") {
+  renderLeftSideColumnHTML(contextMovies = null, panelTitle = "Đề Xuất") {
     // Luôn đảm bảo đủ đúng 15 phim mới, ngẫu nhiên hóa mỗi lần tải lại trang
     let list15 = [];
     if (!contextMovies || contextMovies === this.service.movies) {
@@ -378,7 +378,7 @@ class AppleCinemaApp {
 
     return `
       <div class="vision-dashboard-grid">
-        ${this.renderLeftSideColumnHTML(this.service.movies, "Trailer Mới")}
+        ${this.renderLeftSideColumnHTML(this.service.movies, "Đề Xuất")}
 
         <div class="vision-main-col vision-col-transition">
           <!-- Spatial Settings Hero Header -->
@@ -801,7 +801,7 @@ class AppleCinemaApp {
 
       container.innerHTML = `
         <div class="vision-dashboard-grid">
-          ${this.renderLeftSideColumnHTML(this.service.movies, "Trailer Mới")}
+          ${this.renderLeftSideColumnHTML(this.service.movies, "Đề Xuất")}
 
           <!-- RIGHT MAIN COLUMN: HERO BANNER + GỢI Ý CHO BẠN + CURATED ROWS -->
           <div class="vision-main-col vision-col-transition">
@@ -877,13 +877,13 @@ class AppleCinemaApp {
       <div class="vision-dashboard-grid">
         ${(() => {
         const shortMap = {
-          "anime": "Đề Cử Anime",
-          "phim-le": "Đề Cử Phim Lẻ",
-          "phim-bo": "Đề Cử Phim Bộ",
-          "netflix": "Đề Cử Netflix",
-          "vietsub": "Đề Cử"
+          "anime": "Đề Xuất Anime",
+          "phim-le": "Đề Xuất Phim Lẻ",
+          "phim-bo": "Đề Xuất Phim Bộ",
+          "netflix": "Đề Xuất Netflix",
+          "vietsub": "Đề Xuất"
         };
-        const shortTitle = shortMap[this.currentNav] || "Đề Cử";
+        const shortTitle = shortMap[this.currentNav] || "Đề Xuất";
         return this.renderLeftSideColumnHTML(distinctListForLeft.length >= 2 ? distinctListForLeft : list, shortTitle);
       })()}
 
