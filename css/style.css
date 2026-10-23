@@ -2854,7 +2854,7 @@ body {
     inset 0 -1px 1px rgba(255, 255, 255, 0.15),
     0 4px 14px rgba(0, 0, 0, 0.35);
   transform: translate3d(-50%, calc(var(--dock-idx, 0) * 54px), 0);
-  transition: transform 0.44s cubic-bezier(0.2, 0.95, 0.22, 1.05);
+  transition: transform 0.52s cubic-bezier(0.2, 0.9, 0.25, 1);
   pointer-events: none;
   z-index: 0;
   will-change: transform;
@@ -2880,15 +2880,17 @@ body {
   justify-content: center;
   font-size: 0.98rem;
   cursor: pointer;
-  transition: color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Outro transition: Chậm rãi, êm ái khi icon bỏ chọn về lại trạng thái ban đầu */
+  transition: color 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .vision-dock-icon i {
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-              text-shadow 0.25s ease,
-              filter 0.25s ease;
+  /* Outro transition: Ánh sáng halo và độ phóng to thu nhỏ từ từ tan biến (0.55s) */
+  transition: transform 0.52s cubic-bezier(0.16, 1, 0.3, 1),
+              text-shadow 0.55s cubic-bezier(0.2, 0.8, 0.25, 1),
+              filter 0.55s cubic-bezier(0.2, 0.8, 0.25, 1);
 }
 
 .vision-dock-icon:hover {
@@ -2905,12 +2907,19 @@ body {
   color: #ffffff;
   opacity: 1;
   box-shadow: none;
+  /* Intro transition: Bật sáng êm ái và nhạy bén khi được chọn */
+  transition: color 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.36s cubic-bezier(0.175, 0.885, 0.32, 1.2);
 }
 
 .vision-dock-icon.active i {
   transform: scale(1.12);
   filter: drop-shadow(0 0 8px #ffffff);
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.95), 0 0 18px rgba(255, 255, 255, 0.5);
+  transition: transform 0.36s cubic-bezier(0.175, 0.885, 0.32, 1.2),
+              text-shadow 0.35s ease,
+              filter 0.35s ease;
 }
 
 /* Floating Glass Tooltip Pill on Dock Hover */
@@ -6009,7 +6018,7 @@ html.dragging-glass .vision-left-dock {
     inset 0 -1px 0.8px rgba(255, 255, 255, 0.15),
     0 4px 14px rgba(0, 0, 0, 0.35) !important;
   transform: translate3d(-50%, calc(var(--dock-idx, 0) * 54px), 0);
-  transition: transform 0.44s cubic-bezier(0.22, 1, 0.32, 1);
+  transition: transform 0.52s cubic-bezier(0.2, 0.9, 0.25, 1);
   pointer-events: none;
   z-index: 0;
   will-change: transform;
