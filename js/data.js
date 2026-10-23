@@ -1124,10 +1124,53 @@ class PhimmoiService {
   }
 
   /**
+   * Bộ lọc loại bỏ hoàn toàn các phim quảng cáo, nhà cái cá cược hoặc spam từ API
+   */
+  isAdOrSpam(item) {
+    if (!item) return false;
+    const title = (item.title || item.name || "").toLowerCase();
+    const slug = (item.slug || "").toLowerCase();
+    const syn = (item.synopsis || item.description || item.content || "").toLowerCase();
+
+    const adKeywords = [
+      "quảng cáo", "quang cao", "nhà cái", "cá cược", "cá độ", "đặt cược",
+      "tài xỉu", "bắn cá", "nổ hũ", "soi kèo", "kèo bóng", "casino",
+      "baccarat", "fb88", "jun88", "shbet", "789bet", "hi88", "new88",
+      "okvip", "kubet", "w88", "m88", "188bet", "bk8", "dafabat", "fun88",
+      "sin88", "may88", "red88", "five88", "debet", "sv88", "zbet", "oxbet",
+      "lixi88", "t.me/", "telegram", "zalo.me", "link cược"
+    ];
+
+    for (const kw of adKeywords) {
+      if (title.includes(kw) || slug.includes(kw)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Tự động làm sạch các câu quảng cáo của web nguồn trong phần mô tả phim
+   */
+  cleanAdText(text) {
+    if (!text) return "";
+    return text
+      .replace(/cùng\s+(phimmoi|phimmoiz|nguonc|ophim|kkphim)[^.]*\./gi, "")
+      .replace(/xem\s+phim\s+tại\s+[^\s,.]+/gi, "")
+      .replace(/chúc\s+bạn\s+xem\s+phim\s+vui\s+vẻ[^.]*\./gi, "")
+      .replace(/liên\s+hệ\s+quảng\s+cáo[^\n.]*/gi, "")
+      .replace(/tham\s+gia\s+cược[^\n.]*/gi, "")
+      .replace(/https?:\/\/[^\s]+/gi, "")
+      .trim();
+  }
+
+  /**
    * Chuẩn hóa dữ liệu bài viết từ WordPress REST API
    */
   normalizeWpPost(post) {
     if (!post || !post.slug) return null;
+    const postTitle = (post.title && post.title.rendered) || "";
+    if (this.isAdOrSpam({ title: postTitle, slug: post.slug })) return null;
     const mb = post.meta_box || {};
     const embedded = post._embedded || {};
 
@@ -1162,9 +1205,9 @@ class PhimmoiService {
       }
     });
 
-    // Làm sạch mô tả HTML
+    // Làm sạch mô tả HTML & loại bỏ quảng cáo nguồn
     const rawExcerpt = (post.excerpt && post.excerpt.rendered) || (post.content && post.content.rendered) || "";
-    const cleanSynopsis = this.stripHtml(rawExcerpt).slice(0, 420);
+    const cleanSynopsis = this.cleanAdText(this.stripHtml(rawExcerpt)).slice(0, 420);
 
     // Tập phim & nguồn phát HLS .m3u8
     const streamPool = [
@@ -1343,7 +1386,7 @@ class PhimmoiService {
     // Nguồn 1: PhimAPI (Netflix & KKPhim Vietsub)
     if (phimApiRes && phimApiRes.data && Array.isArray(phimApiRes.data.items)) {
       phimApiRes.data.items.forEach((item) => {
-        if (!item || !item.slug || this.slugMap.has(item.slug)) return;
+        if (!item || !item.slug || this.slugMap.has(item.slug) || this.isAdOrSpam(item)) return;
         const posterUrl = item.poster_url?.startsWith("http") ? item.poster_url : `https://phimimg.com/${item.poster_url}`;
         const thumbUrl = item.thumb_url?.startsWith("http") ? item.thumb_url : `https://phimimg.com/${item.thumb_url}`;
         const isSer = item.type === "series" || (item.episode_current && item.episode_current.includes("/"));
@@ -1385,7 +1428,7 @@ class PhimmoiService {
     // Nguồn 2: NguonC Vietsub CDN
     if (nguoncRes && Array.isArray(nguoncRes.items)) {
       nguoncRes.items.forEach((nc) => {
-        if (!nc || !nc.slug || this.slugMap.has(nc.slug)) return;
+        if (!nc || !nc.slug || this.slugMap.has(nc.slug) || this.isAdOrSpam(nc)) return;
         const isSer = parseInt(nc.total_episodes, 10) > 1;
         const newMovie = {
           id: `nc-${nc.slug}`,
@@ -1413,7 +1456,7 @@ class PhimmoiService {
           ambientColors: ["#ffffff", "#d4d4d4", "#a3a3a3"],
           trailerUrl: "",
           link: "",
-          synopsis: nc.description || `${nc.name} chất lượng cao Vietsub.`,
+          synopsis: this.cleanAdText(nc.description) || `${nc.name} chất lượng cao Vietsub.`,
           episodes: [{ name: "Tập 1 (Vietsub)", slug: "tap-1", source: "", embed: "", needsEnrich: true }]
         };
         this.movies.unshift(newMovie);
@@ -1426,7 +1469,7 @@ class PhimmoiService {
     if (Array.isArray(remotePosts)) {
       remotePosts.forEach((post) => {
         const normalized = this.normalizeWpPost(post);
-        if (normalized && !this.slugMap.has(normalized.slug)) {
+        if (normalized && !this.slugMap.has(normalized.slug) && !this.isAdOrSpam(normalized)) {
           this.movies.push(normalized);
           this.slugMap.set(normalized.slug, normalized);
           localMatches.push(normalized);
@@ -1551,7 +1594,7 @@ class PhimmoiService {
           movie.trailerUrl = phimApiRes.movie.trailer_url;
         }
         if (phimApiRes.movie.content) {
-          const clean = this.stripHtml(phimApiRes.movie.content);
+          const clean = this.cleanAdText(this.stripHtml(phimApiRes.movie.content));
           if (clean.length > (movie.synopsis || "").length) movie.synopsis = clean;
         }
       }

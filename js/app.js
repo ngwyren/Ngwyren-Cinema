@@ -1467,7 +1467,7 @@ class AppleCinemaApp {
             <span id="playerFloatingQualityText">${this.getQualityLabel(this.currentQuality)}</span>
           </div>
           <video id="hlsVideoElement" class="${this.getQualityVideoClass(this.currentQuality)}" controls playsinline poster="${movie.backdrop || movie.poster}"></video>
-          <iframe id="trailerIframeElement" style="display: none;" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+          <iframe id="trailerIframeElement" style="display: none;" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
         </div>
       </div>
 
@@ -1737,29 +1737,36 @@ class AppleCinemaApp {
       return;
     }
 
-    // Chế độ phát Nguồn Vietsub #2 (Embed FHD) hoặc Nguồn Vietsub #3 (StreamC)
-    const embedUrlToUse =
-      serverMode === "embed-1"
-        ? episode?.embed || ncEp?.embed
-        : serverMode === "nguonc-1"
-        ? ncEp?.embed || episode?.embed
-        : serverMode === "dub-1" && !dubEp?.source && dubEp?.embed
-        ? dubEp.embed
-        : !episode?.source && episode?.embed
-        ? episode.embed
-        : "";
+    // 1. Xác định luồng phát HLS .m3u8 trực tiếp (Zero Quảng Cáo, Zero Popup, 100% Native Player)
+    let streamUrl = "";
+    if (serverMode === "dub-1") {
+      streamUrl = (dubEp && dubEp.source) || (episode && episode.source) || "";
+    } else if (serverMode === "embed-1" || serverMode === "nguonc-1") {
+      // Server 2: Ưu tiên luồng m3u8 sạch từ NguonC/StreamC thay vì nhúng embed chứa quảng cáo
+      streamUrl = (ncEp && ncEp.source) || (episode && episode.source) || "";
+    } else {
+      streamUrl = (episode && episode.source) || (ncEp && ncEp.source) || "";
+    }
 
-    if (embedUrlToUse) {
-      this.destroyHls();
-      if (videoEl) {
-        videoEl.pause();
-        videoEl.style.display = "none";
-      }
-      if (iframeEl) {
-        iframeEl.src = embedUrlToUse;
+    // Nếu không có luồng m3u8 trực tiếp mới dùng embed làm phương án dự phòng (có Sandbox chặn quảng cáo)
+    if (!streamUrl) {
+      const fallbackEmbed =
+        serverMode === "embed-1"
+          ? ncEp?.embed || episode?.embed
+          : serverMode === "dub-1"
+          ? dubEp?.embed || episode?.embed
+          : episode?.embed || ncEp?.embed;
+
+      if (fallbackEmbed && iframeEl) {
+        this.destroyHls();
+        if (videoEl) {
+          videoEl.pause();
+          videoEl.style.display = "none";
+        }
+        iframeEl.src = fallbackEmbed;
         iframeEl.style.display = "block";
+        return;
       }
-      return;
     }
 
     // Chế độ phát HLS (.m3u8) trực tiếp của đúng bộ phim đang chọn (Tuyệt đối không dùng stream của phim khác)
@@ -1769,22 +1776,6 @@ class AppleCinemaApp {
     }
     if (!videoEl) return;
     videoEl.style.display = "block";
-
-    let streamUrl = (episode && episode.source) || "";
-    if (serverMode === "dub-1") {
-      streamUrl = (dubEp && dubEp.source) || (episode && episode.source) || "";
-    } else if (serverMode === "nguonc-1" || serverMode === "embed-1") {
-      streamUrl = (ncEp && ncEp.source) || (episode && episode.source) || "";
-    }
-
-    if (!streamUrl && (episode?.embed || ncEp?.embed)) {
-      videoEl.style.display = "none";
-      if (iframeEl) {
-        iframeEl.src = episode?.embed || ncEp?.embed;
-        iframeEl.style.display = "block";
-      }
-      return;
-    }
 
     this.destroyHls();
     this.detectedHlsLevels = [];

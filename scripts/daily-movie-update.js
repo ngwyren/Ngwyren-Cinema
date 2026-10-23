@@ -61,6 +61,20 @@ async function main() {
       if (!detail || !detail.movie) continue;
 
       const m = detail.movie;
+
+      // Bỏ qua phim quảng cáo, nhà cái, cá cược từ API
+      const adKeywords = [
+        "quảng cáo", "quang cao", "nhà cái", "cá cược", "cá độ", "đặt cược",
+        "tài xỉu", "bắn cá", "nổ hũ", "soi kèo", "kèo bóng", "casino",
+        "baccarat", "fb88", "jun88", "shbet", "789bet", "hi88", "new88",
+        "okvip", "kubet", "w88", "m88", "188bet", "bk8", "dafabat", "fun88"
+      ];
+      const checkStr = `${item.name || ''} ${item.slug || ''} ${m.name || ''}`.toLowerCase();
+      if (adKeywords.some(kw => checkStr.includes(kw))) {
+        console.log(`     [SKIP] Bỏ qua phim quảng cáo/cá cược: "${item.name}".`);
+        continue;
+      }
+
       const episodes = [];
 
       if (Array.isArray(detail.episodes) && detail.episodes[0] && Array.isArray(detail.episodes[0].server_data)) {
@@ -124,7 +138,12 @@ async function main() {
         ambientColors: ['#1c1c1e', '#3a3a3c', '#5a5a60'],
         trailerUrl: m.trailer_url || '',
         link: `https://phimmoiz.one/${m.slug}/`,
-        synopsis: (m.content || '').replace(/<[^>]*>/g, '').trim() || `${m.name} là tác phẩm điện ảnh mới nhất cập nhật năm ${m.year}.`,
+        synopsis: (m.content || '')
+          .replace(/<[^>]*>/g, '')
+          .replace(/cùng\s+(phimmoi|phimmoiz|nguonc|ophim|kkphim)[^.]*\./gi, '')
+          .replace(/xem\s+phim\s+tại\s+[^\s,.]+/gi, '')
+          .replace(/https?:\/\/[^\s]+/gi, '')
+          .trim() || `${m.name} là tác phẩm điện ảnh mới nhất cập nhật năm ${m.year}.`,
         episodes: episodes
       };
 
