@@ -1520,6 +1520,11 @@ class AppleCinemaApp {
     if (!modalBackdrop) return;
     modalBackdrop.classList.remove("open");
     modalBackdrop.classList.remove("lights-off");
+    document.getElementById("movieDetailSheet")?.classList.remove("apple-theater-mode");
+    if (this._appleControlsTimeout) {
+      clearTimeout(this._appleControlsTimeout);
+      this._appleControlsTimeout = null;
+    }
     this.lightsOff = false;
     document.body.style.overflow = "";
     document.body.classList.remove("modal-open");
@@ -1605,14 +1610,126 @@ class AppleCinemaApp {
           </div>
         </div>
 
-        <!-- Active Video Container -->
-        <div class="active-video-container ${isPlayingNow ? "playing" : ""}" id="activeVideoContainer">
-          <div class="player-quality-floating-badge" id="playerFloatingQualityBadge">
-            <i class="fas fa-sliders"></i>
-            <span id="playerFloatingQualityText">${this.getQualityLabel(this.currentQuality)}</span>
+        <!-- Active Video Container (Apple Cinema Player - Không viền xanh, chuẩn Apple TV+) -->
+        <div class="active-video-container ${isPlayingNow ? "playing" : ""}" id="activeVideoContainer" tabindex="-1">
+          <!-- Phản xạ ánh sáng LED điện ảnh (Ambient LED Glow) -->
+          <div class="apple-ambient-glow" id="appleAmbientGlow" style="background-image: url('${movie.backdrop || movie.poster}');"></div>
+
+          <!-- Video Element (đã bỏ controls mặc định của trình duyệt để triệt tiêu hoàn toàn viền xanh khi bấm phím cách) -->
+          <video id="hlsVideoElement" class="${this.getQualityVideoClass(this.currentQuality)}" playsinline poster="${movie.backdrop || movie.poster}" tabindex="-1"></video>
+          <iframe id="trailerIframeElement" style="display: none;" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen tabindex="-1"></iframe>
+
+          <!-- Apple Center HUD Pulse (Đĩa kính mờ Apple nhảy giữa màn hình khi Play/Pause/Tua) -->
+          <div class="apple-video-hud" id="appleVideoHud">
+            <div class="apple-hud-disc" id="appleHudDisc">
+              <i class="fas fa-play" id="appleHudIcon"></i>
+            </div>
+            <div class="apple-hud-text" id="appleHudText"></div>
           </div>
-          <video id="hlsVideoElement" class="${this.getQualityVideoClass(this.currentQuality)}" controls playsinline poster="${movie.backdrop || movie.poster}"></video>
-          <iframe id="trailerIframeElement" style="display: none;" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+
+          <!-- Apple Glass Player Overlay Controls (Giao diện điều khiển kính mờ chuẩn Apple visionOS / Apple TV+) -->
+          <div class="apple-player-overlay" id="applePlayerOverlay">
+            <!-- Click Layer phủ toàn màn hình để Play/Pause và Double click Toàn màn hình -->
+            <div class="apple-player-click-layer" id="applePlayerClickLayer"
+                 onclick="app.handleAppleVideoClick(event)"
+                 ondblclick="app.toggleVideoFullscreen(event)"></div>
+
+            <!-- Thanh đỉnh Apple: Tiêu đề + Chế độ rạp phim + PiP -->
+            <div class="apple-player-topbar" id="applePlayerTopbar">
+              <div class="apple-player-title-info">
+                <span class="apple-player-badge"><i class="fab fa-apple"></i> CINEMA</span>
+                <span class="apple-player-movie-name" title="${movie.title}">${movie.title}</span>
+                <span class="apple-player-ep-pill" id="applePlayerEpPill">${currentEp ? currentEp.name : "Tập 1"}</span>
+              </div>
+              <div class="apple-player-top-actions">
+                <button class="apple-pill-btn" onclick="app.toggleVideoTheaterMode(event)" title="Chế độ Rạp phim Apple (T)">
+                  <i class="fas fa-masks-theater"></i> <span>Rạp phim</span>
+                </button>
+                <button class="apple-pill-btn" onclick="app.toggleVideoPip(event)" title="Hình trong hình (PiP)">
+                  <i class="fas fa-clone"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Thanh đáy Apple: Timeline Scrubber + Cụm điều khiển Kính mờ -->
+            <div class="apple-player-bottombar" id="applePlayerBottombar">
+              <!-- Apple Timeline Scrubber -->
+              <div class="apple-scrub-container" id="appleScrubContainer"
+                   onmousedown="app.startScrubbing(event)"
+                   onmousemove="app.previewScrubTime(event)"
+                   onmouseleave="app.hideScrubTimePreview()">
+                <div class="apple-scrub-track">
+                  <div class="apple-scrub-buffer" id="appleScrubBuffer"></div>
+                  <div class="apple-scrub-fill" id="appleScrubFill"></div>
+                  <div class="apple-scrub-thumb" id="appleScrubThumb"></div>
+                </div>
+                <div class="apple-scrub-tooltip" id="appleScrubTooltip">00:00</div>
+              </div>
+
+              <!-- Hàng phím điều khiển Apple -->
+              <div class="apple-controls-row">
+                <div class="apple-ctrls-left">
+                  <!-- Play / Pause Button -->
+                  <button class="apple-ctrl-btn apple-play-btn" id="applePlayBtn" onclick="app.toggleVideoPlayPause(event)" title="Phát / Dừng (Phím cách)">
+                    <i class="fas fa-play" id="applePlayIcon"></i>
+                  </button>
+
+                  <!-- Tua lùi 10s -->
+                  <button class="apple-ctrl-btn apple-skip-btn" onclick="app.seekRelative(-10, true, event)" title="Tua lùi 10 giây (←)">
+                    <i class="fas fa-rotate-left"></i>
+                    <span class="apple-skip-num">10</span>
+                  </button>
+
+                  <!-- Tua tới 10s -->
+                  <button class="apple-ctrl-btn apple-skip-btn" onclick="app.seekRelative(10, true, event)" title="Tua tới 10 giây (→)">
+                    <i class="fas fa-rotate-right"></i>
+                    <span class="apple-skip-num">10</span>
+                  </button>
+
+                  <!-- Điều chỉnh âm lượng dạng trượt Apple -->
+                  <div class="apple-volume-cluster" id="appleVolumeCluster">
+                    <button class="apple-ctrl-btn" id="appleVolBtn" onclick="app.toggleVideoMute(event)" title="Bật / Tắt âm thanh (M)">
+                      <i class="fas fa-volume-high" id="appleVolIcon"></i>
+                    </button>
+                    <div class="apple-vol-slider-wrap">
+                      <input type="range" class="apple-vol-slider" id="appleVolSlider" min="0" max="1" step="0.05" value="1"
+                             oninput="app.setVideoVolume(this.value)" />
+                    </div>
+                  </div>
+
+                  <!-- Đồng hồ thời gian chuẩn Apple TV+ -->
+                  <div class="apple-time-box">
+                    <span id="appleCurrentTime">00:00</span>
+                    <span class="apple-time-divider">/</span>
+                    <span id="appleDurationTime">00:00</span>
+                  </div>
+                </div>
+
+                <div class="apple-ctrls-right">
+                  <!-- Chip hiển thị chất lượng luồng thực tế -->
+                  <div class="apple-quality-chip" id="appleQualityChip" onclick="document.getElementById('srvBtnHls1')?.scrollIntoView({behavior: 'smooth'})" title="Độ phân giải luồng">
+                    <span class="apple-dot-live"></span>
+                    <span id="appleQualityChipText">${this.getQualityLabel(this.currentQuality)}</span>
+                  </div>
+
+                  <!-- Tốc độ phát -->
+                  <button class="apple-ctrl-btn apple-speed-btn" id="appleSpeedBtn" onclick="app.cyclePlaybackSpeed(event)" title="Tốc độ phát">
+                    <span id="appleSpeedText">1.0x</span>
+                  </button>
+
+                  <!-- Picture in Picture -->
+                  <button class="apple-ctrl-btn" onclick="app.toggleVideoPip(event)" title="Hình trong hình (PiP)">
+                    <i class="fas fa-clone"></i>
+                  </button>
+
+                  <!-- Toàn màn hình -->
+                  <button class="apple-ctrl-btn apple-fs-btn" id="appleFsBtn" onclick="app.toggleVideoFullscreen(event)" title="Toàn màn hình (F)">
+                    <i class="fas fa-expand" id="appleFsIcon"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1868,6 +1985,7 @@ class AppleCinemaApp {
     // Chế độ phát Trailer YouTube
     if (serverMode === "trailer" && movie.trailerUrl) {
       this.destroyHls();
+      document.getElementById("applePlayerOverlay")?.style.setProperty("display", "none");
       if (videoEl) {
         videoEl.pause();
         videoEl.style.display = "none";
@@ -1908,6 +2026,7 @@ class AppleCinemaApp {
 
       if (fallbackEmbed && iframeEl) {
         this.destroyHls();
+        document.getElementById("applePlayerOverlay")?.style.setProperty("display", "none");
         if (videoEl) {
           videoEl.pause();
           videoEl.style.display = "none";
@@ -1925,6 +2044,8 @@ class AppleCinemaApp {
     }
     if (!videoEl) return;
     videoEl.style.display = "block";
+    document.getElementById("applePlayerOverlay")?.style.setProperty("display", "flex");
+    this.initAppleVideoPlayerEvents();
 
     this.destroyHls();
     this.detectedHlsLevels = [];
@@ -2003,7 +2124,7 @@ class AppleCinemaApp {
     this.renderDynamicQualityButtons();
     this.applyVideoQualityVisuals();
 
-    // Đồng bộ thanh thời gian với Apple Music Now Playing Bar & lưu xem tiếp tục
+    // Đồng bộ thanh thời gian với Apple Music Now Playing Bar, Apple Video Player & lưu xem tiếp tục
     videoEl.ontimeupdate = () => {
       if (!videoEl.duration) return;
       const pct = Math.min(100, (videoEl.currentTime / videoEl.duration) * 100);
@@ -2021,6 +2142,22 @@ class AppleCinemaApp {
       if (islandFill) islandFill.style.width = `${pct}%`;
       if (islandCur) islandCur.textContent = this.formatSeconds(videoEl.currentTime);
       if (islandTot) islandTot.textContent = this.formatSeconds(videoEl.duration);
+
+      // Đồng bộ thanh timeline chuẩn Apple Video Player
+      const appleCur = document.getElementById("appleCurrentTime");
+      const appleDur = document.getElementById("appleDurationTime");
+      const appleFill = document.getElementById("appleScrubFill");
+      const appleThumb = document.getElementById("appleScrubThumb");
+      if (appleCur) appleCur.textContent = this.formatSeconds(videoEl.currentTime);
+      if (appleDur) appleDur.textContent = this.formatSeconds(videoEl.duration);
+      if (appleFill) appleFill.style.width = `${pct}%`;
+      if (appleThumb) appleThumb.style.left = `${pct}%`;
+
+      // Cập nhật trạng thái nút Play trên giao diện Apple
+      const applePlayIcon = document.getElementById("applePlayIcon");
+      if (applePlayIcon) {
+        applePlayIcon.className = videoEl.paused ? "fas fa-play" : "fas fa-pause";
+      }
 
       // Tự động lưu vị trí thời gian thực nếu thoát giữa chừng
       if (videoEl.currentTime > 5 && (!videoEl._lastSavedPos || Math.abs(videoEl.currentTime - videoEl._lastSavedPos) >= 3)) {
@@ -2274,11 +2411,309 @@ class AppleCinemaApp {
     }
   }
 
-  seekRelative(seconds) {
+  /* ==========================================================================
+     APPLE CINEMA VIDEO PLAYER CONTROLLER (APPLE TV+ / VISIONOS CHẾ ĐỘ XEM VIDEO)
+     ========================================================================== */
+  initAppleVideoPlayerEvents() {
+    const container = document.getElementById("activeVideoContainer");
+    const videoEl = document.getElementById("hlsVideoElement");
+    if (!container || !videoEl) return;
+
+    // Hiển thị thanh điều khiển Apple khi phát luồng native
+    const appleOverlay = document.getElementById("applePlayerOverlay");
+    if (appleOverlay) appleOverlay.style.display = "flex";
+
+    // Auto-hide controls khi xem phim (2.5 giây không di chuột)
+    const resetControlsTimer = () => {
+      container.classList.remove("controls-hidden");
+      if (this._appleControlsTimeout) {
+        clearTimeout(this._appleControlsTimeout);
+        this._appleControlsTimeout = null;
+      }
+      if (!videoEl.paused) {
+        this._appleControlsTimeout = setTimeout(() => {
+          if (!videoEl.paused) {
+            container.classList.add("controls-hidden");
+          }
+        }, 2500);
+      }
+    };
+
+    container.onmousemove = resetControlsTimer;
+    container.onmousedown = resetControlsTimer;
+    container.ontouchstart = resetControlsTimer;
+
+    videoEl.onplay = () => {
+      this.isPlaying = true;
+      const playIcon = document.getElementById("applePlayIcon");
+      if (playIcon) playIcon.className = "fas fa-pause";
+      this.setNowPlayingBar(this.playingMovie, this.currentEpisodeIndex, true);
+      resetControlsTimer();
+      // Bỏ focus của browser để triệt tiêu vĩnh viễn viền xanh
+      videoEl.blur();
+    };
+
+    videoEl.onpause = () => {
+      this.isPlaying = false;
+      const playIcon = document.getElementById("applePlayIcon");
+      if (playIcon) playIcon.className = "fas fa-play";
+      this.setNowPlayingBar(this.playingMovie, this.currentEpisodeIndex, false);
+      container.classList.remove("controls-hidden");
+      videoEl.blur();
+    };
+
+    videoEl.onprogress = () => {
+      if (!videoEl.duration || !videoEl.buffered.length) return;
+      try {
+        const bufferedEnd = videoEl.buffered.end(videoEl.buffered.length - 1);
+        const bufPct = Math.min(100, (bufferedEnd / videoEl.duration) * 100);
+        const bufEl = document.getElementById("appleScrubBuffer");
+        if (bufEl) bufEl.style.width = `${bufPct}%`;
+      } catch (_) {}
+    };
+
+    videoEl.onvolumechange = () => {
+      const volSlider = document.getElementById("appleVolSlider");
+      const volIcon = document.getElementById("appleVolIcon");
+      if (volSlider) volSlider.value = videoEl.muted ? 0 : videoEl.volume;
+      if (volIcon) {
+        if (videoEl.muted || videoEl.volume === 0) {
+          volIcon.className = "fas fa-volume-xmark";
+        } else if (videoEl.volume < 0.5) {
+          volIcon.className = "fas fa-volume-low";
+        } else {
+          volIcon.className = "fas fa-volume-high";
+        }
+      }
+    };
+  }
+
+  toggleVideoPlayPause(e) {
+    if (e) e.stopPropagation();
+    const videoEl = document.getElementById("hlsVideoElement");
+    if (!videoEl) return;
+    if (videoEl.paused) {
+      videoEl.play().catch(() => {});
+      this.showAppleVideoHud("play");
+    } else {
+      videoEl.pause();
+      this.showAppleVideoHud("pause");
+    }
+    videoEl.blur();
+  }
+
+  handleAppleVideoClick(e) {
+    if (e) e.stopPropagation();
+    if (this._videoClickTimeout) {
+      clearTimeout(this._videoClickTimeout);
+      this._videoClickTimeout = null;
+      this.toggleVideoFullscreen();
+      return;
+    }
+    this._videoClickTimeout = setTimeout(() => {
+      this._videoClickTimeout = null;
+      this.toggleVideoPlayPause();
+    }, 240);
+  }
+
+  showAppleVideoHud(type, customText) {
+    const hud = document.getElementById("appleVideoHud");
+    const icon = document.getElementById("appleHudIcon");
+    const text = document.getElementById("appleHudText");
+    if (!hud || !icon) return;
+
+    let iconClass = "fas fa-play";
+    let textContent = customText || "";
+
+    switch (type) {
+      case "play":
+        iconClass = "fas fa-play";
+        textContent = "";
+        break;
+      case "pause":
+        iconClass = "fas fa-pause";
+        textContent = "";
+        break;
+      case "forward":
+        iconClass = "fas fa-rotate-right";
+        textContent = customText || "+10s";
+        break;
+      case "backward":
+        iconClass = "fas fa-rotate-left";
+        textContent = customText || "-10s";
+        break;
+      case "volume":
+        iconClass = "fas fa-volume-high";
+        textContent = customText || "100%";
+        break;
+      case "mute":
+        iconClass = "fas fa-volume-xmark";
+        textContent = "Tắt âm";
+        break;
+      case "unmute":
+        iconClass = "fas fa-volume-high";
+        textContent = "Bật âm";
+        break;
+      case "speed":
+        iconClass = "fas fa-gauge-high";
+        textContent = customText || "1.0x";
+        break;
+      case "theater":
+        iconClass = "fas fa-masks-theater";
+        textContent = customText || "Rạp phim";
+        break;
+    }
+
+    icon.className = iconClass;
+    if (text) {
+      text.textContent = textContent;
+      text.style.display = textContent ? "block" : "none";
+    }
+
+    hud.classList.remove("hud-active");
+    void hud.offsetWidth; // Force reflow
+    hud.classList.add("hud-active");
+
+    if (this._appleHudTimer) clearTimeout(this._appleHudTimer);
+    this._appleHudTimer = setTimeout(() => {
+      hud.classList.remove("hud-active");
+    }, 550);
+  }
+
+  seekRelative(seconds, showHud = false, e) {
+    if (e) e.stopPropagation();
     const videoEl = document.getElementById("hlsVideoElement");
     if (videoEl && !isNaN(videoEl.duration)) {
       videoEl.currentTime = Math.max(0, Math.min(videoEl.duration, videoEl.currentTime + seconds));
+      if (showHud) {
+        this.showAppleVideoHud(seconds > 0 ? "forward" : "backward", `${seconds > 0 ? "+" : ""}${seconds}s`);
+      }
     }
+  }
+
+  setVideoVolume(val, showHud = false) {
+    const videoEl = document.getElementById("hlsVideoElement");
+    if (!videoEl) return;
+    const v = Math.max(0, Math.min(1, parseFloat(val)));
+    videoEl.volume = v;
+    videoEl.muted = (v === 0);
+    if (showHud) {
+      this.showAppleVideoHud("volume", `${Math.round(v * 100)}%`);
+    }
+  }
+
+  adjustVideoVolume(delta) {
+    const videoEl = document.getElementById("hlsVideoElement");
+    if (!videoEl) return;
+    const current = videoEl.muted ? 0 : videoEl.volume;
+    const next = Math.max(0, Math.min(1, current + delta));
+    this.setVideoVolume(next, true);
+  }
+
+  toggleVideoMute(e) {
+    if (e) e.stopPropagation();
+    const videoEl = document.getElementById("hlsVideoElement");
+    if (!videoEl) return;
+    videoEl.muted = !videoEl.muted;
+    this.showAppleVideoHud(videoEl.muted ? "mute" : "unmute");
+  }
+
+  cyclePlaybackSpeed(e) {
+    if (e) e.stopPropagation();
+    const videoEl = document.getElementById("hlsVideoElement");
+    if (!videoEl) return;
+    const speeds = [1.0, 1.25, 1.5, 2.0];
+    const currentSpeed = videoEl.playbackRate || 1.0;
+    const nextIdx = (speeds.indexOf(currentSpeed) + 1) % speeds.length;
+    const nextSpeed = speeds[nextIdx];
+    videoEl.playbackRate = nextSpeed;
+    const textEl = document.getElementById("appleSpeedText");
+    if (textEl) textEl.textContent = `${nextSpeed}x`;
+    this.showAppleVideoHud("speed", `${nextSpeed}x`);
+  }
+
+  toggleVideoTheaterMode(e) {
+    if (e) e.stopPropagation();
+    const modal = document.getElementById("movieDetailModal");
+    const sheet = document.getElementById("movieDetailSheet");
+    if (!sheet) return;
+    const isTheater = sheet.classList.toggle("apple-theater-mode");
+    modal?.classList.toggle("lights-off", isTheater);
+    this.showAppleVideoHud("theater", isTheater ? "Rạp phim: Bật" : "Rạp phim: Tắt");
+  }
+
+  toggleVideoPip(e) {
+    if (e) e.stopPropagation();
+    const videoEl = document.getElementById("hlsVideoElement");
+    if (!videoEl) return;
+    if (document.pictureInPictureElement) {
+      document.exitPictureInPicture().catch(() => {});
+    } else if (videoEl.requestPictureInPicture) {
+      videoEl.requestPictureInPicture().catch(() => {});
+    }
+  }
+
+  toggleVideoFullscreen(e) {
+    if (e) e.stopPropagation();
+    const stage = document.getElementById("activeVideoContainer") || document.getElementById("modalPlayerStage");
+    if (!stage) return;
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    } else {
+      if (stage.requestFullscreen) stage.requestFullscreen().catch(() => {});
+      else if (stage.webkitRequestFullscreen) stage.webkitRequestFullscreen();
+    }
+  }
+
+  startScrubbing(e) {
+    if (e) e.preventDefault();
+    const track = document.getElementById("appleScrubContainer");
+    const videoEl = document.getElementById("hlsVideoElement");
+    if (!track || !videoEl || !videoEl.duration) return;
+
+    const scrub = (moveEvent) => {
+      const rect = track.getBoundingClientRect();
+      const pos = Math.max(0, Math.min(1, (moveEvent.clientX - rect.left) / rect.width));
+      videoEl.currentTime = pos * videoEl.duration;
+      const fillEl = document.getElementById("appleScrubFill");
+      const thumbEl = document.getElementById("appleScrubThumb");
+      if (fillEl) fillEl.style.width = `${pos * 100}%`;
+      if (thumbEl) thumbEl.style.left = `${pos * 100}%`;
+    };
+
+    scrub(e);
+
+    const onMouseMove = (moveEvent) => {
+      scrub(moveEvent);
+    };
+
+    const onMouseUp = () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  }
+
+  previewScrubTime(e) {
+    const track = document.getElementById("appleScrubContainer");
+    const tooltip = document.getElementById("appleScrubTooltip");
+    const videoEl = document.getElementById("hlsVideoElement");
+    if (!track || !tooltip || !videoEl || !videoEl.duration) return;
+
+    const rect = track.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const targetSeconds = pct * videoEl.duration;
+
+    tooltip.textContent = this.formatSeconds(targetSeconds);
+    tooltip.style.left = `${e.clientX - rect.left}px`;
+    tooltip.classList.add("visible");
+  }
+
+  hideScrubTimePreview() {
+    document.getElementById("appleScrubTooltip")?.classList.remove("visible");
   }
 
   toggleNowPlayingPlayPause() {
@@ -2287,13 +2722,7 @@ class AppleCinemaApp {
     const videoEl = document.getElementById("hlsVideoElement");
 
     if (modalOpen && videoEl && videoEl.style.display !== "none") {
-      if (videoEl.paused) {
-        videoEl.play().catch(() => {});
-        this.isPlaying = true;
-      } else {
-        videoEl.pause();
-        this.isPlaying = false;
-      }
+      this.toggleVideoPlayPause();
       this.setNowPlayingBar(this.playingMovie, this.currentEpisodeIndex, this.isPlaying);
     } else {
       // Nếu modal đang đóng, mở thẳng rạp phim phát tiếp
@@ -2737,23 +3166,67 @@ class AppleCinemaApp {
         }
       } else if (e.code === "Space" && !isInput) {
         e.preventDefault();
-        this.toggleNowPlayingPlayPause();
+        const modal = document.getElementById("movieDetailModal");
+        const videoEl = document.getElementById("hlsVideoElement");
+        const modalOpen = modal?.classList.contains("open");
+        const videoVisible = videoEl && videoEl.style.display !== "none";
+
+        if (modalOpen && videoVisible) {
+          this.toggleVideoPlayPause();
+        } else {
+          this.toggleNowPlayingPlayPause();
+        }
+      } else if (e.code === "ArrowLeft" && !isInput) {
+        const modal = document.getElementById("movieDetailModal");
+        const videoEl = document.getElementById("hlsVideoElement");
+        if (modal?.classList.contains("open") && videoEl && videoEl.style.display !== "none") {
+          e.preventDefault();
+          this.seekRelative(-10, true);
+        }
+      } else if (e.code === "ArrowRight" && !isInput) {
+        const modal = document.getElementById("movieDetailModal");
+        const videoEl = document.getElementById("hlsVideoElement");
+        if (modal?.classList.contains("open") && videoEl && videoEl.style.display !== "none") {
+          e.preventDefault();
+          this.seekRelative(10, true);
+        }
+      } else if (e.code === "ArrowUp" && !isInput) {
+        const modal = document.getElementById("movieDetailModal");
+        const videoEl = document.getElementById("hlsVideoElement");
+        if (modal?.classList.contains("open") && videoEl && videoEl.style.display !== "none") {
+          e.preventDefault();
+          this.adjustVideoVolume(0.1);
+        }
+      } else if (e.code === "ArrowDown" && !isInput) {
+        const modal = document.getElementById("movieDetailModal");
+        const videoEl = document.getElementById("hlsVideoElement");
+        if (modal?.classList.contains("open") && videoEl && videoEl.style.display !== "none") {
+          e.preventDefault();
+          this.adjustVideoVolume(-0.1);
+        }
       } else if ((e.key === "f" || e.key === "F") && !isInput) {
         const modal = document.getElementById("movieDetailModal");
         const videoEl = document.getElementById("hlsVideoElement");
         if (modal?.classList.contains("open") && videoEl) {
           e.preventDefault();
-          if (document.fullscreenElement) {
-            document.exitFullscreen?.();
-          } else {
-            videoEl.requestFullscreen?.() || videoEl.webkitRequestFullscreen?.();
-          }
+          this.toggleVideoFullscreen();
         }
       } else if ((e.key === "m" || e.key === "M") && !isInput) {
+        const modal = document.getElementById("movieDetailModal");
         const videoEl = document.getElementById("hlsVideoElement");
-        if (videoEl) {
+        if (modal?.classList.contains("open") && videoEl && videoEl.style.display !== "none") {
+          e.preventDefault();
+          this.toggleVideoMute();
+        } else if (videoEl) {
           videoEl.muted = !videoEl.muted;
           this.showToast(videoEl.muted ? "🔇 Đã tắt tiếng (Muted)" : "🔊 Đã bật âm thanh");
+        }
+      } else if ((e.key === "t" || e.key === "T") && !isInput) {
+        const modal = document.getElementById("movieDetailModal");
+        const videoEl = document.getElementById("hlsVideoElement");
+        if (modal?.classList.contains("open") && videoEl && videoEl.style.display !== "none") {
+          e.preventDefault();
+          this.toggleVideoTheaterMode();
         }
       }
     });
