@@ -1121,7 +1121,7 @@ body::-webkit-scrollbar {
 .filter-chip:hover {
   background: rgba(255, 255, 255, 0.13);
   color: var(--text-primary);
-  transform: translateY(-2px);
+  transform: none !important;
 }
 
 .filter-chip.active {
@@ -5943,7 +5943,7 @@ body.modal-open .apple-player-bar {
 .vision-nav-pill:hover {
   background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
-  transform: translateY(-1px);
+  transform: none !important;
 }
 
 .vision-nav-pill.active {
@@ -6008,7 +6008,7 @@ body.modal-open .apple-player-bar {
 .vision-nav-pill:not(.active):hover {
   background: rgba(255, 255, 255, 0.12) !important;
   color: #ffffff !important;
-  transform: translateY(-1px);
+  transform: none !important;
 }
 
 .vision-nav-pill.active {
@@ -6041,4 +6041,14 @@ body.modal-open .apple-player-bar {
   color: #ffffff !important;
   font-weight: 700 !important;
   box-shadow: 0 2px 14px rgba(245, 158, 11, 0.4), inset 0 1px 0.5px rgba(255, 255, 255, 0.4) !important;
+}
+
+/* ==========================================================================
+   FIX: TRIỆT TIÊU HOÀN TOÀN NHẢY SHAPE KHI RÊ CHUỘT (ZERO POSITION JUMP)
+   ========================================================================== */
+.filter-chip:hover,
+.vision-nav-pill:hover,
+.vision-nav-pill:not(.active):hover,
+.segment-btn:hover {
+  transform: none !important;
 }
