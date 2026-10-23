@@ -42,6 +42,10 @@ class AppleCinemaApp {
       defaultLightsOff: false,
       heroAutoRotate: true
     });
+    if (this.settings.defaultServer === "dub-1") {
+      this.settings.defaultServer = "hls-1";
+      this.saveStorage("apple_cinema_settings", this.settings);
+    }
     this.currentServerMode = this.settings.defaultServer || "hls-1";
     this.currentQuality = this.settings.defaultQuality || "native-max";
 
@@ -509,14 +513,11 @@ class AppleCinemaApp {
                   <span>Nguồn luồng phát ưu tiên</span>
                 </div>
                 <div class="vision-setting-pills">
-                  <button class="filter-chip ${s.defaultServer === 'hls-1' ? 'active' : ''}" onclick="app.updateSetting('defaultServer', 'hls-1')">
+                  <button class="filter-chip ${s.defaultServer !== 'embed-1' ? 'active' : ''}" onclick="app.updateSetting('defaultServer', 'hls-1')">
                     Server 1
                   </button>
                   <button class="filter-chip ${s.defaultServer === 'embed-1' ? 'active' : ''}" onclick="app.updateSetting('defaultServer', 'embed-1')">
                     Server 2
-                  </button>
-                  <button class="filter-chip ${s.defaultServer === 'dub-1' ? 'active' : ''}" onclick="app.updateSetting('defaultServer', 'dub-1')">
-                    Thuyết Minh
                   </button>
                 </div>
               </div>
