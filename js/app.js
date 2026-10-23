@@ -1494,6 +1494,9 @@ class AppleCinemaApp {
 
     if (shouldAutoPlay) {
       this.startVideoPlayback(movie, epIndex, defaultSrv);
+    } else {
+      this.isPlaying = false;
+      this.setNowPlayingBar(movie, epIndex, false);
     }
 
     // Tự động lấy thêm danh sách tập phim & luồng chất lượng thật từ PhimAPI / NguonC / WP API
@@ -1524,6 +1527,10 @@ class AppleCinemaApp {
     document.body.style.overflow = "";
     document.body.classList.remove("modal-open");
     this.stopModalVideo();
+    this.isPlaying = false;
+    if (this.playingMovie || this.selectedMovie) {
+      this.setNowPlayingBar(this.playingMovie || this.selectedMovie, this.currentEpisodeIndex, false);
+    }
   }
 
   minimizeToMiniPlayer() {
@@ -2333,6 +2340,11 @@ class AppleCinemaApp {
   }
 
   stopModalVideo() {
+    this.isPlaying = false;
+    const currentMov = this.playingMovie || this.selectedMovie;
+    if (currentMov) {
+      this.setNowPlayingBar(currentMov, this.currentEpisodeIndex, false);
+    }
     const videoEl = document.getElementById("hlsVideoElement");
     if (videoEl && this.selectedMovie && videoEl.currentTime > 5 && videoEl.duration) {
       this.savePlaybackProgress(this.selectedMovie.slug, this.currentEpisodeIndex, videoEl.currentTime, videoEl.duration);
@@ -2400,6 +2412,12 @@ class AppleCinemaApp {
     if (islandPlayIcon) islandPlayIcon.className = playing ? "fas fa-pause" : "fas fa-play";
     const miniCenterPlay = document.getElementById("miniScreenCenterPlayIcon");
     if (miniCenterPlay) miniCenterPlay.className = playing ? "fas fa-pause" : "fas fa-play";
+
+    // Đồng bộ nhãn trạng thái ĐANG PHÁT / TẠM DỪNG
+    const islandLiveBadge = document.getElementById("nowPlayingIslandLiveBadge");
+    const islandLiveText = document.getElementById("nowPlayingIslandLiveText");
+    if (islandLiveBadge) islandLiveBadge.classList.toggle("paused", !playing);
+    if (islandLiveText) islandLiveText.textContent = playing ? "ĐANG PHÁT" : "TẠM DỪNG";
 
     // Đồng bộ nút yêu thích mini player
     const miniFavBtn = document.getElementById("miniPlayerFavBtn");
