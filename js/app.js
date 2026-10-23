@@ -232,8 +232,6 @@ class AppleCinemaApp {
 
     // Đồng bộ chính xác thanh Dock bên trái với trang lớn
     this.syncLeftDockIndicator(navKey);
-    this.syncNavPillIndicator();
-
     // Đóng sidebar mobile nếu đang mở
     this.toggleMobileSidebar(false);
 
@@ -243,21 +241,7 @@ class AppleCinemaApp {
     this.triggerPageTransition();
   }
 
-  syncNavPillIndicator() {
-    const container = document.getElementById("visionNavPills");
-    const activePill = container?.querySelector(".vision-nav-pill.active");
-    const indicator = document.getElementById("visionNavIndicator");
-    if (!container || !activePill || !indicator) return;
-
-    const cRect = container.getBoundingClientRect();
-    const pRect = activePill.getBoundingClientRect();
-    const x = pRect.left - cRect.left + container.scrollLeft;
-    const w = pRect.width;
-
-    indicator.style.setProperty("--nav-pill-x", `${x}px`);
-    indicator.style.setProperty("--nav-pill-w", `${w}px`);
-    indicator.style.opacity = "1";
-  }
+  syncNavPillIndicator() {}
 
   triggerHaptic(type = "light") {
     if (typeof navigator !== "undefined" && navigator.vibrate) {

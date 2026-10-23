@@ -5771,8 +5771,6 @@ body.modal-open .apple-player-bar {
 .player-compact-bar .btn-expand-cinema {
   display: none !important;
 }
-
-
 /* ==========================================================================
    THEME HARMONY & APPLE SPATIAL GLASS ENGINE (EMERALD / AURORA / AMBER)
    ========================================================================== */
@@ -5793,19 +5791,19 @@ body.modal-open .apple-player-bar {
     0 4px 14px rgba(0, 0, 0, 0.35) !important;
 }
 
-[data-theme="emerald"] .vision-nav-indicator {
-  background: linear-gradient(135deg, #10b981, #059669) !important;
-  box-shadow: 0 2px 14px rgba(16, 185, 129, 0.4), inset 0 1px 0.5px rgba(167, 243, 208, 0.6) !important;
-}
-
 [data-theme="emerald"] .vision-nav-pill.active {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  border-color: rgba(110, 231, 183, 0.85) !important;
   color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 14px rgba(16, 185, 129, 0.4), inset 0 1px 0.5px rgba(255, 255, 255, 0.4) !important;
 }
 
 [data-theme="emerald"] .filter-chip.active {
   background: linear-gradient(135deg, #10b981, #059669) !important;
   border-color: rgba(110, 231, 183, 0.9) !important;
   color: #ffffff !important;
+  font-weight: 700 !important;
   box-shadow: 0 2px 12px rgba(16, 185, 129, 0.35), inset 0 1px 0.5px rgba(255, 255, 255, 0.4) !important;
 }
 
@@ -5830,19 +5828,19 @@ body.modal-open .apple-player-bar {
     0 4px 14px rgba(0, 0, 0, 0.35) !important;
 }
 
-[data-theme="aurora"] .vision-nav-indicator {
-  background: linear-gradient(135deg, #8b5cf6, #6366f1) !important;
-  box-shadow: 0 2px 14px rgba(139, 92, 246, 0.45), inset 0 1px 0.5px rgba(216, 180, 254, 0.6) !important;
-}
-
 [data-theme="aurora"] .vision-nav-pill.active {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1) !important;
+  border-color: rgba(192, 132, 252, 0.85) !important;
   color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 14px rgba(139, 92, 246, 0.4), inset 0 1px 0.5px rgba(255, 255, 255, 0.4) !important;
 }
 
 [data-theme="aurora"] .filter-chip.active {
   background: linear-gradient(135deg, #8b5cf6, #6366f1) !important;
   border-color: rgba(192, 132, 252, 0.9) !important;
   color: #ffffff !important;
+  font-weight: 700 !important;
   box-shadow: 0 2px 12px rgba(139, 92, 246, 0.4), inset 0 1px 0.5px rgba(255, 255, 255, 0.4) !important;
 }
 
@@ -5867,19 +5865,19 @@ body.modal-open .apple-player-bar {
     0 4px 14px rgba(0, 0, 0, 0.35) !important;
 }
 
-[data-theme="amber"] .vision-nav-indicator {
-  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
-  box-shadow: 0 2px 14px rgba(245, 158, 11, 0.4), inset 0 1px 0.5px rgba(254, 243, 199, 0.6) !important;
-}
-
 [data-theme="amber"] .vision-nav-pill.active {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  border-color: rgba(252, 211, 77, 0.85) !important;
   color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 14px rgba(245, 158, 11, 0.4), inset 0 1px 0.5px rgba(255, 255, 255, 0.4) !important;
 }
 
 [data-theme="amber"] .filter-chip.active {
   background: linear-gradient(135deg, #f59e0b, #d97706) !important;
   border-color: rgba(252, 211, 77, 0.9) !important;
   color: #ffffff !important;
+  font-weight: 700 !important;
   box-shadow: 0 2px 12px rgba(245, 158, 11, 0.4), inset 0 1px 0.5px rgba(255, 255, 255, 0.4) !important;
 }
 
@@ -5916,33 +5914,12 @@ body.modal-open .apple-player-bar {
   will-change: transform;
 }
 
-.vision-nav-indicator {
-  position: absolute;
-  top: 6px;
-  left: 0;
-  height: calc(100% - 12px);
-  width: var(--nav-pill-w, 0px);
-  border-radius: 999px;
-  background: #ffffff;
-  box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.9), 0 3px 12px rgba(0, 0, 0, 0.28);
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0;
-  transform: translate3d(var(--nav-pill-x, 0px), 0, 0);
-  transition: transform 0.44s cubic-bezier(0.22, 1, 0.32, 1),
-              width 0.44s cubic-bezier(0.22, 1, 0.32, 1),
-              opacity 0.25s ease;
-  will-change: transform, width;
-}
-
 .vision-nav-pill {
   position: relative;
-  z-index: 2;
-  background: transparent !important;
-  border: 1px solid transparent !important;
-  box-shadow: none !important;
-  color: rgba(255, 255, 255, 0.72) !important;
-  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: rgba(255, 255, 255, 0.72);
+  padding: 8px 18px;
   border-radius: 999px;
   font-size: 0.85rem;
   font-weight: 600;
@@ -5955,20 +5932,26 @@ body.modal-open .apple-player-bar {
   gap: 6px;
   box-sizing: border-box;
   line-height: 1.25;
-  transition: color 0.3s cubic-bezier(0.22, 1, 0.32, 1),
-              transform 0.25s cubic-bezier(0.2, 1, 0.3, 1);
+  transition:
+    background 0.38s cubic-bezier(0.22, 1, 0.32, 1),
+    color 0.3s cubic-bezier(0.22, 1, 0.32, 1),
+    box-shadow 0.38s cubic-bezier(0.22, 1, 0.32, 1),
+    transform 0.25s cubic-bezier(0.2, 1, 0.3, 1),
+    border-color 0.38s ease;
 }
 
 .vision-nav-pill:hover {
-  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  transform: translateY(-1px);
 }
 
 .vision-nav-pill.active {
+  background: #ffffff !important;
+  border-color: #ffffff !important;
   color: #111216 !important;
   font-weight: 700 !important;
-  background: transparent !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.28), inset 0 1px 0.5px rgba(255, 255, 255, 0.9) !important;
 }
 
 .filter-chip.active {
