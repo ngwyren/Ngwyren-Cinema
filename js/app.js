@@ -27,12 +27,9 @@ class AppleCinemaApp {
     this.lightsOff = false;
     this.hlsInstance = null;
 
-    // Lưu trữ cá nhân (Danh sách của tôi, Lịch sử xem & Cài đặt hệ thống)
-    this.myList = this.loadStorage("apple_cinema_mylist", ["pm-1", "pm-2", "pm-4"]);
-    this.watchHistory = this.loadStorage("apple_cinema_history", [
-      { slug: "thanh-guom-diet-quy-vo-han-thanh-465645", epIndex: 0, progress: 38, timestamp: Date.now() - 3600000 },
-      { slug: "matchbox-phim-dien-anh", epIndex: 0, progress: 64, timestamp: Date.now() - 7200000 }
-    ]);
+    // Lưu trữ cá nhân (Danh sách của tôi, Lịch sử xem & Cài đặt hệ thống - Mặc định trống cho tài khoản mới)
+    this.myList = this.loadStorage("apple_cinema_mylist", []);
+    this.watchHistory = this.loadStorage("apple_cinema_history", []);
     this.settings = this.loadStorage("apple_cinema_settings", {
       theme: "default",
       glassPercent: 50,
@@ -151,22 +148,24 @@ class AppleCinemaApp {
       "dich-nhan-kiet-lang-nhan-kiep"
     ];
 
-    // Lọc các phim bom tấn hợp lệ có ảnh nền nét
-    let pool = candidateSlugs
+    // Lọc các phim bom tấn có ảnh nền nét từ ứng viên và catalog
+    const seedMovies = candidateSlugs
       .map((s) => this.service.slugMap.get(s))
-      .filter((m) => m && (m.backdrop || m.poster));
+      .filter((m) => m && m.backdrop);
 
-    if (pool.length < 6) {
-      pool = this.service.movies.filter((m) => m.backdrop && !m.backdrop.includes("nguonc.com")).slice(0, 16);
-    }
+    const catalogHdMovies = this.service.movies
+      .filter((m) => m && m.backdrop && !m.backdrop.includes("nguonc.com") && (m.rating >= 8.0 || m.year >= 2024))
+      .slice(0, 45);
 
-    // Xáo trộn ngẫu nhiên mỗi lần tải lại trang (Fisher-Yates Shuffle)
+    const pool = Array.from(new Set([...seedMovies, ...catalogHdMovies]));
+
+    // Xáo trộn ngẫu nhiên hoàn toàn mỗi lần tải lại trang (Fisher-Yates Shuffle)
     for (let i = pool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [pool[i], pool[j]] = [pool[j], pool[i]];
     }
 
-    // Chọn ngẫu nhiên 8 phim xuất sắc nhất & chọn slide mở đầu ngẫu nhiên
+    // Chọn ngẫu nhiên 8 phim xuất sắc & chọn vị trí slide mở đầu ngẫu nhiên (đổi liên tục mỗi lần load web)
     this.heroMovies = pool.slice(0, 8);
     this.heroIndex = Math.floor(Math.random() * this.heroMovies.length);
   }
@@ -314,8 +313,19 @@ class AppleCinemaApp {
     const continueItems = this.watchHistory
       .map((h) => ({ movie: this.findMovie(h.slug), epIndex: h.epIndex || 0 }))
       .filter((x) => x.movie);
-    const fallbackContinue = this.service.movies.slice(15, 20).map((m) => ({ movie: m, epIndex: 0 }));
-    const finalContinue = [...continueItems, ...fallbackContinue].slice(0, 5);
+
+    // Chỉ hiển thị khung Xem Tiếp khi người dùng đã thực sự xem phim (tài khoản mới không hiện rác)
+    const continuePanelHTML = continueItems.length > 0 ? `
+        <div class="vision-glass-panel">
+          <div class="vision-panel-header">
+            <span class="vision-panel-title">Xem Tiếp</span>
+            <button class="vision-see-all-pill" onclick="app.setNavigation('lich-su')">Lịch sử</button>
+          </div>
+          <div class="vision-continue-list">
+            ${continueItems.slice(0, 5).map((item) => this.renderVisionContinueItemHTML(item.movie, item.epIndex)).join("")}
+          </div>
+        </div>
+    ` : "";
 
     return `
       <aside class="vision-side-col">
@@ -329,36 +339,17 @@ class AppleCinemaApp {
           </div>
         </div>
 
-        <div class="vision-glass-panel">
-          <div class="vision-panel-header">
-            <span class="vision-panel-title">Xem Tiếp</span>
-            <button class="vision-see-all-pill" onclick="app.setNavigation('lich-su')">Lịch sử</button>
-          </div>
-          <div class="vision-continue-list">
-            ${finalContinue.map((item) => this.renderVisionContinueItemHTML(item.movie, item.epIndex)).join("")}
-          </div>
-        </div>
+        ${continuePanelHTML}
       </aside>
     `;
   }
 
   pickDistinctCategoryHero(list, navKey) {
     if (!list || list.length === 0) return this.heroMovies[0] || this.service.movies[0];
-    const homeHeroSlug = this.heroMovies[0]?.slug || "thanh-guom-diet-quy-vo-han-thanh-465645";
-    const preferredByNav = {
-      "phim-le": "matchbox-phim-dien-anh",
-      "phim-bo": "squid-game-3-765752",
-      "anime": "one-piece-dao-hai-tac",
-      "netflix": "squid-game-3-765752",
-      "vietsub": "tai-xe-an-danh-phan-3",
-      "moi-cap-nhat": "nhiem-vu-bat-kha-thi-nghiep-bao-phan-2-1"
-    };
-    const prefSlug = preferredByNav[navKey];
-    if (prefSlug) {
-      const foundPref = list.find((m) => m.slug === prefSlug) || this.findMovie(prefSlug);
-      if (foundPref) return foundPref;
-    }
-    return list.find((m) => m.slug !== homeHeroSlug) || list[0];
+    const pool = list.filter((m) => m && m.backdrop && !m.backdrop.includes("nguonc.com"));
+    const poolToUse = pool.length >= 3 ? pool.slice(0, 15) : list.slice(0, 8);
+    // Chọn ngẫu nhiên một phim xuất sắc trong danh mục mỗi lần mở
+    return poolToUse[Math.floor(Math.random() * poolToUse.length)] || list[0];
   }
 
   renderSettingsViewHTML() {
