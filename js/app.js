@@ -277,7 +277,8 @@ class AppleCinemaApp {
       "yeu-thich": 1,
       "lich-su": 1,
       "anime": 2,
-      "cai-dat": 3
+      "lich-chieu": 3,
+      "cai-dat": 4
     };
     const targetIdx = dockMap[navKey] !== undefined ? dockMap[navKey] : 0;
 
@@ -566,6 +567,137 @@ class AppleCinemaApp {
     `;
   }
 
+  renderScheduleViewHTML() {
+    const schedule = window.NGWYREN_AIR_SCHEDULE || {};
+    const dayKeys = ["thu-2", "thu-3", "thu-4", "thu-5", "thu-6", "thu-7", "chu-nhat"];
+    const dayNames = {
+      "thu-2": "Thứ 2",
+      "thu-3": "Thứ 3",
+      "thu-4": "Thứ 4",
+      "thu-5": "Thứ 5",
+      "thu-6": "Thứ 6",
+      "thu-7": "Thứ 7",
+      "chu-nhat": "Chủ Nhật"
+    };
+
+    // Xác định ngày hiện tại trong tuần (Hôm nay)
+    const jsDay = new Date().getDay(); // 0: Chủ Nhật, 1: Thứ 2, 2: Thứ 3...
+    const todayKey = jsDay === 0 ? "chu-nhat" : `thu-${jsDay + 1}`;
+
+    if (!this.activeScheduleDay) {
+      this.activeScheduleDay = todayKey;
+    }
+
+    const currentDayKey = this.activeScheduleDay;
+    const dayItems = schedule[currentDayKey] || [];
+
+    const tabsHTML = dayKeys
+      .map((k) => {
+        const isToday = k === todayKey;
+        const isActive = k === currentDayKey;
+        const count = (schedule[k] || []).length;
+        return `
+          <button class="schedule-tab-btn ${isActive ? "active" : ""}"
+                  onclick="app.selectScheduleDay('${k}')"
+                  data-day="${k}">
+            <span class="tab-day-label">${dayNames[k]}</span>
+            ${isToday ? '<span class="tab-today-badge">Hôm nay</span>' : ""}
+            <span class="tab-count-tag">${count} phim</span>
+          </button>
+        `;
+      })
+      .join("");
+
+    const cardsHTML = dayItems.length > 0
+      ? dayItems
+          .map((m) => {
+            const genresHTML = (m.genres || []).slice(0, 2).map((g) => `<span class="sch-genre-tag">${g}</span>`).join("");
+            return `
+              <article class="schedule-card-glass" onclick="app.openMovieModal('${m.slug}', true)">
+                <div class="schedule-card-media">
+                  <img src="${m.poster || m.backdrop}" alt="${m.title}" loading="lazy" decoding="async"
+                       onerror="this.src='https://yanhh3d.ee/wp-content/uploads/2025/12/bach-luyen-thanh-than-3-00.jpg'" />
+                  <div class="schedule-card-top-badges">
+                    <span class="sch-time-pill"><i class="far fa-clock"></i> ${m.airTime || "10:00 Sáng"}</span>
+                    <span class="sch-quality-pill"><i class="fas fa-sparkles"></i> ${m.quality || "4K / 1080p"}</span>
+                  </div>
+                  <div class="schedule-hover-play">
+                    <div class="sch-play-icon"><i class="fas fa-play"></i></div>
+                  </div>
+                </div>
+                <div class="schedule-card-info">
+                  <h3 class="schedule-movie-title" title="${m.title}">${m.title}</h3>
+                  <div class="schedule-movie-sub">${m.originTitle || m.country}</div>
+                  <div class="schedule-movie-chips">
+                    <span class="sch-ep-pill"><i class="fas fa-tv"></i> ${m.currentEpisode || "Tập Mới"}</span>
+                    <span class="sch-lang-pill"><i class="fas fa-microphone"></i> ${m.language || "Vietsub + Thuyết Minh"}</span>
+                  </div>
+                  <div class="schedule-movie-genres">${genresHTML}</div>
+                </div>
+              </article>
+            `;
+          })
+          .join("")
+      : `
+        <div class="schedule-empty-state">
+          <i class="fas fa-calendar-xmark"></i>
+          <h3>Chưa có lịch phát sóng cho ${dayNames[currentDayKey]}</h3>
+          <p>Các tập phim hoạt hình 3D và Anime mới đang được tự động đồng bộ hàng ngày.</p>
+        </div>
+      `;
+
+    return `
+      <div class="vision-dashboard-grid">
+        ${this.renderLeftSideColumnHTML(this.service.movies, "Đang Chiếu")}
+
+        <div class="vision-main-col vision-col-transition">
+          <!-- Spatial Schedule Hero Header -->
+          <section class="schedule-hero-panel">
+            <div class="schedule-hero-details">
+              <div class="schedule-hero-kicker">
+                <i class="fas fa-calendar-days"></i> NGWYREN CINEMA AIR SCHEDULE • TỰ ĐỘNG CẬP NHẬT
+              </div>
+              <h1 class="schedule-hero-title">Lịch Chiếu Hoạt Hình 3D & Anime</h1>
+              <p class="schedule-hero-desc">
+                Khám phá lịch phát sóng định kỳ hàng tuần của các siêu phẩm 3D Donghua và Anime nổi tiếng từ YanHH3D & AnimeVietSub. Xem ngay với chất lượng cao nhất 1080p, 4K Vietsub kèm Thuyết minh.
+              </p>
+            </div>
+          </section>
+
+          <!-- Day of Week Capsule Scroller Bar -->
+          <div class="schedule-tabs-bar">
+            <div class="schedule-tabs-scroll-wrap">
+              ${tabsHTML}
+            </div>
+          </div>
+
+          <!-- Schedule Status Header Bar -->
+          <div class="schedule-status-header">
+            <div class="schedule-status-title">
+              <span class="schedule-status-dot"></span>
+              Phát sóng <strong>${dayNames[currentDayKey]}</strong>
+              ${currentDayKey === todayKey ? '<span class="schedule-live-badge">HÔM NAY ĐANG CHIẾU</span>' : ""}
+            </div>
+            <div class="schedule-status-total">
+              Đang phát sóng: <strong>${dayItems.length} bộ phim</strong>
+            </div>
+          </div>
+
+          <!-- Schedule Cards 4-Column Grid -->
+          <div class="schedule-cards-grid">
+            ${cardsHTML}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  selectScheduleDay(dayKey) {
+    this.activeScheduleDay = dayKey;
+    this.triggerHaptic("light");
+    this.renderMainView();
+  }
+
   applyGlassDynamics(percent) {
     const p = Math.max(0, Math.min(100, Number(percent)));
     const t = p / 100;
@@ -739,6 +871,12 @@ class AppleCinemaApp {
     if (this.currentNav === "cai-dat") {
       container.innerHTML = this.renderSettingsViewHTML();
       this.initGlassSlider();
+      return;
+    }
+
+    // Trang Lịch Chiếu Phim (Hoạt Hình 3D & Anime Showtimes)
+    if (this.currentNav === "lich-chieu") {
+      container.innerHTML = this.renderScheduleViewHTML();
       return;
     }
 
@@ -1748,10 +1886,14 @@ class AppleCinemaApp {
       streamUrl = (episode && episode.source) || (ncEp && ncEp.source) || "";
     }
 
-    // Nếu không có luồng m3u8 trực tiếp mới dùng embed làm phương án dự phòng (có Sandbox chặn quảng cáo)
-    if (!streamUrl) {
+    const isDirectM3u8 = streamUrl && (streamUrl.includes(".m3u8") || streamUrl.includes("/hls/"));
+
+    // Nếu không có luồng m3u8 trực tiếp hoặc nguồn là player embed/iframe, sử dụng iframe với Sandbox an toàn
+    if (!isDirectM3u8) {
       const fallbackEmbed =
-        serverMode === "embed-1"
+        (streamUrl && (streamUrl.includes("http") || streamUrl.includes("//")))
+          ? streamUrl
+          : serverMode === "embed-1"
           ? ncEp?.embed || episode?.embed
           : serverMode === "dub-1"
           ? dubEp?.embed || episode?.embed
@@ -1959,23 +2101,36 @@ class AppleCinemaApp {
   }
 
   setVideoQuality(qualityMode, showNotification = true) {
-    // Nếu người dùng bấm chuyển sang luồng .m3u8 của Server phụ (alt-0, alt-1...)
+    // Nếu người dùng bấm chuyển sang luồng .m3u8 hoặc Server phụ (alt-0, alt-1...)
     if (qualityMode.startsWith("alt-")) {
       const altIdx = parseInt(qualityMode.replace("alt-", ""), 10);
       const ep = this.selectedMovie?.episodes?.[this.currentEpisodeIndex] || this.selectedMovie?.episodes?.[0];
       const altObj = ep?.altSources?.[altIdx];
-      if (altObj && altObj.source && this.hlsInstance) {
+      if (altObj) {
         const videoEl = document.getElementById("hlsVideoElement");
-        const resumeTime = videoEl ? videoEl.currentTime : 0;
+        const iframeEl = document.getElementById("trailerIframeElement");
+        const isAltM3u8 = altObj.source && (altObj.source.includes(".m3u8") || altObj.source.includes("/hls/"));
+        if (isAltM3u8 && this.hlsInstance) {
+          const resumeTime = videoEl ? videoEl.currentTime : 0;
+          this.currentQuality = qualityMode;
+          this.hlsInstance.loadSource(altObj.source);
+          this.hlsInstance.once(window.Hls.Events.MANIFEST_PARSED, () => {
+            if (videoEl && resumeTime > 1) videoEl.currentTime = resumeTime;
+            videoEl?.play().catch(() => {});
+          });
+        } else if (iframeEl) {
+          this.destroyHls();
+          if (videoEl) {
+            videoEl.pause();
+            videoEl.style.display = "none";
+          }
+          iframeEl.src = altObj.embed || altObj.source;
+          iframeEl.style.display = "block";
+        }
         this.currentQuality = qualityMode;
-        this.hlsInstance.loadSource(altObj.source);
-        this.hlsInstance.once(window.Hls.Events.MANIFEST_PARSED, () => {
-          if (videoEl && resumeTime > 1) videoEl.currentTime = resumeTime;
-          videoEl?.play().catch(() => {});
-        });
         this.renderDynamicQualityButtons();
         if (showNotification) {
-          this.showToast(`Đã chuyển sang luồng .m3u8 từ ${altObj.label}`);
+          this.showToast(`Đã chuyển sang ${altObj.label}`);
         }
         return;
       }

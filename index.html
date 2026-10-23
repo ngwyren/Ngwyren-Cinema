@@ -71,7 +71,10 @@
       <button class="vision-dock-icon" data-nav="anime" data-dock-idx="2" data-label="Anime" onclick="app.setNavigation('anime')" title="Kho Phim Anime">
         <i class="fas fa-dragon"></i>
       </button>
-      <button class="vision-dock-icon" data-nav="cai-dat" data-dock-idx="3" data-label="Cài Đặt" onclick="app.setNavigation('cai-dat')" title="Cài Đặt Hệ Thống">
+      <button class="vision-dock-icon" data-nav="lich-chieu" data-dock-idx="3" data-label="Lịch Chiếu" onclick="app.setNavigation('lich-chieu')" title="Lịch Chiếu Phim">
+        <i class="fas fa-calendar-days"></i>
+      </button>
+      <button class="vision-dock-icon" data-nav="cai-dat" data-dock-idx="4" data-label="Cài Đặt" onclick="app.setNavigation('cai-dat')" title="Cài Đặt Hệ Thống">
         <i class="fas fa-gear"></i>
       </button>
     </aside>
@@ -99,12 +102,13 @@
           <div class="search-dropdown" id="searchDropdown"></div>
         </div>
 
-        <!-- Center Category Pills (Khám Phá | Phim Lẻ | Phim Bộ | Hoạt Hình | Netflix) -->
+        <!-- Center Category Pills (Khám Phá | Phim Lẻ | Phim Bộ | Hoạt Hình | Lịch Chiếu | Netflix) -->
         <nav class="vision-nav-pills" id="visionNavPills" aria-label="Danh mục chính">
           <button class="vision-nav-pill active" data-nav="kham-pha" onclick="app.resetAllFilters()">Khám Phá</button>
           <button class="vision-nav-pill" data-nav="phim-le" onclick="app.setNavigation('phim-le')">Phim Lẻ</button>
           <button class="vision-nav-pill" data-nav="phim-bo" onclick="app.setNavigation('phim-bo')">Phim Bộ</button>
           <button class="vision-nav-pill" data-nav="anime" onclick="app.setNavigation('anime')">Hoạt Hình</button>
+          <button class="vision-nav-pill" data-nav="lich-chieu" onclick="app.setNavigation('lich-chieu')">Lịch Chiếu</button>
           <button class="vision-nav-pill" data-nav="netflix" onclick="app.setNavigation('netflix')">Netflix</button>
         </nav>
 
@@ -250,13 +254,13 @@
       <i class="fas fa-house"></i>
       <span>Khám Phá</span>
     </button>
-    <button class="dock-tab-btn" data-nav="phim-le" onclick="app.setNavigation('phim-le')">
-      <i class="fas fa-film"></i>
-      <span>Movies</span>
-    </button>
     <button class="dock-tab-btn" data-nav="anime" onclick="app.setNavigation('anime')">
       <i class="fas fa-dragon"></i>
       <span>Anime</span>
+    </button>
+    <button class="dock-tab-btn" data-nav="lich-chieu" onclick="app.setNavigation('lich-chieu')">
+      <i class="fas fa-calendar-days"></i>
+      <span>Lịch Chiếu</span>
     </button>
     <button class="dock-tab-btn" data-nav="netflix" onclick="app.setNavigation('netflix')">
       <i class="fas fa-circle-play"></i>
@@ -287,9 +291,10 @@
   </div>
 
   <!-- Scripts -->
-  <script src="js/movies-catalog.js?v=6.6"></script>
-  <script src="js/data.js?v=6.6"></script>
-  <script src="js/auth-config.js?v=6.6"></script>
-  <script src="js/app.js?v=6.6"></script>
+  <script src="js/movies-catalog.js?v=7.0"></script>
+  <script src="js/air-schedule.js?v=7.0"></script>
+  <script src="js/data.js?v=7.0"></script>
+  <script src="js/auth-config.js?v=7.0"></script>
+  <script src="js/app.js?v=7.0"></script>
 </body>
 </html>

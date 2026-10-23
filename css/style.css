@@ -6192,3 +6192,442 @@ html.dragging-glass .vision-left-dock {
   box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.5) !important;
   filter: none !important;
 }
+
+/* ==========================================================================
+   VISIONOS AIR SCHEDULE (LỊCH CHIẾU PHIM HOẠT HÌNH 3D & ANIME HÀNG TUẦN)
+   Thiết kế chuẩn Apple Liquid Glass, Tab ngày động học, Thẻ phim 4 cột
+   ========================================================================== */
+
+.schedule-hero-panel {
+  position: relative;
+  border-radius: 24px;
+  padding: 34px 38px;
+  margin-bottom: 24px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-top: 1.5px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.schedule-hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #38ef7d;
+  background: rgba(56, 239, 125, 0.12);
+  border: 1px solid rgba(56, 239, 125, 0.28);
+  padding: 5px 14px;
+  border-radius: 999px;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+
+.schedule-hero-title {
+  font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.18;
+  margin: 0 0 10px 0;
+  letter-spacing: -0.02em;
+}
+
+.schedule-hero-desc {
+  font-size: 0.96rem;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.55;
+  margin: 0;
+  max-width: 820px;
+}
+
+/* Day of Week Tabs Bar */
+.schedule-tabs-bar {
+  margin-bottom: 22px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.schedule-tabs-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.schedule-tabs-scroll-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: max-content;
+  padding: 4px 2px;
+}
+
+.schedule-tab-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 10px 20px;
+  min-width: 108px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: rgba(255, 255, 255, 0.78);
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.schedule-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.22);
+  transform: translateY(-2px);
+}
+
+.schedule-tab-btn.active {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85)) !important;
+  color: #111216 !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 1px #ffffff !important;
+  transform: translateY(-2px);
+}
+
+.tab-day-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.tab-today-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #16a34a;
+  background: rgba(22, 163, 74, 0.18);
+  padding: 2px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+}
+.schedule-tab-btn.active .tab-today-badge {
+  color: #15803d;
+  background: rgba(21, 128, 61, 0.2);
+}
+
+.tab-count-tag {
+  font-size: 0.72rem;
+  opacity: 0.75;
+  font-weight: 500;
+}
+
+/* Schedule Status Header Bar */
+.schedule-status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.schedule-status-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.schedule-status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #30d158;
+  box-shadow: 0 0 10px #30d158;
+  animation: appleLivePulse 2s infinite ease-in-out;
+}
+@keyframes appleLivePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.85); }
+}
+
+.schedule-live-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #30d158;
+  background: rgba(48, 209, 88, 0.16);
+  border: 1px solid rgba(48, 209, 88, 0.3);
+  padding: 3px 9px;
+  border-radius: 999px;
+  margin-left: 6px;
+}
+
+.schedule-status-total {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* Schedule Cards Grid (Matches Vision Pro 4-Column Layout) */
+.schedule-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .schedule-cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 768px) {
+  .schedule-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .schedule-hero-panel {
+    padding: 22px 20px;
+  }
+}
+
+/* Schedule Glass Card */
+.schedule-card-glass {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  overflow: hidden;
+  cursor: pointer;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+.schedule-card-glass:hover {
+  transform: translateY(-6px);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.45);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.schedule-card-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: #0a0b0e;
+}
+
+.schedule-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.schedule-card-glass:hover .schedule-card-media img {
+  transform: scale(1.06);
+}
+
+.schedule-card-top-badges {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.sch-time-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sch-quality-pill {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #ffd60a;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 214, 10, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.schedule-hover-play {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.65) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  z-index: 1;
+}
+
+.schedule-card-glass:hover .schedule-hover-play {
+  opacity: 1;
+}
+
+.sch-play-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #111216;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  padding-left: 3px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  transform: scale(0.85);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.schedule-card-glass:hover .sch-play-icon {
+  transform: scale(1);
+}
+
+.schedule-card-info {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-grow: 1;
+}
+
+.schedule-movie-title {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.schedule-movie-sub {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.schedule-movie-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.sch-ep-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #38ef7d;
+  background: rgba(56, 239, 125, 0.12);
+  border: 1px solid rgba(56, 239, 125, 0.22);
+  padding: 3px 9px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sch-lang-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #0a84ff;
+  background: rgba(10, 132, 255, 0.12);
+  border: 1px solid rgba(10, 132, 255, 0.22);
+  padding: 3px 9px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.schedule-movie-genres {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.sch-genre-tag {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.schedule-empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.schedule-empty-state i {
+  font-size: 2.8rem;
+  margin-bottom: 14px;
+  opacity: 0.5;
+}
+
+.schedule-empty-state h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+}
+
+.schedule-empty-state p {
+  font-size: 0.92rem;
+  margin: 0;
+  max-width: 480px;
+}

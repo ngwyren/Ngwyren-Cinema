@@ -1,0 +1,40 @@
+name: Daily Movie & Showtimes Auto-Updater
+
+on:
+  schedule:
+    # Chạy tự động mỗi ngày lúc 12:00 đêm (00:00 ICT Việt Nam = 17:00 UTC)
+    - cron: '0 17 * * *'
+  workflow_dispatch: # Cho phép bấm nút cập nhật thủ công bất kỳ lúc nào
+
+permissions:
+  contents: write
+
+jobs:
+  update-movies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Crawl & Ingest Movies from yanhh3d.ee and animevietsub.sale
+        run: |
+          python3 scripts/ingest_catalogs.py
+
+      - name: Commit and Push Updated Catalog & Schedule
+        run: |
+          git config --global user.name "Ngwyren Cinema Bot"
+          git config --global user.email "bot@ngwyren.cinema"
+          git add js/movies-catalog.js js/air-schedule.js
+          if git diff --staged --quiet; then
+            echo "Kho phim và lịch chiếu đã ở trạng thái mới nhất, không có thay đổi."
+          else
+            git commit -m "chore(auto-update): đồng bộ phim mới và cập nhật lịch chiếu hàng ngày [skip ci]"
+            git push origin main
+          fi

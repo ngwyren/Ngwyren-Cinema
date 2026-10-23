@@ -1650,6 +1650,52 @@ class PhimmoiService {
       }
     }
 
+    // 4. Nguồn YanHH3D & AnimeVietSub (Multi-Server: 1080p, 4K, Vietsub, Thuyết Minh)
+    if (movie.sourceSite === "yanhh3d.ee" || movie.yanPostId) {
+      const postId = movie.yanPostId || String(movie.id).replace("yan-", "");
+      if (postId) {
+        movie.episodes = movie.episodes || [];
+        if (movie.episodes.length === 0) {
+          movie.episodes = [{
+            name: "Tập 1",
+            slug: "tap-1",
+            source: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=tap-1&type=tiktik&sv=1`,
+            embed: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=tap-1&type=tiktik&sv=1`
+          }];
+        }
+        movie.episodes.forEach((ep) => {
+          const epSlug = ep.slug || "tap-1";
+          ep.altSources = [
+            {
+              id: "yan-vt-1",
+              label: "1080p Vietsub V1",
+              source: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=tiktik&sv=1`,
+              embed: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=tiktik&sv=1`
+            },
+            {
+              id: "yan-vt-2",
+              label: "1080p Vietsub V2",
+              source: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=pro&sv=1`,
+              embed: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=pro&sv=1`
+            },
+            {
+              id: "yan-tm",
+              label: "4K Thuyết Minh",
+              source: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=vippro&sv=1`,
+              embed: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=vippro&sv=1`
+            }
+          ];
+        });
+
+        movie.dubEpisodes = movie.episodes.map((ep) => ({
+          name: `${ep.name} (Thuyết Minh)`,
+          slug: `${ep.slug}-tm`,
+          source: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${ep.slug || "tap-1"}&type=vippro&sv=1`,
+          embed: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${ep.slug || "tap-1"}&type=vippro&sv=1`
+        }));
+      }
+    }
+
     return movie;
   }
 
