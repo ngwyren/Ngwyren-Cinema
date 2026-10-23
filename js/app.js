@@ -290,14 +290,11 @@ class AppleCinemaApp {
     const container = document.getElementById("mainContentWrapper");
     if (container) {
       container.classList.remove("vision-view-enter");
-      void container.offsetWidth;
-      container.classList.add("vision-view-enter");
-    }
-    const mainCol = container?.querySelector(".vision-main-col");
-    if (mainCol) {
-      mainCol.classList.remove("vision-col-transition");
-      void mainCol.offsetWidth;
-      mainCol.classList.add("vision-col-transition");
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          container.classList.add("vision-view-enter");
+        });
+      });
     }
   }
 
@@ -513,10 +510,10 @@ class AppleCinemaApp {
                 </div>
                 <div class="vision-setting-pills">
                   <button class="filter-chip ${s.defaultServer === 'hls-1' ? 'active' : ''}" onclick="app.updateSetting('defaultServer', 'hls-1')">
-                    Vietsub #1
+                    Server 1
                   </button>
                   <button class="filter-chip ${s.defaultServer === 'embed-1' ? 'active' : ''}" onclick="app.updateSetting('defaultServer', 'embed-1')">
-                    Vietsub #2
+                    Server 2
                   </button>
                   <button class="filter-chip ${s.defaultServer === 'dub-1' ? 'active' : ''}" onclick="app.updateSetting('defaultServer', 'dub-1')">
                     Thuyết Minh
@@ -619,10 +616,15 @@ class AppleCinemaApp {
       fill.style.width = percent + "%";
       thumb.style.left = percent + "%";
 
-      const blurPx = Math.round(12 + (percent / 100) * 38);
-      const alpha = (0.42 + (percent / 100) * 0.48).toFixed(2);
-      document.documentElement.style.setProperty("--glass-dyn-blur", `${blurPx}px`);
-      document.documentElement.style.setProperty("--glass-dyn-alpha", `${alpha}`);
+      // Phổ mờ kính từ 4px (siêu trong suốt thấy rõ phòng) đến 54px (kính mờ đặc bí mật)
+      const blurPx = Math.round(4 + (percent / 100) * 50);
+      const alpha = (0.15 + (percent / 100) * 0.80).toFixed(2);
+      const panelAlpha = (0.02 + (percent / 100) * 0.78).toFixed(2);
+      const root = document.documentElement;
+      root.style.setProperty("--glass-dyn-blur", `${blurPx}px`);
+      root.style.setProperty("--glass-dyn-alpha", `${alpha}`);
+      root.style.setProperty("--glass-panel-alpha", `${panelAlpha}`);
+      root.setAttribute("data-glass", percent < 25 ? "clear" : (percent > 75 ? "frost" : "standard"));
 
       document.querySelectorAll(".ios-label-stop").forEach((el, idx) => {
         const val = idx === 0 ? 0 : idx === 1 ? 50 : 100;
@@ -637,6 +639,7 @@ class AppleCinemaApp {
 
     track.onpointerdown = (e) => {
       isDragging = true;
+      document.documentElement.classList.add("dragging-glass");
       track.classList.add("dragging");
       thumb.classList.add("dragging");
       track.setPointerCapture(e.pointerId);
@@ -651,6 +654,7 @@ class AppleCinemaApp {
     const handlePointerEnd = (e) => {
       if (!isDragging) return;
       isDragging = false;
+      document.documentElement.classList.remove("dragging-glass");
       track.classList.remove("dragging");
       thumb.classList.remove("dragging");
       try { track.releasePointerCapture(e.pointerId); } catch (_) {}
@@ -695,11 +699,14 @@ class AppleCinemaApp {
     else if (s.glassBlur === "clear") percent = 0;
     else if (s.glassBlur === "frost") percent = 100;
 
-    const blurPx = Math.round(12 + (percent / 100) * 38);
-    const alpha = (0.42 + (percent / 100) * 0.48).toFixed(2);
+    // Phổ mờ kính: Trong Suốt (0% -> 4px, alpha 0.15), Tiêu Chuẩn (50% -> 29px, alpha 0.55), Kính Mờ (100% -> 54px, alpha 0.95)
+    const blurPx = Math.round(4 + (percent / 100) * 50);
+    const alpha = (0.15 + (percent / 100) * 0.80).toFixed(2);
+    const panelAlpha = (0.02 + (percent / 100) * 0.78).toFixed(2);
     root.style.setProperty("--glass-dyn-blur", `${blurPx}px`);
     root.style.setProperty("--glass-dyn-alpha", `${alpha}`);
-    root.setAttribute("data-glass", percent === 0 ? "clear" : (percent === 100 ? "frost" : "standard"));
+    root.style.setProperty("--glass-panel-alpha", `${panelAlpha}`);
+    root.setAttribute("data-glass", percent < 25 ? "clear" : (percent > 75 ? "frost" : "standard"));
   }
 
   setThemeMode(theme) {
@@ -1551,14 +1558,30 @@ class AppleCinemaApp {
         </div>
       </div>
 
-      <!-- Server & Stream Switcher Toolbar (Multi-Source Netflix, Vietsub & 4K/2K Quality Switcher) -->
+      <!-- Server & Stream Switcher Toolbar (Multi-Source Server 1 / Server 2 & 4K/2K Quality Switcher) -->
       <div class="player-toolbar">
         <div class="player-toolbar-left">
-          <span class="server-label"><i class="fas fa-closed-captioning"></i> Nguồn phát:</span>
-          <button class="server-btn active" id="srvBtnHls1"
-                  onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'hls-1')" title="Phát phim Vietsub chất lượng tốt nhất">
-            <i class="fas fa-closed-captioning"></i> Vietsub
+          <span class="server-label"><i class="fas fa-server"></i> Nguồn phát:</span>
+          <button class="server-btn ${this.currentServerMode === "hls-1" || !this.currentServerMode ? "active" : ""}" id="srvBtnHls1"
+                  onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'hls-1')" title="Phát Server 1 chất lượng tốt nhất">
+            <i class="fas fa-server"></i> Server 1
           </button>
+          ${
+            movie.nguoncEpisodes && movie.nguoncEpisodes.length > 0
+              ? `<button class="server-btn ${this.currentServerMode === "embed-1" ? "active" : ""}" id="srvBtnEmbed1"
+                        onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'embed-1')" title="Phát Server 2">
+                  <i class="fas fa-server"></i> Server 2
+                </button>`
+              : ""
+          }
+          ${
+            movie.dubEpisodes && movie.dubEpisodes.length > 0
+              ? `<button class="server-btn ${this.currentServerMode === "dub-1" ? "active" : ""}" id="srvBtnDub1"
+                        onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'dub-1')" title="Phát bản Thuyết Minh">
+                  <i class="fas fa-microphone"></i> Thuyết Minh
+                </button>`
+              : ""
+          }
           ${
             movie.trailerUrl
               ? `<button class="server-btn ${this.currentServerMode === "trailer" ? "active" : ""}" id="srvBtnTrailer"
