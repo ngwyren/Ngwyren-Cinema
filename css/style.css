@@ -2764,12 +2764,13 @@ body {
 .vision-left-dock {
   --dock-idx: 0;
   position: fixed;
-  left: 12px;
+  left: 18px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 50;
-  width: 52px;
-  padding: 8px 0;
+  width: 56px;
+  height: auto !important;
+  padding: 10px 0;
   border-radius: 999px;
   background: linear-gradient(
     145deg,
@@ -2787,23 +2788,23 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 /* Sliding Liquid Glass Pill Indicator inside Dock (Perfectly Centered & Matching Main Window Active Pill) */
 .vision-dock-indicator {
   position: absolute;
-  top: 8px;
+  top: 10px;
   left: 50%;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.22);
   border: 1px solid rgba(255, 255, 255, 0.34);
   box-shadow:
     inset 0 1px 0.5px rgba(255, 255, 255, 0.45),
     0 4px 14px rgba(0, 0, 0, 0.25);
-  transform: translate3d(-50%, calc(var(--dock-idx, 0) * 50px), 0);
+  transform: translate3d(-50%, calc(var(--dock-idx, 0) * 54px), 0);
   transition: transform 0.46s cubic-bezier(0.22, 1.28, 0.36, 1);
   pointer-events: none;
   z-index: 0;
@@ -2815,19 +2816,19 @@ body {
 
 @keyframes liquidDockStretch {
   0% {
-    width: 40px;
+    width: 42px;
     border-radius: 50%;
   }
   38% {
-    width: 34px;
+    width: 36px;
     border-radius: 20px;
     background: rgba(255, 255, 255, 0.3);
   }
   78% {
-    width: 41px;
+    width: 43px;
   }
   100% {
-    width: 40px;
+    width: 42px;
     border-radius: 50%;
   }
 }
@@ -2835,8 +2836,8 @@ body {
 .vision-dock-icon {
   position: relative;
   z-index: 1;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   border: none;
   background: transparent;
@@ -2844,7 +2845,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.94rem;
+  font-size: 0.96rem;
   cursor: pointer;
   transition: color 0.25s ease, transform 0.32s cubic-bezier(0.22, 1.35, 0.36, 1);
 }
@@ -3028,8 +3029,11 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  padding: 6px 4px;
   overflow-x: auto;
+  overflow-y: visible;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 .vision-nav-pills::-webkit-scrollbar {
   display: none;
@@ -3039,7 +3043,7 @@ body {
   background: transparent;
   border: 1px solid transparent;
   color: rgba(255, 255, 255, 0.72);
-  padding: 9px 18px;
+  padding: 8px 16px;
   border-radius: 999px;
   font-size: 0.85rem;
   font-weight: 600;
@@ -3048,26 +3052,30 @@ body {
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  box-sizing: border-box;
+  line-height: 1.25;
   transition:
     background 0.28s cubic-bezier(0.22, 1, 0.36, 1),
     border-color 0.28s cubic-bezier(0.22, 1, 0.36, 1),
     color 0.25s ease,
-    transform 0.28s cubic-bezier(0.22, 1.35, 0.36, 1);
+    box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .vision-nav-pill:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
-  transform: translateY(-1px);
 }
 
 .vision-nav-pill.active {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, 0.38);
   color: #ffffff;
-  box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.42);
-  transform: scale(1.03);
+  box-shadow:
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.5),
+    0 2px 10px rgba(0, 0, 0, 0.28);
+  transform: none;
 }
 
 .vision-count-tag {
@@ -4011,9 +4019,11 @@ body.modal-open .apple-player-bar {
   }
   .vision-left-dock {
     display: flex !important;
-    left: 20px;
-    width: 64px;
-    height: min(460px, 80vh);
+    left: 20px !important;
+    width: 56px !important;
+    height: auto !important;
+    padding: 10px 0 !important;
+    gap: 12px !important;
   }
   .vision-dashboard-grid {
     display: grid !important;
@@ -4052,8 +4062,10 @@ body.modal-open .apple-player-bar {
   .vision-left-dock {
     display: flex !important;
     left: 14px !important;
-    width: 58px !important;
-    height: min(430px, 78vh) !important;
+    width: 56px !important;
+    height: auto !important;
+    padding: 10px 0 !important;
+    gap: 12px !important;
   }
   .vision-window {
     border-radius: 26px !important;
@@ -4116,6 +4128,7 @@ body.modal-open .apple-player-bar {
   .vision-nav-pills {
     grid-column: 1 / -1;
     justify-content: flex-start;
+    padding: 6px 4px !important;
   }
   .vision-dashboard-grid {
     display: grid !important;
@@ -4218,7 +4231,7 @@ body.modal-open .apple-player-bar {
     scroll-snap-type: x proximity !important;
     -webkit-overflow-scrolling: touch !important;
     gap: 8px !important;
-    padding: 2px 2px 6px !important;
+    padding: 6px 4px !important;
     scrollbar-width: none !important;
   }
   .vision-nav-pills::-webkit-scrollbar {
