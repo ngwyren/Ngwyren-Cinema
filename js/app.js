@@ -57,8 +57,8 @@ class AppleCinemaApp {
     this.bindGlobalEvents();
     this.updateSidebarCounts();
 
-    // Khởi tạo thanh Now Playing mặc định với bộ phim đầu tiên trong lịch sử
-    const initialPlaying = this.service.slugMap.get(this.watchHistory[0]?.slug) || this.service.movies[0];
+    // Khởi tạo thanh Now Playing mặc định với bộ phim đầu tiên trong lịch sử hoặc ngẫu nhiên từ Hero
+    const initialPlaying = this.service.slugMap.get(this.watchHistory[0]?.slug) || this.heroMovies[this.heroIndex] || this.service.movies[0];
     this.setNowPlayingBar(initialPlaying, 0, false);
 
     // Render giao diện tức thì (0ms)
@@ -118,7 +118,7 @@ class AppleCinemaApp {
   }
 
   setupHeroMovies() {
-    const preferredSlugs = [
+    const candidateSlugs = [
       "thanh-guom-diet-quy-vo-han-thanh-465645",
       "matchbox-phim-dien-anh",
       "squid-game-3-765752",
@@ -126,14 +126,35 @@ class AppleCinemaApp {
       "tai-xe-an-danh-phan-3",
       "nhiem-vu-bat-kha-thi-nghiep-bao-phan-2-1",
       "chainsaw-man-the-movie-chuong-reze",
-      "phi-vu-dong-troi-2"
+      "phi-vu-dong-troi-2",
+      "cau-be-mat-tich-phan-5",
+      "chu-thuat-hoi-chien-hoai-ngoc-ngoc-chiet-the-movie",
+      "tham-tu-kien-ky-an-khong-dau",
+      "good-boy-18",
+      "nha-gia-tien",
+      "cu-roi-tu-than-2-diem-chet",
+      "100-ngay-lua-doi",
+      "dich-nhan-kiet-lang-nhan-kiep"
     ];
-    this.heroMovies = preferredSlugs
+
+    // Lọc các phim bom tấn hợp lệ có ảnh nền nét
+    let pool = candidateSlugs
       .map((s) => this.service.slugMap.get(s))
-      .filter(Boolean);
-    if (this.heroMovies.length === 0) {
-      this.heroMovies = this.service.movies.slice(0, 6);
+      .filter((m) => m && (m.backdrop || m.poster));
+
+    if (pool.length < 6) {
+      pool = this.service.movies.filter((m) => m.backdrop && !m.backdrop.includes("nguonc.com")).slice(0, 16);
     }
+
+    // Xáo trộn ngẫu nhiên mỗi lần tải lại trang (Fisher-Yates Shuffle)
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+
+    // Chọn ngẫu nhiên 8 phim xuất sắc nhất & chọn slide mở đầu ngẫu nhiên
+    this.heroMovies = pool.slice(0, 8);
+    this.heroIndex = Math.floor(Math.random() * this.heroMovies.length);
   }
 
   /* ==========================================================================
@@ -252,13 +273,26 @@ class AppleCinemaApp {
   }
 
   renderLeftSideColumnHTML(contextMovies = null, panelTitle = "🔥 Phim & Trailer Mới") {
-    // Luôn đảm bảo đủ đúng 15 phim mới và cuộn mượt mà
-    let list15 = contextMovies && contextMovies.length ? [...contextMovies] : [];
-    if (list15.length < 15) {
-      for (const m of this.service.movies) {
-        if (!list15.some((x) => x.slug === m.slug)) {
-          list15.push(m);
-          if (list15.length >= 15) break;
+    // Luôn đảm bảo đủ đúng 15 phim mới, ngẫu nhiên hóa mỗi lần tải lại trang
+    let list15 = [];
+    if (!contextMovies || contextMovies === this.service.movies) {
+      if (!this._shuffledTrailers) {
+        const topPool = this.service.movies.slice(0, 45);
+        for (let i = topPool.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [topPool[i], topPool[j]] = [topPool[j], topPool[i]];
+        }
+        this._shuffledTrailers = topPool.slice(0, 15);
+      }
+      list15 = this._shuffledTrailers;
+    } else {
+      list15 = [...contextMovies];
+      if (list15.length < 15) {
+        for (const m of this.service.movies) {
+          if (!list15.some((x) => x.slug === m.slug)) {
+            list15.push(m);
+            if (list15.length >= 15) break;
+          }
         }
       }
     }
