@@ -244,6 +244,7 @@ class AppleCinemaApp {
 
   syncLeftDockIndicator(navKey) {
     const dockEl = document.getElementById("appleSidebar");
+    const indicator = document.getElementById("visionDockIndicator");
     if (!dockEl) return;
     const dockMap = {
       "kham-pha": 0,
@@ -258,6 +259,13 @@ class AppleCinemaApp {
       "cai-dat": 4
     };
     const targetIdx = dockMap[navKey] !== undefined ? dockMap[navKey] : 0;
+
+    // Hiệu ứng co giãn thấu kính chất lỏng Liquid Glass
+    if (indicator && dockEl.style.getPropertyValue("--dock-idx") !== String(targetIdx)) {
+      indicator.classList.add("is-morphing");
+      setTimeout(() => indicator.classList.remove("is-morphing"), 220);
+    }
+
     dockEl.style.setProperty("--dock-idx", String(targetIdx));
     document.querySelectorAll(".vision-dock-icon").forEach((btn) => {
       btn.classList.toggle("active", Number(btn.dataset.dockIdx) === targetIdx);
@@ -1522,27 +1530,15 @@ class AppleCinemaApp {
       <!-- Server & Stream Switcher Toolbar (Multi-Source Netflix, Vietsub & 4K/2K Quality Switcher) -->
       <div class="player-toolbar">
         <div class="player-toolbar-left">
-          <span class="server-label"><i class="fas fa-server"></i> Nguồn phát Vietsub:</span>
-          <button class="server-btn ${this.currentServerMode === "hls-1" ? "active" : ""}" id="srvBtnHls1"
-                  onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'hls-1')">
-            <i class="fas fa-circle-play"></i> Netflix Vietsub #1 (HLS)
-          </button>
-          <button class="server-btn ${this.currentServerMode === "embed-1" ? "active" : ""}" id="srvBtnEmbed1"
-                  onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'embed-1')">
-            <i class="fas fa-closed-captioning"></i> Vietsub #2 (Embed FHD)
-          </button>
-          <button class="server-btn ${this.currentServerMode === "nguonc-1" ? "active" : ""}" id="srvBtnNguonc1"
-                  onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'nguonc-1')">
-            <i class="fas fa-cloud"></i> Vietsub #3 (StreamC)
-          </button>
-          <button class="server-btn ${this.currentServerMode === "dub-1" ? "active" : ""}" id="srvBtnDub1"
-                  onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'dub-1')">
-            <i class="fas fa-microphone-lines"></i> Lồng Tiếng / Thuyết Minh
+          <span class="server-label"><i class="fas fa-closed-captioning"></i> Nguồn phát:</span>
+          <button class="server-btn active" id="srvBtnHls1"
+                  onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'hls-1')" title="Phát phim Vietsub chất lượng tốt nhất">
+            <i class="fas fa-closed-captioning"></i> Vietsub
           </button>
           ${
             movie.trailerUrl
               ? `<button class="server-btn ${this.currentServerMode === "trailer" ? "active" : ""}" id="srvBtnTrailer"
-                        onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'trailer')">
+                        onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'trailer')" title="Xem Trailer">
                   <i class="fab fa-youtube"></i> Trailer
                 </button>`
               : ""
@@ -1977,64 +1973,9 @@ class AppleCinemaApp {
   }
 
   buildQualityButtonsHTML() {
-    const buttons = [];
-    const levels = this.detectedHlsLevels || [];
-    const ep = this.selectedMovie?.episodes?.[this.currentEpisodeIndex] || this.selectedMovie?.episodes?.[0];
-    const altSources = ep?.altSources || [];
-
-    if (levels.length > 1) {
-      // Phim có nhiều mức chất lượng thật trong luồng .m3u8 (Multi-variant HLS)
-      for (let i = levels.length - 1; i >= 0; i--) {
-        const l = levels[i];
-        const isBest = i === levels.length - 1;
-        const key = isBest ? "native-max" : `level-${l.index}`;
-        buttons.push({
-          key,
-          label: isBest ? `★ Tốt nhất (${l.shortLabel})` : l.shortLabel,
-          title: `Chuyển sang luồng gốc ${l.detailLabel}`
-        });
-      }
-      buttons.push({
-        key: "Auto",
-        label: "Auto (ABR)",
-        title: "Tự động điều chỉnh chất lượng theo tốc độ mạng"
-      });
-    } else {
-      // Luồng .m3u8 chỉ hiển thị chất lượng gốc tốt nhất (Full HD 1080p)
-      const w = this.actualVideoRes.width || 1920;
-      const h = this.actualVideoRes.height || 1080;
-      const mbps = this.actualVideoRes.bitrateMbps || 3.5;
-      const nativeTier = this.resolveResolutionTier(w, h);
-      buttons.push({
-        key: "native-max",
-        label: `★ Chất lượng tốt nhất: ${nativeTier} (${w}×${h} • ${mbps}M)`,
-        title: `Đang phát ở chất lượng gốc tốt nhất từ CDN (${w}×${h}, ${mbps} Mbps)`
-      });
-    }
-
-    // Nếu tập phim có nhiều luồng .m3u8 từ các Server khác nhau (VD: Hà Nội / Đà Nẵng / StreamC)
-    if (altSources.length > 1) {
-      altSources.forEach((alt, idx) => {
-        buttons.push({
-          key: `alt-${idx}`,
-          label: `Luồng #${idx + 1} (${alt.label.replace(/^#/, "")})`,
-          title: `Đổi sang luồng .m3u8 từ ${alt.label}`
-        });
-      });
-    }
-
-    return buttons
-      .map(
-        (b) => `
-      <button class="quality-pill-btn ${this.currentQuality === b.key ? "active" : ""}"
-              data-quality="${b.key}"
-              title="${b.title}"
-              onclick="app.setVideoQuality('${b.key}', true)">
-        ${b.label}
-      </button>
-    `
-      )
-      .join("");
+    return `<button class="quality-pill-btn active" data-quality="native-max" title="Độ phân giải Full HD sắc nét">
+      1080p
+    </button>`;
   }
 
   renderDynamicQualityButtons() {
@@ -2562,18 +2503,8 @@ class AppleCinemaApp {
   }
 
   showToast(message) {
-    const container = document.getElementById("toastContainer");
-    if (!container) return;
-    const toast = document.createElement("div");
-    toast.className = "apple-toast";
-    toast.innerHTML = `<i class="fas fa-circle-check" style="color: #ffffff;"></i><span>${message}</span>`;
-    container.appendChild(toast);
-    setTimeout(() => {
-      toast.style.opacity = "0";
-      toast.style.transform = "translateY(-10px)";
-      toast.style.transition = "all 0.3s ease";
-      setTimeout(() => toast.remove(), 300);
-    }, 3200);
+    // Tắt toàn bộ thông báo toast theo yêu cầu người dùng
+    return;
   }
 
   bindGlobalEvents() {
