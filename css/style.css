@@ -1094,8 +1094,13 @@ body::-webkit-scrollbar {
   align-items: center;
   gap: 10px;
   overflow-x: auto;
-  padding-bottom: 6px;
-  scrollbar-width: none;
+  overflow-y: visible;
+  padding: 10px 4px !important;
+  margin-top: -4px;
+  margin-bottom: 14px;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  -webkit-overflow-scrolling: touch;
 }
 .quick-filters-bar::-webkit-scrollbar {
   display: none;
@@ -2653,8 +2658,8 @@ html {
 
   .quick-filters-bar {
     gap: 8px;
-    margin-bottom: 22px;
-    padding-bottom: 6px;
+    margin-bottom: 16px;
+    padding: 8px 4px !important;
   }
 
   .filter-chip {
@@ -6050,5 +6055,25 @@ body.modal-open .apple-player-bar {
 .vision-nav-pill:hover,
 .vision-nav-pill:not(.active):hover,
 .segment-btn:hover {
+  transform: none !important;
+}
+
+/* ==========================================================================
+   FIX: TRÁNH BỊ CẮT SHAPE KHI RÊ CHUỘT (CHIP & PILL FULL BOUNDARY SAFETY)
+   ========================================================================== */
+.quick-filters-bar,
+.vision-nav-pills {
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  overflow-y: visible !important;
+}
+
+.filter-chip {
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+  transform: none !important;
+}
+
+.filter-chip:hover {
   transform: none !important;
 }
