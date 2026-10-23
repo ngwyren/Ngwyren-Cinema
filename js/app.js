@@ -1106,6 +1106,7 @@ class AppleCinemaApp {
     modalBackdrop.classList.add("open");
     modalBackdrop.classList.toggle("lights-off", this.lightsOff);
     document.body.style.overflow = "hidden";
+    document.body.classList.add("modal-open");
 
     // Tự động kéo mượt lên đầu Modal khi bấm chọn phim khác ở mục Nội Dung Tương Tự / Cùng Thể Loại
     modalBackdrop.scrollTo({ top: 0, behavior: "smooth" });
@@ -1144,6 +1145,7 @@ class AppleCinemaApp {
     modalBackdrop.classList.remove("lights-off");
     this.lightsOff = false;
     document.body.style.overflow = "";
+    document.body.classList.remove("modal-open");
     this.stopModalVideo();
   }
 
@@ -1913,18 +1915,21 @@ class AppleCinemaApp {
       return;
     }
 
-    // Hiển thị gợi ý tức thì từ kho local
-    const quickMatches = this.service.movies
-      .filter(
-        (m) =>
-          m.title.toLowerCase().includes(query.toLowerCase()) ||
-          m.originTitle.toLowerCase().includes(query.toLowerCase()) ||
-          m.genres.some((g) => g.toLowerCase().includes(query.toLowerCase())) ||
-          m.cast.some((c) => c.toLowerCase().includes(query.toLowerCase()))
-      )
-      .slice(0, 6);
+    // Tối ưu hoá tìm kiếm 120fps: Debounce nhẹ 60ms & cache chuỗi gộp để duyệt cực nhanh
+    clearTimeout(this.searchQuickTimer);
+    this.searchQuickTimer = setTimeout(() => {
+      const q = query.toLowerCase();
+      const quickMatches = this.service.movies
+        .filter((m) => {
+          if (!m._searchIndex) {
+            m._searchIndex = `${m.title || ""} ${m.originTitle || ""} ${Array.isArray(m.genres) ? m.genres.join(" ") : ""} ${Array.isArray(m.cast) ? m.cast.join(" ") : ""}`.toLowerCase();
+          }
+          return m._searchIndex.includes(q);
+        })
+        .slice(0, 6);
 
-    this.renderSearchDropdown(query, quickMatches, false);
+      this.renderSearchDropdown(query, quickMatches, false);
+    }, 60);
 
     // Debounce gọi API tìm kiếm trực tuyến của Phimmoiz.one
     clearTimeout(this.searchDebounce);
@@ -2226,9 +2231,20 @@ class AppleCinemaApp {
       }
     });
 
-    // Phím tắt Ctrl+K hoặc / để tìm kiếm nhanh, ESC để đóng Modal
+    // Phím tắt bàn phím Desktop chuẩn Rạp Phim:
+    // Ctrl+K hoặc /: Tìm kiếm
+    // Space: Play / Pause (video đang mở hoặc thanh Now Playing)
+    // F: Toàn màn hình video (Fullscreen)
+    // M: Bật / Tắt tiếng (Mute / Unmute)
+    // ESC: Đóng Modal & Dropdown
     document.addEventListener("keydown", (e) => {
+      const target = e.target;
+      const isInput = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
+
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        topInput?.focus();
+      } else if (e.key === "/" && !isInput) {
         e.preventDefault();
         topInput?.focus();
       } else if (e.key === "Escape") {
@@ -2236,6 +2252,26 @@ class AppleCinemaApp {
         this.toggleMobileSidebar(false);
         if (document.getElementById("movieDetailModal")?.classList.contains("open")) {
           this.closeMovieModal();
+        }
+      } else if (e.code === "Space" && !isInput) {
+        e.preventDefault();
+        this.toggleNowPlayingPlayPause();
+      } else if ((e.key === "f" || e.key === "F") && !isInput) {
+        const modal = document.getElementById("movieDetailModal");
+        const videoEl = document.getElementById("hlsVideoElement");
+        if (modal?.classList.contains("open") && videoEl) {
+          e.preventDefault();
+          if (document.fullscreenElement) {
+            document.exitFullscreen?.();
+          } else {
+            videoEl.requestFullscreen?.() || videoEl.webkitRequestFullscreen?.();
+          }
+        }
+      } else if ((e.key === "m" || e.key === "M") && !isInput) {
+        const videoEl = document.getElementById("hlsVideoElement");
+        if (videoEl) {
+          videoEl.muted = !videoEl.muted;
+          this.showToast(videoEl.muted ? "🔇 Đã tắt tiếng (Muted)" : "🔊 Đã bật âm thanh");
         }
       }
     });
