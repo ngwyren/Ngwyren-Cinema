@@ -34,6 +34,10 @@ class AppleCinemaApp {
       { slug: "matchbox-phim-dien-anh", epIndex: 0, progress: 64, timestamp: Date.now() - 7200000 }
     ]);
     this.settings = this.loadStorage("apple_cinema_settings", {
+      theme: "default",
+      glassPercent: 50,
+      glassBlur: "standard",
+      ambientGlow: true,
       defaultServer: "hls-1",
       defaultQuality: "native-max",
       autoPlayOnOpen: false,
@@ -359,6 +363,12 @@ class AppleCinemaApp {
 
   renderSettingsViewHTML() {
     const s = this.settings || {};
+    let glassPercent = 50;
+    if (s.glassPercent !== undefined) glassPercent = Number(s.glassPercent);
+    else if (s.glassBlur === "clear") glassPercent = 0;
+    else if (s.glassBlur === "frost") glassPercent = 100;
+    const glassLabel = glassPercent === 0 ? "Trong Suốt" : (glassPercent === 100 ? "Kính Mờ" : "Tiêu Chuẩn");
+
     return `
       <div class="vision-dashboard-grid">
         ${this.renderLeftSideColumnHTML(this.service.movies, "🔥 Trailer Mới")}
@@ -367,15 +377,15 @@ class AppleCinemaApp {
           <!-- Spatial Settings Hero Header -->
           <section class="vision-settings-banner">
             <div class="vision-settings-banner-left">
-              <span class="vision-trending-pill"><i class="fas fa-gear"></i> visionOS Control Center</span>
-              <h1 class="vision-hero-title" style="margin-top: 8px;">Cài Đặt Hệ Thống</h1>
-              <p class="vision-hero-desc" style="max-width: 620px;">
-                Tùy chỉnh chất lượng luồng phát Full HD 1080p gốc, máy chủ Vietsub/Thuyết minh ưu tiên, chế độ Rạp Phim và quản lý dữ liệu cá nhân trên Ngwyren Cinema.
+              <span class="vision-trending-pill">visionOS</span>
+              <h1 class="vision-hero-title">Cài Đặt Hệ Thống</h1>
+              <p class="vision-hero-desc">
+                Tùy chỉnh không gian thị giác, luồng phát và trải nghiệm rạp chiếu.
               </p>
             </div>
             <div class="vision-settings-banner-actions">
               <button class="vision-btn-outline" onclick="app.resetDefaultSettings()">
-                <i class="fas fa-sliders"></i> Mặc Định
+                Mặc Định
               </button>
             </div>
           </section>
@@ -385,176 +395,191 @@ class AppleCinemaApp {
             <!-- Card Theme: Giao Diện & Không Gian Thị Giác -->
             <div class="vision-settings-card" style="grid-column: 1 / -1;">
               <div class="vision-settings-card-header">
-                <i class="fas fa-palette"></i>
                 <div>
-                  <h3>Chủ Đề & Không Gian Thị Giác (Theme & Spatial Lighting)</h3>
-                  <p>Tùy chỉnh tông màu rạp chiếu, độ mờ kính cường lực và hiệu ứng ánh sáng không gian</p>
+                  <h3>Chủ Đề & Không Gian</h3>
+                  <p>Tông màu rạp chiếu và độ mờ kính cường lực</p>
                 </div>
               </div>
 
-              <!-- Row 1: Không Gian Màu Sắc -->
+              <!-- Row 1: Tông Màu -->
               <div class="vision-setting-row">
                 <div class="vision-setting-info">
-                  <strong>Không gian màu sắc (Spatial Theme)</strong>
-                  <span>Chọn tông màu không gian rạp chiếu chuẩn Apple visionOS</span>
+                  <strong>Tông màu</strong>
+                  <span>Chọn phong cách không gian hiển thị</span>
                 </div>
                 <div class="vision-setting-pills">
-                  <button class="filter-chip ${(s.theme || 'default') === 'default' ? 'active' : ''}" onclick="app.setThemeMode('default')">
-                    🌌 visionOS Gốc
+                  <button class="filter-chip ${(s.theme || 'default') === 'default' ? 'active' : ''}" data-theme-btn="default" onclick="app.setThemeMode('default')">
+                    Mặc Định
                   </button>
-                  <button class="filter-chip ${s.theme === 'midnight' ? 'active' : ''}" onclick="app.setThemeMode('midnight')">
-                    🎬 Rạp Phim Nửa Đêm (OLED)
+                  <button class="filter-chip ${s.theme === 'midnight' ? 'active' : ''}" data-theme-btn="midnight" onclick="app.setThemeMode('midnight')">
+                    Nửa Đêm
                   </button>
-                  <button class="filter-chip ${s.theme === 'aurora' ? 'active' : ''}" onclick="app.setThemeMode('aurora')">
-                    🔮 Cực Quang Tím (Aurora)
+                  <button class="filter-chip ${s.theme === 'aurora' ? 'active' : ''}" data-theme-btn="aurora" onclick="app.setThemeMode('aurora')">
+                    Cực Quang
                   </button>
-                  <button class="filter-chip ${s.theme === 'amber' ? 'active' : ''}" onclick="app.setThemeMode('amber')">
-                    🌅 Hoàng Hôn Amber
+                  <button class="filter-chip ${s.theme === 'amber' ? 'active' : ''}" data-theme-btn="amber" onclick="app.setThemeMode('amber')">
+                    Hoàng Hôn
                   </button>
-                  <button class="filter-chip ${s.theme === 'emerald' ? 'active' : ''}" onclick="app.setThemeMode('emerald')">
-                    🌲 Ngọc Lục Bảo
-                  </button>
-                </div>
-              </div>
-
-              <!-- Row 2: Độ Mờ Kính Cường Lực -->
-              <div class="vision-setting-row">
-                <div class="vision-setting-info">
-                  <strong>Độ mờ kính cường lực (Glass Blur)</strong>
-                  <span>Điều chỉnh độ trong suốt của cửa sổ kính không gian</span>
-                </div>
-                <div class="vision-setting-pills">
-                  <button class="filter-chip ${s.glassBlur === 'clear' ? 'active' : ''}" onclick="app.setGlassBlurMode('clear')">
-                    Trong Suốt Cao (Clear)
-                  </button>
-                  <button class="filter-chip ${(s.glassBlur || 'standard') === 'standard' ? 'active' : ''}" onclick="app.setGlassBlurMode('standard')">
-                    Tiêu Chuẩn (visionOS)
-                  </button>
-                  <button class="filter-chip ${s.glassBlur === 'frost' ? 'active' : ''}" onclick="app.setGlassBlurMode('frost')">
-                    Kính Mờ Đậm (Frost)
+                  <button class="filter-chip ${s.theme === 'emerald' ? 'active' : ''}" data-theme-btn="emerald" onclick="app.setThemeMode('emerald')">
+                    Lục Bảo
                   </button>
                 </div>
               </div>
 
-              <!-- Row 3: Hiệu Ứng Ánh Sáng Môi Trường -->
+              <!-- Row 2: Độ mờ kính (Kéo thả iPhone) -->
+              <div class="vision-setting-row" style="flex-direction: column; align-items: stretch; gap: 6px;">
+                <div class="vision-setting-info" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                  <strong>Độ mờ kính</strong>
+                  <span id="glassSliderValueLabel">${glassLabel}</span>
+                </div>
+                <div class="ios-slider-wrapper">
+                  <div class="ios-slider-control">
+                    <span class="ios-slider-icon" title="Trong suốt">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="5" stroke-dasharray="3 3"/>
+                      </svg>
+                    </span>
+                    <div class="ios-slider-track-wrap" id="glassSliderTrack">
+                      <div class="ios-slider-rail"></div>
+                      <div class="ios-slider-ticks">
+                        <span class="ios-slider-tick" style="left: 0%;"></span>
+                        <span class="ios-slider-tick" style="left: 50%;"></span>
+                        <span class="ios-slider-tick" style="left: 100%;"></span>
+                      </div>
+                      <div class="ios-slider-fill" id="glassSliderFill" style="width: ${glassPercent}%;"></div>
+                      <div class="ios-slider-thumb" id="glassSliderThumb" style="left: ${glassPercent}%;"></div>
+                    </div>
+                    <span class="ios-slider-icon" title="Kính mờ">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="5" fill="currentColor" fill-opacity="0.45"/>
+                      </svg>
+                    </span>
+                  </div>
+                  <div class="ios-slider-labels">
+                    <span class="ios-label-stop ${glassPercent === 0 ? 'active' : ''}" onclick="app.setGlassStep(0)">Trong Suốt</span>
+                    <span class="ios-label-stop ${glassPercent === 50 ? 'active' : ''}" onclick="app.setGlassStep(50)">Tiêu Chuẩn</span>
+                    <span class="ios-label-stop ${glassPercent === 100 ? 'active' : ''}" onclick="app.setGlassStep(100)">Kính Mờ</span>
+                  </div>
+                  <p class="ios-slider-caption">Trong suốt nhìn rõ không gian phòng, kính mờ tăng độ tương phản và tập trung.</p>
+                </div>
+              </div>
+
+              <!-- Row 3: Ánh sáng môi trường -->
               <div class="vision-setting-row">
                 <div class="vision-setting-info">
-                  <strong>Ánh sáng môi trường (Ambient Spatial Glow)</strong>
-                  <span>Hiệu ứng quầng sáng ambient phản chiếu nhẹ nhàng trong không gian phòng</span>
+                  <strong>Ánh sáng môi trường</strong>
+                  <span>Quầng sáng ambient phản chiếu theo phim</span>
                 </div>
-                <button class="vision-toggle-btn ${s.ambientGlow !== false ? 'on' : ''}" onclick="app.toggleAmbientGlow()">
-                  <span>${s.ambientGlow !== false ? 'Đang Bật' : 'Đang Tắt'}</span>
+                <button class="vision-toggle-btn ${s.ambientGlow !== false ? 'on' : ''}" id="ambientGlowToggleBtn" onclick="app.toggleAmbientGlow()">
+                  <span>${s.ambientGlow !== false ? 'Bật' : 'Tắt'}</span>
                 </button>
               </div>
             </div>
 
-            <!-- Card 1: Chất lượng & Nguồn phát -->
+            <!-- Card 1: Chất Lượng & Nguồn Phát -->
             <div class="vision-settings-card">
               <div class="vision-settings-card-header">
-                <i class="fas fa-film"></i>
                 <div>
-                  <h3>Chất Lượng & Nguồn Phát Mặc Định</h3>
-                  <p>Áp dụng tự động khi bạn bấm xem bất kỳ bộ phim nào</p>
+                  <h3>Chất Lượng & Nguồn Phát</h3>
+                  <p>Áp dụng mặc định khi mở bất kỳ phim nào</p>
                 </div>
               </div>
 
               <div class="vision-setting-row">
                 <div class="vision-setting-info">
-                  <strong>Chất lượng luồng video</strong>
-                  <span>Luôn khóa ở mức Bitrate & độ phân giải gốc cao nhất từ CDN</span>
+                  <strong>Độ phân giải</strong>
+                  <span>Tự động khóa mức bitrate cao nhất</span>
                 </div>
                 <div class="vision-setting-pills">
-                  <button class="filter-chip ${s.defaultQuality !== "Auto" ? "active" : ""}" onclick="app.updateSetting('defaultQuality', 'native-max')">
-                    ★ Tốt nhất (Full HD 1080p)
+                  <button class="filter-chip ${s.defaultQuality !== 'Auto' ? 'active' : ''}" onclick="app.updateSetting('defaultQuality', 'native-max')">
+                    1080p FHD
                   </button>
-                  <button class="filter-chip ${s.defaultQuality === "Auto" ? "active" : ""}" onclick="app.updateSetting('defaultQuality', 'Auto')">
-                    Auto ABR
+                  <button class="filter-chip ${s.defaultQuality === 'Auto' ? 'active' : ''}" onclick="app.updateSetting('defaultQuality', 'Auto')">
+                    Tự Động
                   </button>
                 </div>
               </div>
 
               <div class="vision-setting-row">
                 <div class="vision-setting-info">
-                  <strong>Máy chủ phát ưu tiên</strong>
-                  <span>Chọn nguồn phát mặc định khi mở trình phát</span>
+                  <strong>Máy chủ ưu tiên</strong>
+                  <span>Nguồn luồng phát ưu tiên</span>
                 </div>
                 <div class="vision-setting-pills">
-                  <button class="filter-chip ${s.defaultServer === "hls-1" ? "active" : ""}" onclick="app.updateSetting('defaultServer', 'hls-1')">
-                    Netflix Vietsub #1 (HLS)
+                  <button class="filter-chip ${s.defaultServer === 'hls-1' ? 'active' : ''}" onclick="app.updateSetting('defaultServer', 'hls-1')">
+                    Vietsub #1
                   </button>
-                  <button class="filter-chip ${s.defaultServer === "embed-1" ? "active" : ""}" onclick="app.updateSetting('defaultServer', 'embed-1')">
-                    Vietsub #2 (Embed)
+                  <button class="filter-chip ${s.defaultServer === 'embed-1' ? 'active' : ''}" onclick="app.updateSetting('defaultServer', 'embed-1')">
+                    Vietsub #2
                   </button>
-                  <button class="filter-chip ${s.defaultServer === "dub-1" ? "active" : ""}" onclick="app.updateSetting('defaultServer', 'dub-1')">
-                    Lồng Tiếng / Thuyết Minh
+                  <button class="filter-chip ${s.defaultServer === 'dub-1' ? 'active' : ''}" onclick="app.updateSetting('defaultServer', 'dub-1')">
+                    Thuyết Minh
                   </button>
                 </div>
               </div>
             </div>
 
-            <!-- Card 2: Trải nghiệm Rạp Phim & Tự động phát -->
+            <!-- Card 2: Trải Nghiệm Rạp Chiếu -->
             <div class="vision-settings-card">
               <div class="vision-settings-card-header">
-                <i class="fas fa-wand-magic-sparkles"></i>
                 <div>
-                  <h3>Trải Nghiệm Rạp Phim & Chuyển Động</h3>
-                  <p>Tùy chỉnh hành vi tự động phát và hiệu ứng không gian visionOS</p>
+                  <h3>Trải Nghiệm Rạp Chiếu</h3>
+                  <p>Hiệu ứng tự động phát và chuyển động</p>
                 </div>
               </div>
 
               <div class="vision-setting-row">
                 <div class="vision-setting-info">
-                  <strong>Tự động phát ngay khi mở phim</strong>
-                  <span>Bắt đầu phát tập phim ngay khi bấm vào thẻ phim</span>
+                  <strong>Tự động phát</strong>
+                  <span>Bắt đầu phát ngay khi bấm phim</span>
                 </div>
-                <button class="vision-toggle-btn ${s.autoPlayOnOpen ? "on" : ""}" onclick="app.updateSetting('autoPlayOnOpen', ${!s.autoPlayOnOpen})">
-                  <span>${s.autoPlayOnOpen ? "Đang Bật" : "Đang Tắt"}</span>
+                <button class="vision-toggle-btn ${s.autoPlayOnOpen ? 'on' : ''}" onclick="app.updateSetting('autoPlayOnOpen', ${!s.autoPlayOnOpen})">
+                  <span>${s.autoPlayOnOpen ? 'Bật' : 'Tắt'}</span>
                 </button>
               </div>
 
               <div class="vision-setting-row">
                 <div class="vision-setting-info">
-                  <strong>Tự động bật Tắt Đèn Rạp</strong>
-                  <span>Làm tối không gian xung quanh khi mở cửa sổ xem phim</span>
+                  <strong>Tắt đèn rạp</strong>
+                  <span>Làm tối nền khi mở trình xem phim</span>
                 </div>
-                <button class="vision-toggle-btn ${s.defaultLightsOff ? "on" : ""}" onclick="app.updateSetting('defaultLightsOff', ${!s.defaultLightsOff})">
-                  <span>${s.defaultLightsOff ? "Đang Bật" : "Đang Tắt"}</span>
+                <button class="vision-toggle-btn ${s.defaultLightsOff ? 'on' : ''}" onclick="app.updateSetting('defaultLightsOff', ${!s.defaultLightsOff})">
+                  <span>${s.defaultLightsOff ? 'Bật' : 'Tắt'}</span>
                 </button>
               </div>
 
               <div class="vision-setting-row">
                 <div class="vision-setting-info">
-                  <strong>Tự động xoay vòng Banner Trang Chủ</strong>
-                  <span>Chuyển đổi poster phim nổi bật mỗi 9 giây ở trang Khám Phá</span>
+                  <strong>Tự xoay Banner</strong>
+                  <span>Đổi poster nổi bật mỗi 9 giây</span>
                 </div>
-                <button class="vision-toggle-btn ${s.heroAutoRotate !== false ? "on" : ""}" onclick="app.updateSetting('heroAutoRotate', ${s.heroAutoRotate === false})">
-                  <span>${s.heroAutoRotate !== false ? "Đang Bật" : "Đang Tắt"}</span>
+                <button class="vision-toggle-btn ${s.heroAutoRotate !== false ? 'on' : ''}" onclick="app.updateSetting('heroAutoRotate', ${s.heroAutoRotate === false})">
+                  <span>${s.heroAutoRotate !== false ? 'Bật' : 'Tắt'}</span>
                 </button>
               </div>
             </div>
 
-            <!-- Card 3: Quản lý Dữ liệu Cá nhân -->
+            <!-- Card 3: Quản Lý Dữ Liệu Cá Nhân -->
             <div class="vision-settings-card" style="grid-column: 1 / -1;">
               <div class="vision-settings-card-header">
-                <i class="fas fa-database"></i>
                 <div>
-                  <h3>Quản Lý Dữ Liệu Cá Nhân & Bộ Nhớ Đệm</h3>
-                  <p>Đang lưu ${this.myList.length} phim yêu thích • ${this.watchHistory.length} phim trong lịch sử xem tiếp</p>
+                  <h3>Quản Lý Dữ Liệu Cá Nhân</h3>
+                  <p>Đang lưu ${this.myList.length} phim yêu thích • ${this.watchHistory.length} phim xem tiếp</p>
                 </div>
               </div>
 
               <div class="vision-setting-actions-row">
                 <button class="vision-btn-outline" onclick="app.setNavigation('yeu-thich')">
-                  <i class="fas fa-heart"></i> Xem Phim Đã Lưu (${this.myList.length})
+                  Phim Đã Lưu (${this.myList.length})
                 </button>
                 <button class="vision-btn-outline" onclick="app.setNavigation('lich-su')">
-                  <i class="fas fa-clock-rotate-left"></i> Xem Lịch Sử (${this.watchHistory.length})
+                  Lịch Sử (${this.watchHistory.length})
                 </button>
                 <button class="vision-btn-outline" onclick="app.clearWatchHistory()">
-                  <i class="fas fa-trash-can"></i> Xóa Lịch Sử Xem
+                  Xóa Lịch Sử
                 </button>
                 <button class="vision-btn-outline" onclick="app.clearMyList()">
-                  <i class="fas fa-folder-minus"></i> Làm Trống Danh Sách Lưu
+                  Xóa Đã Lưu
                 </button>
               </div>
             </div>
@@ -564,31 +589,134 @@ class AppleCinemaApp {
     `;
   }
 
+  initGlassSlider() {
+    const track = document.getElementById("glassSliderTrack");
+    const thumb = document.getElementById("glassSliderThumb");
+    const fill = document.getElementById("glassSliderFill");
+    const label = document.getElementById("glassSliderValueLabel");
+    if (!track || !thumb || !fill) return;
+
+    let isDragging = false;
+
+    const updateSlider = (clientX, snap = false) => {
+      const rect = track.getBoundingClientRect();
+      let pos = (clientX - rect.left) / rect.width;
+      pos = Math.max(0, Math.min(1, pos));
+      let percent = Math.round(pos * 100);
+
+      if (snap) {
+        if (percent < 25) percent = 0;
+        else if (percent > 75) percent = 100;
+        else percent = 50;
+      }
+
+      fill.style.width = percent + "%";
+      thumb.style.left = percent + "%";
+
+      const blurPx = Math.round(12 + (percent / 100) * 38);
+      const alpha = (0.42 + (percent / 100) * 0.48).toFixed(2);
+      document.documentElement.style.setProperty("--glass-dyn-blur", `${blurPx}px`);
+      document.documentElement.style.setProperty("--glass-dyn-alpha", `${alpha}`);
+
+      document.querySelectorAll(".ios-label-stop").forEach((el, idx) => {
+        const val = idx === 0 ? 0 : idx === 1 ? 50 : 100;
+        el.classList.toggle("active", Math.abs(percent - val) < 25);
+      });
+      if (label) {
+        label.textContent = percent < 25 ? "Trong Suốt" : (percent > 75 ? "Kính Mờ" : "Tiêu Chuẩn");
+      }
+
+      return percent;
+    };
+
+    track.onpointerdown = (e) => {
+      isDragging = true;
+      track.classList.add("dragging");
+      thumb.classList.add("dragging");
+      track.setPointerCapture(e.pointerId);
+      updateSlider(e.clientX, false);
+    };
+
+    track.onpointermove = (e) => {
+      if (!isDragging) return;
+      updateSlider(e.clientX, false);
+    };
+
+    const handlePointerEnd = (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      track.classList.remove("dragging");
+      thumb.classList.remove("dragging");
+      try { track.releasePointerCapture(e.pointerId); } catch (_) {}
+      const finalPercent = updateSlider(e.clientX, true);
+      this.settings.glassPercent = finalPercent;
+      this.settings.glassBlur = finalPercent === 0 ? "clear" : (finalPercent === 100 ? "frost" : "standard");
+      this.saveStorage("apple_cinema_settings", this.settings);
+      this.applyTheme();
+    };
+
+    track.onpointerup = handlePointerEnd;
+    track.onpointercancel = handlePointerEnd;
+  }
+
+  setGlassStep(percent) {
+    this.settings.glassPercent = percent;
+    this.settings.glassBlur = percent === 0 ? "clear" : (percent === 100 ? "frost" : "standard");
+    this.saveStorage("apple_cinema_settings", this.settings);
+    this.applyTheme();
+    const fill = document.getElementById("glassSliderFill");
+    const thumb = document.getElementById("glassSliderThumb");
+    const label = document.getElementById("glassSliderValueLabel");
+    if (fill && thumb) {
+      fill.style.width = percent + "%";
+      thumb.style.left = percent + "%";
+      document.querySelectorAll(".ios-label-stop").forEach((el, idx) => {
+        const val = idx === 0 ? 0 : idx === 1 ? 50 : 100;
+        el.classList.toggle("active", val === percent);
+      });
+      if (label) label.textContent = percent === 0 ? "Trong Suốt" : (percent === 100 ? "Kính Mờ" : "Tiêu Chuẩn");
+    }
+  }
+
   applyTheme() {
     const s = this.settings || {};
     const root = document.documentElement;
     root.setAttribute("data-theme", s.theme || "default");
-    root.setAttribute("data-glass", s.glassBlur || "standard");
     root.setAttribute("data-ambient", s.ambientGlow !== false ? "true" : "false");
+
+    let percent = 50;
+    if (s.glassPercent !== undefined) percent = Number(s.glassPercent);
+    else if (s.glassBlur === "clear") percent = 0;
+    else if (s.glassBlur === "frost") percent = 100;
+
+    const blurPx = Math.round(12 + (percent / 100) * 38);
+    const alpha = (0.42 + (percent / 100) * 0.48).toFixed(2);
+    root.style.setProperty("--glass-dyn-blur", `${blurPx}px`);
+    root.style.setProperty("--glass-dyn-alpha", `${alpha}`);
+    root.setAttribute("data-glass", percent === 0 ? "clear" : (percent === 100 ? "frost" : "standard"));
   }
 
   setThemeMode(theme) {
-    this.updateSetting("theme", theme);
+    this.settings.theme = theme;
+    this.saveStorage("apple_cinema_settings", this.settings);
     this.applyTheme();
-    if (this.currentNav === "cai-dat") this.renderMainView();
-  }
-
-  setGlassBlurMode(blur) {
-    this.updateSetting("glassBlur", blur);
-    this.applyTheme();
-    if (this.currentNav === "cai-dat") this.renderMainView();
+    // Cập nhật ngay lập tức DOM không cần render lại toàn bộ (0ms delay)
+    document.querySelectorAll("[data-theme-btn]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.themeBtn === theme);
+    });
   }
 
   toggleAmbientGlow() {
     const current = this.settings.ambientGlow !== false;
-    this.updateSetting("ambientGlow", !current);
+    this.settings.ambientGlow = !current;
+    this.saveStorage("apple_cinema_settings", this.settings);
     this.applyTheme();
-    if (this.currentNav === "cai-dat") this.renderMainView();
+    const btn = document.getElementById("ambientGlowToggleBtn");
+    if (btn) {
+      btn.classList.toggle("on", this.settings.ambientGlow);
+      const span = btn.querySelector("span");
+      if (span) span.textContent = this.settings.ambientGlow ? "Bật" : "Tắt";
+    }
   }
 
   updateSetting(key, value) {
@@ -607,6 +735,7 @@ class AppleCinemaApp {
   resetDefaultSettings() {
     this.settings = {
       theme: "default",
+      glassPercent: 50,
       glassBlur: "standard",
       ambientGlow: true,
       defaultServer: "hls-1",
@@ -649,6 +778,7 @@ class AppleCinemaApp {
     // Trang Cài Đặt Hệ Thống (Khi bấm icon bánh răng ở thanh bên trái)
     if (this.currentNav === "cai-dat") {
       container.innerHTML = this.renderSettingsViewHTML();
+      this.initGlassSlider();
       return;
     }
 

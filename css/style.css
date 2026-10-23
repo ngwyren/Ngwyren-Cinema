@@ -3887,21 +3887,21 @@ body {
    VISION OS CONTROL CENTER / SETTINGS & PERSONAL LIBRARY PANELS
    ========================================================================== */
 .vision-settings-banner {
-  border-radius: 28px;
+  border-radius: 24px;
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.14) 0%,
-    rgba(255, 255, 255, 0.05) 100%
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.04) 100%
   );
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   box-shadow:
-    inset 0 1px 0.5px rgba(255, 255, 255, 0.38),
-    0 18px 40px rgba(0, 0, 0, 0.35);
-  padding: 26px 30px;
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.28),
+    0 16px 36px rgba(0, 0, 0, 0.3);
+  padding: 20px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 20px;
   flex-wrap: wrap;
 }
 
@@ -3909,7 +3909,21 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  gap: 4px;
+}
+
+.vision-settings-banner-left .vision-hero-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.vision-settings-banner-left .vision-hero-desc {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0;
 }
 
 .vision-settings-banner-actions {
@@ -3922,108 +3936,237 @@ body {
 .vision-settings-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  gap: 16px;
 }
 
 .vision-settings-card {
-  border-radius: 26px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.28);
-  padding: 22px 24px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.2);
+  padding: 18px 22px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
 }
 
 .vision-settings-card-header {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.vision-settings-card-header > i {
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.05rem;
-  flex-shrink: 0;
+  justify-content: space-between;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .vision-settings-card-header h3 {
-  font-size: 1rem;
+  font-size: 0.96rem;
   font-weight: 700;
   color: #ffffff;
+  margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .vision-settings-card-header p {
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.74rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 2px 0 0;
 }
 
 .vision-setting-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+  gap: 14px;
+  min-height: 40px;
+  padding: 2px 0;
 }
 
 .vision-setting-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .vision-setting-info strong {
-  font-size: 0.88rem;
-  color: #ffffff;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .vision-setting-info span {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .vision-setting-pills {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
 .vision-toggle-btn {
-  padding: 8px 18px;
+  padding: 6px 16px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 0.8rem;
-  font-weight: 700;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.78rem;
+  font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .vision-toggle-btn.on {
   background: #ffffff;
-  color: #111216 !important;
+  color: #0b0c0e !important;
   border-color: #ffffff;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .vision-setting-actions-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
+}
+
+/* APPLE iOS LIQUID GLASS SLIDER COMPONENT (ZERO-LAG DRAG & DROP) */
+.ios-slider-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0 2px;
+}
+
+.ios-slider-control {
+  width: 100%;
+  height: 48px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.14), 0 8px 22px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 14px;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+.ios-slider-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  transition: color 0.2s ease;
+}
+
+.ios-slider-track-wrap {
+  flex: 1;
+  position: relative;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.ios-slider-rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.ios-slider-ticks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6px;
+  pointer-events: none;
+}
+
+.ios-slider-tick {
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+}
+
+.ios-slider-fill {
+  position: absolute;
+  left: 0;
+  height: 6px;
+  border-radius: 999px;
+  background: #007aff;
+  box-shadow: 0 0 8px rgba(0, 122, 255, 0.6);
+  pointer-events: none;
+  transition: width 0.12s ease-out;
+}
+
+.ios-slider-thumb {
+  position: absolute;
+  top: 50%;
+  width: 32px;
+  height: 18px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  touch-action: none;
+  transition: transform 0.15s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow 0.15s ease, left 0.12s ease-out;
+}
+
+.ios-slider-thumb:active,
+.ios-slider-thumb.dragging {
+  cursor: grabbing;
+  transform: translate(-50%, -50%) scale(1.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 0 3px rgba(0, 122, 255, 0.35);
+  transition: none !important;
+}
+
+.ios-slider-track-wrap.dragging .ios-slider-fill,
+.ios-slider-track-wrap.dragging .ios-slider-thumb {
+  transition: none !important;
+}
+
+.ios-slider-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 38px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.ios-label-stop {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.ios-label-stop:hover,
+.ios-label-stop.active {
+  color: #ffffff;
+}
+
+.ios-slider-caption {
+  font-size: 0.71rem;
+  color: rgba(255, 255, 255, 0.42);
+  margin: 0;
+  text-align: center;
 }
 
 /* ==========================================================================
@@ -5064,19 +5207,33 @@ body.modal-open .apple-player-bar {
   box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4) !important;
 }
 
-/* Glassmorphism Blur Levels */
+/* Glassmorphism Blur Levels & Dynamic Continuous Dragging */
+:root {
+  --glass-dyn-blur: 28px;
+  --glass-dyn-alpha: 0.68;
+}
+
+.vision-window,
+.vision-glass-panel,
+.vision-settings-card {
+  backdrop-filter: blur(var(--glass-dyn-blur, 28px)) saturate(165%) !important;
+  -webkit-backdrop-filter: blur(var(--glass-dyn-blur, 28px)) saturate(165%) !important;
+  transition: backdrop-filter 0.15s ease, -webkit-backdrop-filter 0.15s ease, background 0.25s ease;
+}
+
 [data-glass="clear"] .vision-window,
 [data-glass="clear"] .vision-glass-panel,
 [data-glass="clear"] .vision-settings-card {
-  backdrop-filter: blur(14px) saturate(140%) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+  backdrop-filter: blur(var(--glass-dyn-blur, 12px)) saturate(135%) !important;
+  -webkit-backdrop-filter: blur(var(--glass-dyn-blur, 12px)) saturate(135%) !important;
 }
+
 [data-glass="frost"] .vision-window,
 [data-glass="frost"] .vision-glass-panel,
 [data-glass="frost"] .vision-settings-card {
-  backdrop-filter: blur(48px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(48px) saturate(180%) !important;
-  background-color: rgba(22, 24, 30, 0.9) !important;
+  backdrop-filter: blur(var(--glass-dyn-blur, 50px)) saturate(185%) !important;
+  -webkit-backdrop-filter: blur(var(--glass-dyn-blur, 50px)) saturate(185%) !important;
+  background-color: rgba(20, 22, 28, var(--glass-dyn-alpha, 0.9)) !important;
 }
 
 /* Ambient Spatial Glow Animation */
