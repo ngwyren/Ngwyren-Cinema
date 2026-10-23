@@ -2790,7 +2790,7 @@ body {
   gap: 12px;
 }
 
-/* Sliding Liquid Glass Pill Indicator inside Dock (Perfectly Centered with White Halo Glow) */
+/* Sliding Liquid Glass Pill Indicator inside Dock (Silky Smooth 120fps Glide with Radiant White Halo Glow) */
 .vision-dock-indicator {
   position: absolute;
   top: 10px;
@@ -2800,47 +2800,22 @@ body {
   border-radius: 50%;
   background: radial-gradient(
     circle at center,
-    rgba(255, 255, 255, 0.36) 0%,
-    rgba(255, 255, 255, 0.2) 55%,
-    rgba(255, 255, 255, 0.08) 100%
+    rgba(255, 255, 255, 0.44) 0%,
+    rgba(255, 255, 255, 0.22) 55%,
+    rgba(255, 255, 255, 0.06) 100%
   );
-  border: 1.5px solid rgba(255, 255, 255, 0.48);
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
   box-shadow:
-    0 0 16px rgba(255, 255, 255, 0.38),
-    0 0 28px rgba(255, 255, 255, 0.16),
-    inset 0 1.5px 1px rgba(255, 255, 255, 0.75),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.18),
+    0 0 18px 2px rgba(255, 255, 255, 0.44),
+    0 0 32px 6px rgba(255, 255, 255, 0.18),
+    inset 0 1.5px 1px #ffffff,
+    inset 0 -1px 1px rgba(255, 255, 255, 0.2),
     0 4px 14px rgba(0, 0, 0, 0.25);
   transform: translate3d(-50%, calc(var(--dock-idx, 0) * 54px), 0);
-  transition: transform 0.42s cubic-bezier(0.22, 1.25, 0.36, 1);
+  transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
   z-index: 0;
-}
-
-.vision-dock-indicator.dock-morph {
-  animation: liquidDockStretch 0.42s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@keyframes liquidDockStretch {
-  0% {
-    width: 42px;
-    border-radius: 50%;
-    box-shadow: 0 0 16px rgba(255, 255, 255, 0.38);
-  }
-  38% {
-    width: 36px;
-    border-radius: 20px;
-    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.48) 0%, rgba(255, 255, 255, 0.15) 100%);
-    box-shadow: 0 0 24px rgba(255, 255, 255, 0.55);
-  }
-  78% {
-    width: 43px;
-  }
-  100% {
-    width: 42px;
-    border-radius: 50%;
-    box-shadow: 0 0 16px rgba(255, 255, 255, 0.38);
-  }
+  will-change: transform;
 }
 
 .vision-dock-icon {
@@ -2851,27 +2826,31 @@ body {
   border-radius: 50%;
   border: none;
   background: transparent;
-  color: rgba(255, 255, 255, 0.4);
-  opacity: 0.72;
+  color: rgba(255, 255, 255, 0.38);
+  opacity: 0.7;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.98rem;
   cursor: pointer;
-  transition: color 0.25s ease, opacity 0.25s ease, transform 0.32s cubic-bezier(0.22, 1.35, 0.36, 1);
+  transition: color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .vision-dock-icon i {
-  transition: transform 0.36s cubic-bezier(0.22, 1.4, 0.36, 1), text-shadow 0.28s ease, filter 0.28s ease;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              text-shadow 0.25s ease,
+              filter 0.25s ease;
 }
 
 .vision-dock-icon:hover {
   color: #ffffff;
-  opacity: 0.92;
+  opacity: 0.95;
 }
 
 .vision-dock-icon:hover i {
-  transform: scale(1.12);
+  transform: scale(1.1);
 }
 
 .vision-dock-icon.active {
@@ -2882,9 +2861,9 @@ body {
 }
 
 .vision-dock-icon.active i {
-  transform: scale(1.14);
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.85));
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.95), 0 0 18px rgba(255, 255, 255, 0.45);
+  transform: scale(1.12);
+  filter: drop-shadow(0 0 8px #ffffff);
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.95), 0 0 18px rgba(255, 255, 255, 0.5);
 }
 
 /* Floating Glass Tooltip Pill on Dock Hover */
@@ -3824,78 +3803,592 @@ body {
   margin-left: 2px;
 }
 
-/* Compact Centered Floating visionOS Player Capsule */
+/* ==========================================================================
+   DYNAMIC ISLAND / ALCOVE SPATIAL PLAYER BAR (Normal Compact -> Hover Expanded)
+   ========================================================================== */
 .apple-player-bar {
   left: calc(50% + 32px);
   right: auto;
   transform: translateX(-50%);
   width: min(740px, calc(100vw - 104px));
   height: 56px;
-  bottom: 10px;
+  bottom: 12px;
   padding: 0 14px;
   border-radius: 999px;
-  grid-template-columns: minmax(170px, 1fr) minmax(220px, 1.25fr) auto;
-  gap: 14px;
+  display: block !important;
   background: linear-gradient(
     145deg,
-    rgba(92, 95, 102, 0.72) 0%,
-    rgba(58, 60, 66, 0.78) 48%,
-    rgba(42, 44, 50, 0.84) 100%
+    rgba(45, 48, 56, 0.88) 0%,
+    rgba(26, 28, 34, 0.94) 100%
   ) !important;
-  backdrop-filter: blur(28px) saturate(165%);
-  -webkit-backdrop-filter: blur(28px) saturate(165%);
-  border: 1.5px solid rgba(255, 255, 255, 0.28) !important;
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
   box-shadow:
     inset 0 1.5px 1px rgba(255, 255, 255, 0.45),
-    0 16px 40px rgba(0, 0, 0, 0.52);
+    0 16px 40px rgba(0, 0, 0, 0.58);
+  transition: width 0.44s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.44s cubic-bezier(0.16, 1, 0.3, 1),
+              border-radius 0.44s cubic-bezier(0.16, 1, 0.3, 1),
+              padding 0.44s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.44s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.44s ease;
+  overflow: hidden;
+  z-index: 60;
+  will-change: width, height, transform, border-radius;
+}
+
+/* 1. Trạng thái thu gọn (Compact View) */
+.island-compact-view {
+  width: 100%;
+  height: 56px;
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) minmax(220px, 1.25fr) auto;
+  align-items: center;
+  gap: 14px;
+  transition: opacity 0.22s ease, transform 0.22s ease;
 }
 
 .apple-player-bar .player-now-info {
+  display: flex;
+  align-items: center;
   gap: 10px;
+  cursor: pointer;
+  min-width: 0;
 }
 
 .apple-player-bar .player-now-art {
   width: 38px;
   height: 38px;
   border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.apple-player-bar .player-now-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.apple-player-bar .player-now-text {
+  min-width: 0;
 }
 
 .apple-player-bar .player-now-title {
   font-size: 0.8rem;
+  font-weight: 600;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
   gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .apple-player-bar .player-now-sub {
   font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.65);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .apple-player-bar .player-transport {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 3px;
 }
 
 .apple-player-bar .transport-btns {
+  display: flex;
+  align-items: center;
   gap: 12px;
+}
+
+.apple-player-bar .transport-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.apple-player-bar .transport-btn:hover {
+  color: #ffffff;
+  transform: scale(1.15);
 }
 
 .apple-player-bar .transport-play-main {
   width: 30px;
   height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: #ffffff;
+  color: #111216;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+  transition: all 0.2s ease;
+}
+
+.apple-player-bar .transport-play-main:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.7);
 }
 
 .apple-player-bar .transport-scrubber {
+  width: 100%;
   max-width: 240px;
-  font-size: 0.63rem;
+  display: flex;
+  align-items: center;
   gap: 8px;
+  font-size: 0.63rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-variant-numeric: tabular-nums;
 }
 
 .apple-player-bar .scrubber-track {
+  flex: 1;
   height: 3px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+}
+
+.apple-player-bar .scrubber-fill {
+  height: 100%;
+  width: 0%;
+  background: #ffffff;
+  border-radius: 999px;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+}
+
+.apple-player-bar .player-extra-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .apple-player-bar .btn-expand-cinema {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 13px;
   font-size: 0.74rem;
+  font-weight: 600;
   border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.apple-player-bar .btn-expand-cinema:hover {
+  background: rgba(255, 255, 255, 0.28);
+  transform: scale(1.04);
+}
+
+/* 2. Trạng thái mở rộng (Expanded Dynamic Island - Alcove Cinema) */
+.island-expanded-view {
+  display: none;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  gap: 18px;
+  align-items: stretch;
+  transform: translateY(8px);
+  transition: opacity 0.34s cubic-bezier(0.16, 1, 0.3, 1) 0.06s,
+              transform 0.34s cubic-bezier(0.16, 1, 0.3, 1) 0.06s;
+}
+
+/* KHI RÊ CHUỘT: TỰ ĐỘNG PHÓNG TO NHƯ DYNAMIC ISLAND & APP ALCOVE */
+@media (hover: hover) and (min-width: 769px) {
+  .apple-player-bar:hover {
+    width: min(850px, calc(100vw - 84px));
+    height: 196px;
+    border-radius: 26px;
+    padding: 14px 18px;
+    background: linear-gradient(
+      155deg,
+      rgba(32, 34, 42, 0.96) 0%,
+      rgba(18, 19, 25, 0.98) 100%
+    ) !important;
+    border-color: rgba(255, 255, 255, 0.32) !important;
+    box-shadow:
+      0 28px 70px rgba(0, 0, 0, 0.8),
+      0 0 0 1px rgba(255, 255, 255, 0.25),
+      inset 0 1.5px 1px rgba(255, 255, 255, 0.55),
+      0 0 35px rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .apple-player-bar:hover .island-compact-view {
+    display: none !important;
+    opacity: 0;
+  }
+
+  .apple-player-bar:hover .island-expanded-view {
+    display: flex !important;
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Màn hình phim 16:9 Alcove Preview Screen */
+.island-preview-screen {
+  position: relative;
+  width: 252px;
+  min-width: 252px;
+  height: 100%;
+  border-radius: 18px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+}
+
+.island-screen-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
+}
+
+.island-preview-screen:hover .island-screen-img {
+  transform: scale(1.06);
+  filter: brightness(1.08);
+}
+
+.island-screen-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.4) 55%, rgba(0, 0, 0, 0.88) 100%);
+  pointer-events: none;
+}
+
+.island-screen-play-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.26);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 0.95rem;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease;
+}
+
+.island-preview-screen:hover .island-screen-play-pulse {
+  transform: translate(-50%, -50%) scale(1.15);
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.island-screen-live-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.island-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34c759;
+  box-shadow: 0 0 6px #34c759;
+  animation: islandLivePulse 1.8s infinite;
+}
+
+@keyframes islandLivePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.island-screen-duration {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Bảng nội dung bên phải Alcove Dynamic Island */
+.island-content-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.island-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.island-pill-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.island-sound-wave {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 10px;
+}
+
+.island-sound-wave span {
+  width: 2px;
+  background: #ffffff;
+  border-radius: 1px;
+  animation: islandWave 1.2s ease-in-out infinite alternate;
+}
+.island-sound-wave span:nth-child(1) { height: 4px; animation-delay: 0.1s; }
+.island-sound-wave span:nth-child(2) { height: 10px; animation-delay: 0.3s; }
+.island-sound-wave span:nth-child(3) { height: 6px; animation-delay: 0.2s; }
+
+@keyframes islandWave {
+  0% { height: 3px; }
+  100% { height: 10px; }
+}
+
+.island-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.island-icon-action {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: all 0.22s ease;
+}
+
+.island-icon-action:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  transform: scale(1.08);
+}
+
+.island-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.island-movie-title {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+.island-meta-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.island-chip {
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.island-chip.quality {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+/* Thanh Scrubber tua thời gian */
+.island-scrub-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0;
+}
+
+.island-time-text {
+  font-size: 0.64rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.island-scrub-track {
+  flex: 1;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: height 0.2s ease;
+}
+
+.island-scrub-track:hover {
+  height: 7px;
+}
+
+.island-scrub-fill {
+  height: 100%;
+  width: 0%;
+  background: #ffffff;
+  border-radius: 999px;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+  transition: width 0.15s linear;
+}
+
+/* Hàng nút điều khiển Pro */
+.island-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.island-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.island-ctrl-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.75);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 4px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.island-ctrl-btn .btn-sub-label {
+  font-size: 0.52rem;
+  font-weight: 700;
+  margin-top: 1px;
+}
+
+.island-ctrl-btn:hover {
+  color: #ffffff;
+  transform: scale(1.15);
+}
+
+.island-play-btn-glow {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  background: radial-gradient(circle at center, #ffffff 0%, #e0e0e0 100%);
+  color: #111216;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.5), inset 0 1px 1px #ffffff;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.island-play-btn-glow:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.8);
+}
+
+.island-open-theater-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  color: #ffffff;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.4);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.island-open-theater-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.55);
+  transform: scale(1.04);
 }
 
 /* ==========================================================================

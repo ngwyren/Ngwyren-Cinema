@@ -244,7 +244,6 @@ class AppleCinemaApp {
 
   syncLeftDockIndicator(navKey) {
     const dockEl = document.getElementById("appleSidebar");
-    const dockIndicator = document.getElementById("visionDockIndicator");
     if (!dockEl) return;
     const dockMap = {
       "kham-pha": 0,
@@ -263,11 +262,6 @@ class AppleCinemaApp {
     document.querySelectorAll(".vision-dock-icon").forEach((btn) => {
       btn.classList.toggle("active", Number(btn.dataset.dockIdx) === targetIdx);
     });
-    if (dockIndicator) {
-      dockIndicator.classList.remove("dock-morph");
-      void dockIndicator.offsetWidth;
-      dockIndicator.classList.add("dock-morph");
-    }
   }
 
   triggerPageTransition() {
@@ -1924,6 +1918,14 @@ class AppleCinemaApp {
       if (curTime) curTime.textContent = this.formatSeconds(videoEl.currentTime);
       if (totTime) totTime.textContent = this.formatSeconds(videoEl.duration);
 
+      // Đồng bộ timeline cho Dynamic Island mở rộng
+      const islandFill = document.getElementById("nowPlayingIslandScrubFill");
+      const islandCur = document.getElementById("nowPlayingIslandCurrentTime");
+      const islandTot = document.getElementById("nowPlayingIslandTotalTime");
+      if (islandFill) islandFill.style.width = `${pct}%`;
+      if (islandCur) islandCur.textContent = this.formatSeconds(videoEl.currentTime);
+      if (islandTot) islandTot.textContent = this.formatSeconds(videoEl.duration);
+
       // Tự động lưu vị trí thời gian thực nếu thoát giữa chừng
       if (videoEl.currentTime > 5 && (!videoEl._lastSavedPos || Math.abs(videoEl.currentTime - videoEl._lastSavedPos) >= 3)) {
         videoEl._lastSavedPos = videoEl.currentTime;
@@ -2162,7 +2164,7 @@ class AppleCinemaApp {
   }
 
   /* ==========================================================================
-     APPLE MUSIC "NOW PLAYING" MINI BAR CONTROLLER
+     APPLE MUSIC "NOW PLAYING" & ALCOVE DYNAMIC ISLAND CONTROLLER
      ========================================================================== */
   setNowPlayingBar(movie, epIndex = 0, playing = true) {
     if (!movie) return;
@@ -2170,7 +2172,7 @@ class AppleCinemaApp {
     this.currentEpisodeIndex = epIndex;
     this.isPlaying = playing;
 
-    const ep = movie.episodes[epIndex] || movie.episodes[0];
+    const ep = (movie.episodes && movie.episodes[epIndex]) || (movie.episodes && movie.episodes[0]);
     const artImg = document.getElementById("nowPlayingArt");
     const titleText = document.getElementById("nowPlayingTitleText");
     const subText = document.getElementById("nowPlayingSubText");
@@ -2185,6 +2187,30 @@ class AppleCinemaApp {
     if (eqBars) eqBars.classList.toggle("paused", !playing);
     if (playIcon) {
       playIcon.className = playing ? "fas fa-pause" : "fas fa-play";
+    }
+
+    // Đồng bộ thông tin sang bản mở rộng Dynamic Island (Alcove style)
+    const islandBackdrop = document.getElementById("nowPlayingIslandBackdrop");
+    const islandTitle = document.getElementById("nowPlayingIslandTitle");
+    const islandDuration = document.getElementById("nowPlayingIslandDuration");
+    const islandQuality = document.getElementById("nowPlayingIslandQuality");
+    const islandLang = document.getElementById("nowPlayingIslandLang");
+    const islandEp = document.getElementById("nowPlayingIslandEp");
+    const islandPlayIcon = document.getElementById("nowPlayingIslandPlayIcon");
+
+    if (islandBackdrop) islandBackdrop.src = movie.backdrop || movie.poster;
+    if (islandTitle) islandTitle.textContent = movie.title;
+    if (islandDuration) islandDuration.textContent = movie.duration || "Full HD";
+    if (islandQuality) islandQuality.textContent = movie.quality || "FHD";
+    if (islandLang) islandLang.textContent = movie.language || "Vietsub";
+    if (islandEp) islandEp.textContent = ep ? ep.name : "Full";
+    if (islandPlayIcon) islandPlayIcon.className = playing ? "fas fa-pause" : "fas fa-play";
+  }
+
+  seekRelative(seconds) {
+    const videoEl = document.getElementById("hlsVideoElement");
+    if (videoEl && !isNaN(videoEl.duration)) {
+      videoEl.currentTime = Math.max(0, Math.min(videoEl.duration, videoEl.currentTime + seconds));
     }
   }
 
