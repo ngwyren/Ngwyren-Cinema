@@ -386,9 +386,6 @@ class AppleCinemaApp {
           <section class="vision-settings-banner">
             <div class="vision-settings-banner-left">
               <h1 class="vision-hero-title">Cài Đặt Hệ Thống</h1>
-              <p class="vision-hero-desc">
-                Tùy chỉnh không gian thị giác, luồng phát và trải nghiệm rạp chiếu.
-              </p>
             </div>
             <div class="vision-settings-banner-actions">
               <button class="vision-btn-outline" onclick="app.resetDefaultSettings()">
@@ -404,7 +401,6 @@ class AppleCinemaApp {
               <div class="vision-settings-card-header">
                 <div>
                   <h3>Chủ Đề & Không Gian</h3>
-                  <p>Tông màu rạp chiếu và độ mờ kính cường lực</p>
                 </div>
               </div>
 
@@ -412,7 +408,6 @@ class AppleCinemaApp {
               <div class="vision-setting-row">
                 <div class="vision-setting-info">
                   <strong>Tông màu</strong>
-                  <span>Chọn phong cách không gian hiển thị</span>
                 </div>
                 <div class="vision-setting-pills">
                   <button class="filter-chip ${(s.theme || 'default') === 'default' ? 'active' : ''}" data-theme-btn="default" onclick="app.setThemeMode('default')">
@@ -433,14 +428,13 @@ class AppleCinemaApp {
                 </div>
               </div>
 
-              <!-- Row 2: Độ mờ kính (Kéo thả iPhone) -->
+              <!-- Row 2: Độ mờ kính (Native visionOS Range Slider) -->
               <div class="vision-setting-row" style="flex-direction: column; align-items: stretch; gap: 10px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                   <div>
-                    <strong style="font-size: 0.86rem; color: #ffffff;">Độ mờ kính</strong>
-                    <span style="font-size: 0.72rem; color: rgba(255, 255, 255, 0.48); display: block; margin-top: 2px;">Tùy chỉnh độ trong suốt của không gian kính</span>
+                    <strong style="font-size: 0.88rem; color: #ffffff;">Độ mờ kính</strong>
                   </div>
-                  <span class="vision-badge" id="glassSliderValueLabel" style="font-size: 0.76rem; font-weight: 700; padding: 4px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.18); color: #ffffff;">${glassLabel}</span>
+                  <span class="vision-badge" id="glassSliderValueLabel" style="font-size: 0.76rem; font-weight: 700; padding: 4px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.18); color: #ffffff;">${glassLabel} (${glassPercent}%)</span>
                 </div>
                 <div class="ios-slider-wrapper">
                   <div class="ios-slider-control">
@@ -449,34 +443,13 @@ class AppleCinemaApp {
                         <rect x="3" y="3" width="18" height="18" rx="5" stroke-dasharray="3 3"/>
                       </svg>
                     </span>
-                    <div class="ios-slider-track-wrap" id="glassSliderTrack">
-                      <div class="ios-slider-rail"></div>
-                      <div class="ios-slider-ticks">
-                        <span class="ios-slider-tick" style="left: 0%;"></span>
-                        <span class="ios-slider-tick" style="left: 50%;"></span>
-                        <span class="ios-slider-tick" style="left: 100%;"></span>
-                      </div>
-                      <div class="ios-slider-fill" id="glassSliderFill" style="width: ${glassPercent}%;"></div>
-                      <div class="ios-slider-thumb" id="glassSliderThumb" style="left: ${glassPercent}%;"></div>
-                    </div>
+                    <input type="range" min="0" max="100" value="${glassPercent}" id="glassNativeRange" class="ios-native-range" style="--range-fill: ${glassPercent}%;" aria-label="Độ mờ kính" />
                     <span class="ios-slider-icon" title="Kính mờ (100%)" onclick="app.setGlassStep(100)" style="cursor: pointer;">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="3" width="18" height="18" rx="5" fill="currentColor" fill-opacity="0.45"/>
                       </svg>
                     </span>
                   </div>
-                  <div class="ios-slider-labels">
-                    <button type="button" class="ios-label-stop ${glassPercent === 0 ? 'active' : ''}" onclick="app.setGlassStep(0)">
-                      <i class="fas fa-eye"></i> Trong Suốt
-                    </button>
-                    <button type="button" class="ios-label-stop ${glassPercent === 50 ? 'active' : ''}" onclick="app.setGlassStep(50)">
-                      <i class="fas fa-sliders"></i> Tiêu Chuẩn
-                    </button>
-                    <button type="button" class="ios-label-stop ${glassPercent === 100 ? 'active' : ''}" onclick="app.setGlassStep(100)">
-                      <i class="fas fa-shield"></i> Kính Mờ
-                    </button>
-                  </div>
-                  <p class="ios-slider-caption">Trong suốt nhìn rõ không gian phòng, kính mờ tăng độ tương phản và tập trung.</p>
                 </div>
               </div>
 
@@ -484,7 +457,6 @@ class AppleCinemaApp {
               <div class="vision-setting-row">
                 <div class="vision-setting-info">
                   <strong>Ánh sáng môi trường</strong>
-                  <span>Quầng sáng ambient phản chiếu theo phim</span>
                 </div>
                 <button class="vision-toggle-btn ${s.ambientGlow !== false ? 'on' : ''}" id="ambientGlowToggleBtn" onclick="app.toggleAmbientGlow()">
                   <span>${s.ambientGlow !== false ? 'Bật' : 'Tắt'}</span>
@@ -497,14 +469,12 @@ class AppleCinemaApp {
               <div class="vision-settings-card-header">
                 <div>
                   <h3>Chất Lượng & Nguồn Phát</h3>
-                  <p>Áp dụng mặc định khi mở bất kỳ phim nào</p>
                 </div>
               </div>
 
               <div class="vision-setting-row">
                 <div class="vision-setting-info">
                   <strong>Độ phân giải</strong>
-                  <span>Tự động khóa mức bitrate cao nhất</span>
                 </div>
                 <div class="vision-setting-pills">
                   <button class="filter-chip ${s.defaultQuality !== 'Auto' ? 'active' : ''}" onclick="app.updateSetting('defaultQuality', 'native-max')">
@@ -519,7 +489,6 @@ class AppleCinemaApp {
               <div class="vision-setting-row">
                 <div class="vision-setting-info">
                   <strong>Máy chủ ưu tiên</strong>
-                  <span>Nguồn luồng phát ưu tiên</span>
                 </div>
                 <div class="vision-setting-pills">
                   <button class="filter-chip ${s.defaultServer !== 'embed-1' ? 'active' : ''}" onclick="app.updateSetting('defaultServer', 'hls-1')">
@@ -537,14 +506,12 @@ class AppleCinemaApp {
               <div class="vision-settings-card-header">
                 <div>
                   <h3>Trải Nghiệm Rạp Chiếu</h3>
-                  <p>Hiệu ứng tự động phát và chuyển động</p>
                 </div>
               </div>
 
               <div class="vision-setting-row">
                 <div class="vision-setting-info">
                   <strong>Tự động phát</strong>
-                  <span>Bắt đầu phát ngay khi bấm phim</span>
                 </div>
                 <button class="vision-toggle-btn ${s.autoPlayOnOpen ? 'on' : ''}" onclick="app.updateSetting('autoPlayOnOpen', ${!s.autoPlayOnOpen})">
                   <span>${s.autoPlayOnOpen ? 'Bật' : 'Tắt'}</span>
@@ -554,7 +521,6 @@ class AppleCinemaApp {
               <div class="vision-setting-row">
                 <div class="vision-setting-info">
                   <strong>Tắt đèn rạp</strong>
-                  <span>Làm tối nền khi mở trình xem phim</span>
                 </div>
                 <button class="vision-toggle-btn ${s.defaultLightsOff ? 'on' : ''}" onclick="app.updateSetting('defaultLightsOff', ${!s.defaultLightsOff})">
                   <span>${s.defaultLightsOff ? 'Bật' : 'Tắt'}</span>
@@ -564,7 +530,6 @@ class AppleCinemaApp {
               <div class="vision-setting-row">
                 <div class="vision-setting-info">
                   <strong>Tự xoay Banner</strong>
-                  <span>Đổi poster nổi bật mỗi 9 giây</span>
                 </div>
                 <button class="vision-toggle-btn ${s.heroAutoRotate !== false ? 'on' : ''}" onclick="app.updateSetting('heroAutoRotate', ${s.heroAutoRotate === false})">
                   <span>${s.heroAutoRotate !== false ? 'Bật' : 'Tắt'}</span>
@@ -577,7 +542,6 @@ class AppleCinemaApp {
               <div class="vision-settings-card-header">
                 <div>
                   <h3>Quản Lý Dữ Liệu Cá Nhân</h3>
-                  <p>Đang lưu ${this.myList.length} phim yêu thích • ${this.watchHistory.length} phim xem tiếp</p>
                 </div>
               </div>
 
@@ -603,29 +567,13 @@ class AppleCinemaApp {
   }
 
   initGlassSlider() {
-    const track = document.getElementById("glassSliderTrack");
-    const thumb = document.getElementById("glassSliderThumb");
-    const fill = document.getElementById("glassSliderFill");
+    const range = document.getElementById("glassNativeRange");
     const label = document.getElementById("glassSliderValueLabel");
-    if (!track || !thumb || !fill) return;
+    if (!range) return;
 
-    let isDragging = false;
-
-    const updateSlider = (clientX, snap = false) => {
-      const rect = track.getBoundingClientRect();
-      if (!rect || rect.width <= 0) return 50;
-      let pos = (clientX - rect.left) / rect.width;
-      pos = Math.max(0, Math.min(1, pos));
-      let percent = Math.round(pos * 100);
-
-      if (snap) {
-        if (percent < 25) percent = 0;
-        else if (percent > 75) percent = 100;
-        else percent = 50;
-      }
-
-      fill.style.width = percent + "%";
-      thumb.style.left = percent + "%";
+    const applyPercent = (val, save = false) => {
+      const percent = Math.max(0, Math.min(100, Number(val)));
+      range.style.setProperty("--range-fill", `${percent}%`);
 
       // Phổ mờ kính từ 4px (siêu trong suốt thấy rõ phòng) đến 54px (kính mờ đặc bí mật)
       const blurPx = Math.round(4 + (percent / 100) * 50);
@@ -637,52 +585,24 @@ class AppleCinemaApp {
       root.style.setProperty("--glass-panel-alpha", `${panelAlpha}`);
       root.setAttribute("data-glass", percent < 25 ? "clear" : (percent > 75 ? "frost" : "standard"));
 
-      document.querySelectorAll(".ios-label-stop").forEach((el, idx) => {
-        const val = idx === 0 ? 0 : idx === 1 ? 50 : 100;
-        el.classList.toggle("active", Math.abs(percent - val) < 25);
-      });
       if (label) {
-        label.textContent = percent < 25 ? "Trong Suốt" : (percent > 75 ? "Kính Mờ" : "Tiêu Chuẩn");
+        const text = percent < 25 ? "Trong Suốt" : (percent > 75 ? "Kính Mờ" : "Tiêu Chuẩn");
+        label.textContent = `${text} (${percent}%)`;
       }
 
-      return percent;
+      if (save) {
+        this.settings.glassPercent = percent;
+        this.settings.glassBlur = percent < 25 ? "clear" : (percent > 75 ? "frost" : "standard");
+        this.saveStorage("apple_cinema_settings", this.settings);
+      }
     };
 
-    const onPointerMove = (e) => {
-      if (!isDragging) return;
-      updateSlider(e.clientX, false);
+    range.oninput = (e) => {
+      applyPercent(e.target.value, false);
     };
 
-    const onPointerUp = (e) => {
-      if (!isDragging) return;
-      isDragging = false;
-      document.documentElement.classList.remove("dragging-glass");
-      track.classList.remove("dragging");
-      thumb.classList.remove("dragging");
-
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", onPointerUp);
-      window.removeEventListener("pointercancel", onPointerUp);
-
-      const finalPercent = updateSlider(e.clientX, true);
-      this.settings.glassPercent = finalPercent;
-      this.settings.glassBlur = finalPercent === 0 ? "clear" : (finalPercent === 100 ? "frost" : "standard");
-      this.saveStorage("apple_cinema_settings", this.settings);
-      this.applyTheme();
-    };
-
-    track.onpointerdown = (e) => {
-      e.preventDefault();
-      isDragging = true;
-      document.documentElement.classList.add("dragging-glass");
-      track.classList.add("dragging");
-      thumb.classList.add("dragging");
-
-      window.addEventListener("pointermove", onPointerMove);
-      window.addEventListener("pointerup", onPointerUp);
-      window.addEventListener("pointercancel", onPointerUp);
-
-      updateSlider(e.clientX, false);
+    range.onchange = (e) => {
+      applyPercent(e.target.value, true);
     };
   }
 
@@ -691,17 +611,15 @@ class AppleCinemaApp {
     this.settings.glassBlur = percent === 0 ? "clear" : (percent === 100 ? "frost" : "standard");
     this.saveStorage("apple_cinema_settings", this.settings);
     this.applyTheme();
-    const fill = document.getElementById("glassSliderFill");
-    const thumb = document.getElementById("glassSliderThumb");
+    const range = document.getElementById("glassNativeRange");
     const label = document.getElementById("glassSliderValueLabel");
-    if (fill && thumb) {
-      fill.style.width = percent + "%";
-      thumb.style.left = percent + "%";
-      document.querySelectorAll(".ios-label-stop").forEach((el, idx) => {
-        const val = idx === 0 ? 0 : idx === 1 ? 50 : 100;
-        el.classList.toggle("active", val === percent);
-      });
-      if (label) label.textContent = percent === 0 ? "Trong Suốt" : (percent === 100 ? "Kính Mờ" : "Tiêu Chuẩn");
+    if (range) {
+      range.value = percent;
+      range.style.setProperty("--range-fill", `${percent}%`);
+    }
+    if (label) {
+      const text = percent === 0 ? "Trong Suốt" : (percent === 100 ? "Kính Mờ" : "Tiêu Chuẩn");
+      label.textContent = `${text} (${percent}%)`;
     }
   }
 
@@ -922,7 +840,6 @@ class AppleCinemaApp {
                        Thư Viện Cá Nhân
                      </span>
                      <h1 class="vision-hero-title" style="margin-top: 8px;">${title} (${list.length} phim)</h1>
-                     <p class="vision-hero-desc">${subtitle}</p>
                    </div>
                    <div class="vision-settings-banner-actions">
                      ${
@@ -943,23 +860,23 @@ class AppleCinemaApp {
           ${this.renderGenreChipsHTML()}
 
           <section class="vision-shelf-section">
-            <div class="vision-shelf-header">
-              <div>
-                <h2 class="vision-shelf-title">${title}</h2>
-                <p class="section-subtitle">${subtitle} • Hiển thị ${visibleList.length} / ${list.length} bộ phim</p>
-              </div>
-              <button class="vision-see-all-pill" onclick="app.resetAllFilters()">
-                <i class="fas fa-rotate-left"></i> Về Khám Phá
-              </button>
-            </div>
+            ${
+              !isPersonalPage
+                ? `<div class="vision-shelf-header">
+                     <h2 class="vision-shelf-title">${title}</h2>
+                     <button class="vision-see-all-pill" onclick="app.resetAllFilters()">
+                       <i class="fas fa-rotate-left"></i> Về Khám Phá
+                     </button>
+                   </div>`
+                : ""
+            }
             ${
               visibleList.length > 0
                 ? `<div class="vision-cards-grid-4">${visibleList.map((m) => this.renderVisionFeatureCardHTML(m)).join("")}</div>
                    ${this.renderLoadMoreButtonsHTML(list.length)}`
                 : `<div style="padding: 60px 20px; text-align: center; background: rgba(255,255,255,0.04); border-radius: 26px; border: 1px solid rgba(255,255,255,0.12);">
-                    <i class="fas fa-film" style="font-size: 2.5rem; color: #ffffff; margin-bottom: 12px;"></i>
-                    <h3 style="margin-bottom: 6px;">Chưa có phim trong mục này</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px;">Hãy thử chọn thể loại khác hoặc khám phá kho phim đề cử.</p>
+                    <i class="fas fa-film" style="font-size: 2.5rem; color: #ffffff; margin-bottom: 14px;"></i>
+                    <h3 style="margin-bottom: 18px; font-weight: 600;">Chưa có phim trong mục này</h3>
                     <button class="vision-btn-watch" onclick="app.resetAllFilters()">Khám Phá Kho Phim</button>
                   </div>`
             }
@@ -1297,7 +1214,6 @@ class AppleCinemaApp {
         <div class="section-header">
           <div class="section-title-wrap">
             <h2 class="section-title">Top 10 Phim Xu Hướng</h2>
-            <p class="section-subtitle">Bảng xếp hạng những bộ phim được xem nhiều nhất hôm nay</p>
           </div>
           <div class="section-controls">
             <button class="carousel-nav-btn" onclick="app.scrollTrack('${trackId}', -1)">
@@ -1341,7 +1257,6 @@ class AppleCinemaApp {
         <div class="section-header">
           <div class="section-title-wrap">
             <h2 class="section-title">Bảng Xếp Hạng Ngwyren Cinema</h2>
-            <p class="section-subtitle">Cập nhật liên tục Phim lẻ mới, Phim bộ mới & Đánh giá cao nhất</p>
           </div>
         </div>
         <div class="charts-grid-3">
