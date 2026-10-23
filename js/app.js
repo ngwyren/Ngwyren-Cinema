@@ -2611,6 +2611,7 @@ class AppleCinemaApp {
       } else if (e.key === "Escape") {
         document.getElementById("searchDropdown")?.classList.remove("open");
         this.toggleMobileSidebar(false);
+        document.getElementById("applePlayerBar")?.classList.remove("is-expanded");
         if (document.getElementById("movieDetailModal")?.classList.contains("open")) {
           this.closeMovieModal();
         }
@@ -2636,6 +2637,34 @@ class AppleCinemaApp {
         }
       }
     });
+
+    // Dynamic Island / Mini Theater Hover Controller với Debounce chống giật viền (Anti-Glitch)
+    const playerBar = document.getElementById("applePlayerBar");
+    if (playerBar) {
+      let collapseTimer = null;
+      let expandTimer = null;
+
+      playerBar.addEventListener("mouseenter", () => {
+        if (collapseTimer) {
+          clearTimeout(collapseTimer);
+          collapseTimer = null;
+        }
+        expandTimer = setTimeout(() => {
+          playerBar.classList.add("is-expanded");
+        }, 50);
+      });
+
+      playerBar.addEventListener("mouseleave", () => {
+        if (expandTimer) {
+          clearTimeout(expandTimer);
+          expandTimer = null;
+        }
+        // Debounce an toàn 220ms: Cho phép rê chuột sát mép viền cong mà không bao giờ bị glitch / nhấp nháy
+        collapseTimer = setTimeout(() => {
+          playerBar.classList.remove("is-expanded");
+        }, 220);
+      });
+    }
   }
 
   /* ==========================================================================
