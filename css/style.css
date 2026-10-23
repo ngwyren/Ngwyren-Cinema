@@ -3127,35 +3127,64 @@ body {
   align-items: center;
   gap: 10px;
   cursor: pointer;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.vision-profile-pill:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .vision-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  max-width: 32px !important;
+  max-height: 32px !important;
+  border-radius: 50% !important;
   background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.78rem;
+  font-size: 0.85rem;
+  overflow: hidden !important;
+  position: relative;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.vision-avatar img,
+.vision-avatar .profile-avatar-img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
+  display: block !important;
 }
 
 .vision-profile-text {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   line-height: 1.15;
 }
 
 .vision-profile-name {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: #ffffff;
+  white-space: nowrap;
 }
 
 .vision-profile-handle {
   font-size: 0.66rem;
   color: rgba(255, 255, 255, 0.56);
+  white-space: nowrap;
 }
 
 .vision-profile-arrow {

@@ -2447,17 +2447,18 @@ class AppleCinemaApp {
   initUserProfile() {
     this.userProfile = this.loadStorage("ngwyren_user_profile", {
       type: "guest",
-      name: "Khách",
+      name: "Guest",
       handle: "@guest",
       avatar: "🎬",
       avatarType: "emoji",
       avatarUrl: ""
     });
 
-    // Chuyển đổi nếu còn lưu tên mặc định cũ hoặc tài khoản giả lập cũ
-    if (this.userProfile.type === "guest" && (this.userProfile.name === "Ngwyren Cinema" || this.userProfile.handle === "@ngwyren")) {
-      this.userProfile.name = "Khách";
+    // Nếu còn lưu tên cũ "Ngwyren Cinema" hoặc "Khách" -> chuẩn hóa thành "Guest"
+    if (this.userProfile.type === "guest" && (this.userProfile.name === "Ngwyren Cinema" || this.userProfile.name === "Khách" || this.userProfile.handle === "@ngwyren")) {
+      this.userProfile.name = "Guest";
       this.userProfile.handle = "@guest";
+      this.userProfile.avatar = "🎬";
       this.saveStorage("ngwyren_user_profile", this.userProfile);
     }
 
@@ -2733,10 +2734,16 @@ class AppleCinemaApp {
     const isGoogle = this.userProfile.type === "google";
 
     if (nameEl) {
-      nameEl.textContent = isGoogle ? this.userProfile.name : "Đăng Nhập";
+      nameEl.textContent = isGoogle ? this.userProfile.name : "Guest";
     }
     if (handleEl) {
-      handleEl.textContent = isGoogle ? this.userProfile.handle : "Bằng Google";
+      if (isGoogle) {
+        handleEl.textContent = this.userProfile.handle;
+        handleEl.style.display = "block";
+      } else {
+        handleEl.textContent = "";
+        handleEl.style.display = "none";
+      }
     }
     if (avatarEl) {
       if (isGoogle && this.userProfile.avatarType === "image" && this.userProfile.avatarUrl) {
@@ -2744,7 +2751,7 @@ class AppleCinemaApp {
       } else if (isGoogle) {
         avatarEl.innerHTML = `<div class="profile-avatar-letter">${(this.userProfile.name || "G").charAt(0).toUpperCase()}</div>`;
       } else {
-        avatarEl.innerHTML = `<i class="fab fa-google" style="color: #4285f4; font-size: 1.05rem;"></i>`;
+        avatarEl.innerHTML = `<span class="profile-avatar-emoji">🎬</span>`;
       }
     }
   }
@@ -2936,7 +2943,7 @@ class AppleCinemaApp {
   logoutProfile() {
     this.userProfile = {
       type: "guest",
-      name: "Khách",
+      name: "Guest",
       handle: "@guest",
       avatar: "🎬",
       avatarType: "emoji",
@@ -2946,7 +2953,7 @@ class AppleCinemaApp {
     this.updateProfileUI();
     this.syncToCloud(true);
     this.closeAuthModal();
-    this.showToast(`👋 Đã đăng xuất khỏi tài khoản Google`);
+    this.showToast(`👋 Đã trở về chế độ Guest`);
   }
 
   closeAuthModal() {
