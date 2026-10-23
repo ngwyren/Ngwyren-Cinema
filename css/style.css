@@ -7044,12 +7044,13 @@ iframe:focus-within,
   position: relative;
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  background: transparent;
+  border-radius: 0 !important;
+  background: transparent !important;
   border: none !important;
   outline: none !important;
-  color: rgba(255, 255, 255, 0.88);
-  font-size: 0.95rem;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -7059,9 +7060,9 @@ iframe:focus-within,
 }
 
 .apple-ctrl-btn:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: transparent !important;
   color: #ffffff;
-  transform: scale(1.1);
+  transform: scale(1.15);
 }
 
 .apple-ctrl-btn:active {
@@ -7069,17 +7070,24 @@ iframe:focus-within,
 }
 
 .apple-play-btn {
-  width: 42px;
-  height: 42px;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.22) !important;
-  color: #ffffff;
-  font-size: 1.15rem;
+  width: 38px;
+  height: 38px;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+  font-size: 1.35rem;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
 }
 
 .apple-play-btn:hover {
-  background: rgba(255, 255, 255, 0.26);
-  border-color: rgba(255, 255, 255, 0.4) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  transform: scale(1.18);
 }
 
 .apple-skip-btn {
