@@ -6253,8 +6253,8 @@ html.dragging-glass .vision-left-dock {
   align-items: center;
   justify-content: center;
   gap: 3px;
-  padding: 10px 20px;
-  min-width: 108px;
+  padding: 10px 18px;
+  min-width: 110px;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -6287,6 +6287,19 @@ html.dragging-glass .vision-left-dock {
   letter-spacing: -0.01em;
 }
 
+.tab-date-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  opacity: 0.85;
+}
+
+.schedule-tab-btn.active .tab-date-label {
+  color: #111216;
+  opacity: 0.9;
+  font-weight: 700;
+}
+
 .tab-today-badge {
   font-size: 0.65rem;
   font-weight: 800;
@@ -6296,16 +6309,80 @@ html.dragging-glass .vision-left-dock {
   padding: 2px 8px;
   border-radius: 999px;
   letter-spacing: 0.04em;
-}
-.schedule-tab-btn.active .tab-today-badge {
-  color: #15803d;
-  background: rgba(21, 128, 61, 0.2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .tab-count-tag {
   font-size: 0.72rem;
   opacity: 0.75;
   font-weight: 500;
+}
+
+/* ==========================================================================
+   HÔM NAY CHIẾU THÌ CHO NÓ MÀU XANH (APPLE EMERALD GREEN)
+   ========================================================================== */
+.schedule-tab-btn.is-today {
+  background: rgba(48, 209, 88, 0.12) !important;
+  border: 1.5px solid rgba(48, 209, 88, 0.5) !important;
+  color: #38ef7d !important;
+  box-shadow: 0 4px 18px rgba(48, 209, 88, 0.2) !important;
+}
+
+.schedule-tab-btn.is-today .tab-day-label {
+  color: #38ef7d !important;
+  font-weight: 800;
+}
+
+.schedule-tab-btn.is-today .tab-date-label {
+  color: #30d158 !important;
+  font-weight: 700;
+  opacity: 1;
+}
+
+.schedule-tab-btn.is-today .tab-today-badge {
+  color: #38ef7d !important;
+  background: rgba(48, 209, 88, 0.24) !important;
+  border: 1px solid rgba(48, 209, 88, 0.42) !important;
+}
+
+.schedule-tab-btn.is-today .tab-count-tag {
+  color: rgba(56, 239, 125, 0.9) !important;
+}
+
+/* KHI TAB HÔM NAY ĐƯỢC CHỌN (ACTIVE) - NỔI BẬT TÔNG XANH LÁ APPLE SANG TRỌNG */
+.schedule-tab-btn.is-today.active {
+  background: linear-gradient(135deg, #30d158 0%, #24b049 100%) !important;
+  color: #ffffff !important;
+  border-color: #30d158 !important;
+  box-shadow:
+    0 10px 28px rgba(48, 209, 88, 0.45),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.8),
+    0 0 18px rgba(48, 209, 88, 0.35) !important;
+  transform: translateY(-2px);
+}
+
+.schedule-tab-btn.is-today.active .tab-day-label {
+  color: #ffffff !important;
+  font-weight: 800;
+}
+
+.schedule-tab-btn.is-today.active .tab-date-label {
+  color: rgba(255, 255, 255, 0.95) !important;
+  font-weight: 700;
+}
+
+.schedule-tab-btn.is-today.active .tab-today-badge {
+  background: #ffffff !important;
+  color: #15803d !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.schedule-tab-btn.is-today.active .tab-count-tag {
+  color: rgba(255, 255, 255, 0.92) !important;
+  font-weight: 600;
 }
 
 /* Schedule Status Header Bar */

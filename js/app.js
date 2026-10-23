@@ -580,9 +580,23 @@ class AppleCinemaApp {
       "chu-nhat": "Chủ Nhật"
     };
 
-    // Xác định ngày hiện tại trong tuần (Hôm nay)
-    const jsDay = new Date().getDay(); // 0: Chủ Nhật, 1: Thứ 2, 2: Thứ 3...
+    // Xác định ngày hiện tại trong tuần (Hôm nay) và tính ngày/tháng thực tế cho 7 ngày trong tuần
+    const now = new Date();
+    const jsDay = now.getDay(); // 0: Chủ Nhật, 1: Thứ 2, 2: Thứ 3...
     const todayKey = jsDay === 0 ? "chu-nhat" : `thu-${jsDay + 1}`;
+
+    const dayIndexInWeek = (jsDay + 6) % 7; // Thứ 2 = 0, ..., Chủ Nhật = 6
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - dayIndexInWeek);
+
+    const dayDates = {};
+    dayKeys.forEach((k, idx) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + idx);
+      const dayNum = String(d.getDate()).padStart(2, "0");
+      const monthNum = String(d.getMonth() + 1).padStart(2, "0");
+      dayDates[k] = `${dayNum}/${monthNum}`;
+    });
 
     if (!this.activeScheduleDay) {
       this.activeScheduleDay = todayKey;
@@ -597,11 +611,12 @@ class AppleCinemaApp {
         const isActive = k === currentDayKey;
         const count = (schedule[k] || []).length;
         return `
-          <button class="schedule-tab-btn ${isActive ? "active" : ""}"
+          <button class="schedule-tab-btn ${isActive ? "active" : ""} ${isToday ? "is-today" : ""}"
                   onclick="app.selectScheduleDay('${k}')"
                   data-day="${k}">
             <span class="tab-day-label">${dayNames[k]}</span>
-            ${isToday ? '<span class="tab-today-badge">Hôm nay</span>' : ""}
+            <span class="tab-date-label">${dayDates[k]}</span>
+            ${isToday ? '<span class="tab-today-badge"><i class="fas fa-circle-dot"></i> Hôm nay</span>' : ""}
             <span class="tab-count-tag">${count} phim</span>
           </button>
         `;
