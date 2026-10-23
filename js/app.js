@@ -286,7 +286,7 @@ class AppleCinemaApp {
     }
   }
 
-  renderLeftSideColumnHTML(contextMovies = null, panelTitle = "🔥 Trailer Mới") {
+  renderLeftSideColumnHTML(contextMovies = null, panelTitle = "Trailer Mới") {
     // Luôn đảm bảo đủ đúng 15 phim mới, ngẫu nhiên hóa mỗi lần tải lại trang
     let list15 = [];
     if (!contextMovies || contextMovies === this.service.movies) {
@@ -371,13 +371,12 @@ class AppleCinemaApp {
 
     return `
       <div class="vision-dashboard-grid">
-        ${this.renderLeftSideColumnHTML(this.service.movies, "🔥 Trailer Mới")}
+        ${this.renderLeftSideColumnHTML(this.service.movies, "Trailer Mới")}
 
         <div class="vision-main-col vision-col-transition">
           <!-- Spatial Settings Hero Header -->
           <section class="vision-settings-banner">
             <div class="vision-settings-banner-left">
-              <span class="vision-trending-pill">visionOS</span>
               <h1 class="vision-hero-title">Cài Đặt Hệ Thống</h1>
               <p class="vision-hero-desc">
                 Tùy chỉnh không gian thị giác, luồng phát và trải nghiệm rạp chiếu.
@@ -795,7 +794,7 @@ class AppleCinemaApp {
 
       container.innerHTML = `
         <div class="vision-dashboard-grid">
-          ${this.renderLeftSideColumnHTML(this.service.movies, "🔥 Trailer Mới")}
+          ${this.renderLeftSideColumnHTML(this.service.movies, "Trailer Mới")}
 
           <!-- RIGHT MAIN COLUMN: HERO BANNER + GỢI Ý CHO BẠN + CURATED ROWS -->
           <div class="vision-main-col vision-col-transition">
@@ -897,7 +896,7 @@ class AppleCinemaApp {
                      </button>
                    </div>
                  </section>`
-              : this.renderHeroHTML(categoryHeroMovie, `🔥 ${title} (${list.length} phim)`)
+              : this.renderHeroHTML(categoryHeroMovie, `${title} (${list.length} phim)`)
           }
 
           ${this.renderGenreChipsHTML()}
@@ -1061,7 +1060,7 @@ class AppleCinemaApp {
   /* ==========================================================================
      VISION OS SPATIAL HTML BUILDERS (HERO, TRAILER STACK, CONTINUE & CARDS)
      ========================================================================== */
-  renderHeroHTML(customMovie = null, customKicker = "🔥 Thịnh Hành") {
+  renderHeroHTML(customMovie = null, customKicker = "Thịnh Hành") {
     const movie = customMovie || this.heroMovies[this.heroIndex] || this.service.movies[0];
     if (!movie) return "";
     const inMyList = this.isInMyList(movie);
@@ -2972,7 +2971,7 @@ class AppleCinemaApp {
       } else if (isGoogle) {
         avatarEl.innerHTML = `<div class="profile-avatar-letter">${(this.userProfile.name || "G").charAt(0).toUpperCase()}</div>`;
       } else {
-        avatarEl.innerHTML = `<span class="profile-avatar-emoji">🎬</span>`;
+        avatarEl.innerHTML = `<div class="profile-avatar-letter" style="background: rgba(255, 255, 255, 0.16); color: #ffffff;">G</div>`;
       }
     }
   }
@@ -3025,8 +3024,7 @@ class AppleCinemaApp {
 
         <div class="auth-google-hero">
           <div class="auth-brand-badge">
-            <span class="auth-brand-icon">🎬</span>
-            <span class="auth-brand-name">Ngwyren Cinema</span>
+            <span class="auth-brand-name">Guest</span>
           </div>
           <p class="auth-subtitle">Đăng nhập tài khoản Google để lưu phim yêu thích và xem tiếp trên mọi thiết bị.</p>
         </div>
