@@ -645,7 +645,6 @@ class AppleCinemaApp {
                   <div class="schedule-movie-sub">${m.originTitle || m.country}</div>
                   <div class="schedule-movie-chips">
                     <span class="sch-ep-pill"><i class="fas fa-tv"></i> ${this.formatEpisodeLabel(m.currentEpisode || "Tập Mới", "Tập Mới")}</span>
-                    <span class="sch-lang-pill"><i class="fas fa-microphone"></i> ${m.language || "Vietsub + Thuyết Minh"}</span>
                   </div>
                   <div class="schedule-movie-genres">${genresHTML}</div>
                 </div>
