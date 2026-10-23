@@ -6748,16 +6748,7 @@ html.dragging-glass .vision-left-dock {
 }
 
 .sch-lang-pill {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #0a84ff;
-  background: rgba(10, 132, 255, 0.12);
-  border: 1px solid rgba(10, 132, 255, 0.22);
-  padding: 3px 9px;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+  display: none !important;
 }
 
 .schedule-movie-genres {
