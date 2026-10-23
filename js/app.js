@@ -1792,8 +1792,6 @@ class AppleCinemaApp {
           <div>
             <div class="hero-meta-pills" style="margin-bottom: 10px;">
               <span class="meta-pill match">${movie.matchScore}% Phù hợp với bạn</span>
-              <span class="meta-pill quality">${movie.quality}</span>
-              <span class="meta-pill">${movie.language}</span>
               <span class="meta-pill">${movie.year}</span>
               <span class="meta-pill"><i class="fas fa-star"></i> ${movie.rating}</span>
             </div>
