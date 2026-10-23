@@ -2922,42 +2922,33 @@ body {
   transform: translate3d(0, -50%, 0) scale(1);
 }
 
-/* Smooth Spatial View Transition when switching tabs */
+/* Smooth Pure Fade-in Transition when switching pages (Zero Khựng / Zero Stutter) */
 .vision-view-enter {
-  animation: visionViewTransition 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: visionPageFade 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  will-change: opacity;
 }
 
 .vision-col-transition {
-  animation: visionMainColTransition 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: visionPageFade 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  will-change: opacity;
 }
 
 .vision-hero-slide-anim {
-  animation: visionHeroSlideFade 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: visionPageFade 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  will-change: opacity;
 }
 
 .modal-movie-switch {
-  animation: modalMovieSwitchTransition 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: visionPageFade 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  will-change: opacity;
 }
 
-@keyframes visionViewTransition {
-  from {
-    opacity: 0.45;
-    transform: translate3d(0, 8px, 0);
+@keyframes visionPageFade {
+  0% {
+    opacity: 0;
   }
-  to {
+  100% {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes visionMainColTransition {
-  from {
-    opacity: 0.35;
-    transform: translate3d(14px, 0, 0) scale(0.992);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 

@@ -236,7 +236,7 @@ class AppleCinemaApp {
     this.toggleMobileSidebar(false);
 
     // Cuộn mượt lên đầu trang & hiệu ứng chuyển trang không gian visionOS
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "instant" });
     this.renderMainView();
     this.triggerPageTransition();
   }
@@ -2335,7 +2335,7 @@ class AppleCinemaApp {
     this.lastSearchQuery = query;
     this.lastSearchResults = await this.service.searchMovies(query);
     this.currentNav = "search-results";
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "instant" });
     this.renderMainView();
     this.triggerPageTransition();
   }
@@ -2371,7 +2371,7 @@ class AppleCinemaApp {
     }
     this.activeGenreFilter = genreLabel;
     this.syncLeftDockIndicator(this.currentNav);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "instant" });
     this.renderMainView();
     this.triggerPageTransition();
   }
@@ -2381,7 +2381,7 @@ class AppleCinemaApp {
     this.customFilterValue = personName;
     this.currentNav = "person-filter";
     this.syncLeftDockIndicator("kham-pha");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "instant" });
     this.renderMainView();
     this.triggerPageTransition();
   }
