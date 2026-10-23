@@ -614,9 +614,9 @@ class AppleCinemaApp {
           <button class="schedule-tab-btn ${isActive ? "active" : ""} ${isToday ? "is-today" : ""}"
                   onclick="app.selectScheduleDay('${k}')"
                   data-day="${k}">
+            ${isToday ? '<span class="tab-today-badge-outer"><i class="fas fa-circle-dot"></i> Hôm nay</span>' : ""}
             <span class="tab-day-label">${dayNames[k]}</span>
             <span class="tab-date-label">${dayDates[k]}</span>
-            ${isToday ? '<span class="tab-today-badge"><i class="fas fa-circle-dot"></i> Hôm nay</span>' : ""}
             <span class="tab-count-tag">${count} phim</span>
           </button>
         `;

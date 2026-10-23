@@ -6231,9 +6231,10 @@ html.dragging-glass .vision-left-dock {
 .schedule-tabs-bar {
   margin-bottom: 22px;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: visible !important;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  padding-top: 14px;
 }
 .schedule-tabs-bar::-webkit-scrollbar {
   display: none;
@@ -6242,18 +6243,19 @@ html.dragging-glass .vision-left-dock {
 .schedule-tabs-scroll-wrap {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: max-content;
-  padding: 4px 2px;
+  padding: 10px 4px 4px 4px;
 }
 
 .schedule-tab-btn {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 3px;
-  padding: 10px 18px;
+  padding: 12px 18px 10px;
   min-width: 110px;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.05);
@@ -6301,15 +6303,25 @@ html.dragging-glass .vision-left-dock {
   font-weight: 700;
 }
 
-.tab-today-badge {
-  font-size: 0.65rem;
+/* Badge "Hôm nay" được đưa ra ngoài phía trên đỉnh nút */
+.tab-today-badge-outer {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.64rem;
   font-weight: 800;
   text-transform: uppercase;
-  color: #16a34a;
-  background: rgba(22, 163, 74, 0.18);
-  padding: 2px 8px;
+  color: #ffffff;
+  background: #1e8e3e;
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  padding: 2px 9px;
   border-radius: 999px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  z-index: 5;
+  pointer-events: none;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -6343,12 +6355,6 @@ html.dragging-glass .vision-left-dock {
   opacity: 1;
 }
 
-.schedule-tab-btn.is-today .tab-today-badge {
-  color: #38ef7d !important;
-  background: rgba(48, 209, 88, 0.24) !important;
-  border: 1px solid rgba(48, 209, 88, 0.42) !important;
-}
-
 .schedule-tab-btn.is-today .tab-count-tag {
   color: rgba(56, 239, 125, 0.9) !important;
 }
@@ -6373,12 +6379,11 @@ html.dragging-glass .vision-left-dock {
   font-weight: 700;
 }
 
-.schedule-tab-btn.is-today.active .tab-today-badge {
+.schedule-tab-btn.is-today.active .tab-today-badge-outer {
   background: #ffffff !important;
   color: #15803d !important;
   border-color: #ffffff !important;
-  box-shadow: none !important;
-  filter: none !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35) !important;
 }
 
 .schedule-tab-btn.is-today.active .tab-count-tag {
