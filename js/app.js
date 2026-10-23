@@ -51,6 +51,7 @@ class AppleCinemaApp {
   }
 
   async init() {
+    this.applyTheme();
     this.buildFastIndexes();
     this.setupHeroMovies();
     this.initUserProfile();
@@ -281,7 +282,7 @@ class AppleCinemaApp {
     }
   }
 
-  renderLeftSideColumnHTML(contextMovies = null, panelTitle = "🔥 Phim & Trailer Mới") {
+  renderLeftSideColumnHTML(contextMovies = null, panelTitle = "🔥 Trailer Mới") {
     // Luôn đảm bảo đủ đúng 15 phim mới, ngẫu nhiên hóa mỗi lần tải lại trang
     let list15 = [];
     if (!contextMovies || contextMovies === this.service.movies) {
@@ -317,7 +318,7 @@ class AppleCinemaApp {
         <div class="vision-glass-panel">
           <div class="vision-panel-header">
             <span class="vision-panel-title">${panelTitle}</span>
-            <span class="vision-panel-sort">Sort by: <strong>Today ⇅</strong></span>
+            <span class="vision-panel-sort">Hôm nay</span>
           </div>
           <div class="vision-trailer-stack">
             ${sourceTrailers.map((m) => this.renderVisionTrailerCardHTML(m)).join("")}
@@ -326,7 +327,7 @@ class AppleCinemaApp {
 
         <div class="vision-glass-panel">
           <div class="vision-panel-header">
-            <span class="vision-panel-title">Continue Watching</span>
+            <span class="vision-panel-title">Xem Tiếp</span>
             <button class="vision-see-all-pill" onclick="app.setNavigation('lich-su')">Lịch sử</button>
           </div>
           <div class="vision-continue-list">
@@ -360,7 +361,7 @@ class AppleCinemaApp {
     const s = this.settings || {};
     return `
       <div class="vision-dashboard-grid">
-        ${this.renderLeftSideColumnHTML(this.service.movies, "🔥 Phim & Trailer Mới")}
+        ${this.renderLeftSideColumnHTML(this.service.movies, "🔥 Trailer Mới")}
 
         <div class="vision-main-col vision-col-transition">
           <!-- Spatial Settings Hero Header -->
@@ -373,9 +374,6 @@ class AppleCinemaApp {
               </p>
             </div>
             <div class="vision-settings-banner-actions">
-              <button class="vision-btn-watch" onclick="app.syncLivePhimmoi(true)">
-                <i class="fas fa-rotate"></i> Đồng Bộ Kho Phim (${this.service.movies.length})
-              </button>
               <button class="vision-btn-outline" onclick="app.resetDefaultSettings()">
                 <i class="fas fa-sliders"></i> Mặc Định
               </button>
@@ -384,6 +382,72 @@ class AppleCinemaApp {
 
           <!-- Settings Grid (2-Column Glass Cards inside Main Column) -->
           <div class="vision-settings-grid">
+            <!-- Card Theme: Giao Diện & Không Gian Thị Giác -->
+            <div class="vision-settings-card" style="grid-column: 1 / -1;">
+              <div class="vision-settings-card-header">
+                <i class="fas fa-palette"></i>
+                <div>
+                  <h3>Chủ Đề & Không Gian Thị Giác (Theme & Spatial Lighting)</h3>
+                  <p>Tùy chỉnh tông màu rạp chiếu, độ mờ kính cường lực và hiệu ứng ánh sáng không gian</p>
+                </div>
+              </div>
+
+              <!-- Row 1: Không Gian Màu Sắc -->
+              <div class="vision-setting-row">
+                <div class="vision-setting-info">
+                  <strong>Không gian màu sắc (Spatial Theme)</strong>
+                  <span>Chọn tông màu không gian rạp chiếu chuẩn Apple visionOS</span>
+                </div>
+                <div class="vision-setting-pills">
+                  <button class="filter-chip ${(s.theme || 'default') === 'default' ? 'active' : ''}" onclick="app.setThemeMode('default')">
+                    🌌 visionOS Gốc
+                  </button>
+                  <button class="filter-chip ${s.theme === 'midnight' ? 'active' : ''}" onclick="app.setThemeMode('midnight')">
+                    🎬 Rạp Phim Nửa Đêm (OLED)
+                  </button>
+                  <button class="filter-chip ${s.theme === 'aurora' ? 'active' : ''}" onclick="app.setThemeMode('aurora')">
+                    🔮 Cực Quang Tím (Aurora)
+                  </button>
+                  <button class="filter-chip ${s.theme === 'amber' ? 'active' : ''}" onclick="app.setThemeMode('amber')">
+                    🌅 Hoàng Hôn Amber
+                  </button>
+                  <button class="filter-chip ${s.theme === 'emerald' ? 'active' : ''}" onclick="app.setThemeMode('emerald')">
+                    🌲 Ngọc Lục Bảo
+                  </button>
+                </div>
+              </div>
+
+              <!-- Row 2: Độ Mờ Kính Cường Lực -->
+              <div class="vision-setting-row">
+                <div class="vision-setting-info">
+                  <strong>Độ mờ kính cường lực (Glass Blur)</strong>
+                  <span>Điều chỉnh độ trong suốt của cửa sổ kính không gian</span>
+                </div>
+                <div class="vision-setting-pills">
+                  <button class="filter-chip ${s.glassBlur === 'clear' ? 'active' : ''}" onclick="app.setGlassBlurMode('clear')">
+                    Trong Suốt Cao (Clear)
+                  </button>
+                  <button class="filter-chip ${(s.glassBlur || 'standard') === 'standard' ? 'active' : ''}" onclick="app.setGlassBlurMode('standard')">
+                    Tiêu Chuẩn (visionOS)
+                  </button>
+                  <button class="filter-chip ${s.glassBlur === 'frost' ? 'active' : ''}" onclick="app.setGlassBlurMode('frost')">
+                    Kính Mờ Đậm (Frost)
+                  </button>
+                </div>
+              </div>
+
+              <!-- Row 3: Hiệu Ứng Ánh Sáng Môi Trường -->
+              <div class="vision-setting-row">
+                <div class="vision-setting-info">
+                  <strong>Ánh sáng môi trường (Ambient Spatial Glow)</strong>
+                  <span>Hiệu ứng quầng sáng ambient phản chiếu nhẹ nhàng trong không gian phòng</span>
+                </div>
+                <button class="vision-toggle-btn ${s.ambientGlow !== false ? 'on' : ''}" onclick="app.toggleAmbientGlow()">
+                  <span>${s.ambientGlow !== false ? 'Đang Bật' : 'Đang Tắt'}</span>
+                </button>
+              </div>
+            </div>
+
             <!-- Card 1: Chất lượng & Nguồn phát -->
             <div class="vision-settings-card">
               <div class="vision-settings-card-header">
@@ -500,9 +564,37 @@ class AppleCinemaApp {
     `;
   }
 
+  applyTheme() {
+    const s = this.settings || {};
+    const root = document.documentElement;
+    root.setAttribute("data-theme", s.theme || "default");
+    root.setAttribute("data-glass", s.glassBlur || "standard");
+    root.setAttribute("data-ambient", s.ambientGlow !== false ? "true" : "false");
+  }
+
+  setThemeMode(theme) {
+    this.updateSetting("theme", theme);
+    this.applyTheme();
+    if (this.currentNav === "cai-dat") this.renderMainView();
+  }
+
+  setGlassBlurMode(blur) {
+    this.updateSetting("glassBlur", blur);
+    this.applyTheme();
+    if (this.currentNav === "cai-dat") this.renderMainView();
+  }
+
+  toggleAmbientGlow() {
+    const current = this.settings.ambientGlow !== false;
+    this.updateSetting("ambientGlow", !current);
+    this.applyTheme();
+    if (this.currentNav === "cai-dat") this.renderMainView();
+  }
+
   updateSetting(key, value) {
     this.settings[key] = value;
     this.saveStorage("apple_cinema_settings", this.settings);
+    if (key === "theme" || key === "glassBlur" || key === "ambientGlow") this.applyTheme();
     if (key === "defaultServer") this.currentServerMode = value;
     if (key === "defaultQuality") this.currentQuality = value;
     if (key === "defaultLightsOff") this.lightsOff = Boolean(value);
@@ -514,6 +606,9 @@ class AppleCinemaApp {
 
   resetDefaultSettings() {
     this.settings = {
+      theme: "default",
+      glassBlur: "standard",
+      ambientGlow: true,
       defaultServer: "hls-1",
       defaultQuality: "native-max",
       autoPlayOnOpen: false,
@@ -524,6 +619,7 @@ class AppleCinemaApp {
     this.saveStorage("apple_cinema_settings", this.settings);
     this.currentServerMode = "hls-1";
     this.currentQuality = "native-max";
+    this.applyTheme();
     if (this.currentNav === "cai-dat") {
       this.renderMainView();
     }
@@ -569,17 +665,17 @@ class AppleCinemaApp {
 
       container.innerHTML = `
         <div class="vision-dashboard-grid">
-          ${this.renderLeftSideColumnHTML(this.service.movies, "🔥 Phim & Trailer Mới")}
+          ${this.renderLeftSideColumnHTML(this.service.movies, "🔥 Trailer Mới")}
 
-          <!-- RIGHT MAIN COLUMN: HERO BANNER + YOU MIGHT LIKE + CURATED ROWS -->
+          <!-- RIGHT MAIN COLUMN: HERO BANNER + GỢI Ý CHO BẠN + CURATED ROWS -->
           <div class="vision-main-col vision-col-transition">
             ${this.renderHeroHTML()}
 
-            <!-- You might like (4-column visionOS cards) -->
+            <!-- Gợi Ý Cho Bạn (4-column visionOS cards) -->
             <section class="vision-shelf-section">
               <div class="vision-shelf-header">
-                <h2 class="vision-shelf-title">You might like</h2>
-                <button class="vision-see-all-pill" onclick="app.setNavigation('moi-cap-nhat')">See all</button>
+                <h2 class="vision-shelf-title">Gợi Ý Cho Bạn</h2>
+                <button class="vision-see-all-pill" onclick="app.setNavigation('moi-cap-nhat')">Xem Tất Cả</button>
               </div>
               <div class="vision-cards-grid-4">
                 ${youMightLike.map((m) => this.renderVisionFeatureCardHTML(m)).join("")}
@@ -592,9 +688,9 @@ class AppleCinemaApp {
             <!-- Anime Row -->
             <section class="vision-shelf-section">
               <div class="vision-shelf-header">
-                <h2 class="vision-shelf-title">Animation & Anime Đỉnh Cao</h2>
+                <h2 class="vision-shelf-title">Anime & Hoạt Hình</h2>
                 <button class="vision-see-all-pill" onclick="app.setNavigation('anime')">
-                  See all (${this.getMoviesByTag("anime").length})
+                  Xem Tất Cả (${this.getMoviesByTag("anime").length})
                 </button>
               </div>
               <div class="vision-cards-grid-4">
@@ -607,7 +703,7 @@ class AppleCinemaApp {
               <div class="vision-shelf-header">
                 <h2 class="vision-shelf-title">Phim Độc Quyền Netflix</h2>
                 <button class="vision-see-all-pill" onclick="app.setNavigation('netflix')">
-                  See all (${this.getMoviesByTag("netflix").length})
+                  Xem Tất Cả (${this.getMoviesByTag("netflix").length})
                 </button>
               </div>
               <div class="vision-cards-grid-4">
@@ -620,7 +716,7 @@ class AppleCinemaApp {
               <div class="vision-shelf-header">
                 <h2 class="vision-shelf-title">Phim Hàn Quốc Thịnh Hành</h2>
                 <button class="vision-see-all-pill" onclick="app.setNavigation('han-quoc')">
-                  See all (${this.getMoviesByCountry("han-quoc").length})
+                  Xem Tất Cả (${this.getMoviesByCountry("han-quoc").length})
                 </button>
               </div>
               <div class="vision-cards-grid-4">
@@ -835,7 +931,7 @@ class AppleCinemaApp {
   /* ==========================================================================
      VISION OS SPATIAL HTML BUILDERS (HERO, TRAILER STACK, CONTINUE & CARDS)
      ========================================================================== */
-  renderHeroHTML(customMovie = null, customKicker = "🔥 Now Trending") {
+  renderHeroHTML(customMovie = null, customKicker = "🔥 Thịnh Hành") {
     const movie = customMovie || this.heroMovies[this.heroIndex] || this.service.movies[0];
     if (!movie) return "";
     const inMyList = this.isInMyList(movie);
@@ -868,7 +964,7 @@ class AppleCinemaApp {
 
             <div class="vision-hero-actions">
               <button class="vision-btn-watch" onclick="app.openMovieModal('${movie.slug}', true)">
-                <i class="fas fa-play"></i> Watch
+                <i class="fas fa-play"></i> Xem Ngay
               </button>
               <button class="vision-btn-outline" onclick="app.toggleMyList('${movie.slug}', event)">
                 <i class="fas ${inMyList ? "fa-check" : "fa-download"}"></i>
@@ -2551,13 +2647,8 @@ class AppleCinemaApp {
 
       this.lastCloudSyncTime = Date.now();
       this.saveStorage("ngwyren_last_cloud_sync", this.lastCloudSyncTime);
-
-      if (notify) {
-        this.showToast(`☁️ Đã sao lưu lên Đám Mây thành công! Mã: ${this.cloudObjId || this.cloudSyncKey}`);
-      }
     } catch (e) {
       console.warn("Cloud sync error:", e);
-      if (notify) this.showToast("⚠️ Không thể kết nối Cloud Sync. Vui lòng kiểm tra mạng!");
     } finally {
       this.cloudSyncing = false;
       this.renderCloudSyncBadge(false);
@@ -2717,7 +2808,7 @@ class AppleCinemaApp {
       };
       this.saveStorage("ngwyren_user_profile", this.userProfile);
       this.updateProfileUI();
-      this.syncToCloud(true);
+      this.syncToCloud(false);
       this.closeAuthModal();
       this.showToast(`🎉 Đăng nhập Google thành công! Chào mừng ${payload.name}`);
     } catch (e) {
@@ -2912,7 +3003,7 @@ class AppleCinemaApp {
     };
     this.saveStorage("ngwyren_user_profile", this.userProfile);
     this.updateProfileUI();
-    this.syncToCloud(true);
+    this.syncToCloud(false);
     this.closeAuthModal();
     this.showToast(`🎉 Đăng nhập Google thành công! Chào mừng ${name}`);
   }
@@ -2951,7 +3042,7 @@ class AppleCinemaApp {
     };
     this.saveStorage("ngwyren_user_profile", this.userProfile);
     this.updateProfileUI();
-    this.syncToCloud(true);
+    this.syncToCloud(false);
     this.closeAuthModal();
     this.showToast(`👋 Đã trở về chế độ Guest`);
   }

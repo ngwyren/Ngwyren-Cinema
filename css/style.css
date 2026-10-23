@@ -2132,9 +2132,8 @@ i.fas, i.fab, i.far {
 .eq-bar:nth-child(3) { height: 65%; animation-delay: 0.4s; }
 .eq-bar:nth-child(4) { height: 85%; animation-delay: 0.15s; }
 
-.eq-bars.paused .eq-bar {
-  animation-play-state: paused;
-  height: 30% !important;
+.eq-bars.paused {
+  display: none !important;
 }
 
 @keyframes eqBounce {
@@ -3226,17 +3225,25 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  white-space: nowrap;
 }
 
 .vision-panel-title {
   font-size: 0.92rem;
   font-weight: 700;
   color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
 }
 
 .vision-panel-sort {
   font-size: 0.72rem;
   color: rgba(255, 255, 255, 0.58);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .vision-panel-sort strong {
@@ -3624,12 +3631,18 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  white-space: nowrap;
 }
 
 .vision-shelf-title {
   font-size: 1.15rem;
   font-weight: 700;
   color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
 }
 
 .vision-see-all-pill {
@@ -3642,6 +3655,8 @@ body {
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .vision-see-all-pill:hover {
@@ -4966,4 +4981,110 @@ body.modal-open .apple-player-bar {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* ==========================================================================
+   VISION THEMES & SPATIAL LIGHTING SYSTEM
+   ========================================================================== */
+
+/* 1. Theme: Midnight OLED (Rạp Chiếu Nửa Đêm - Đen Tuyền Tuyệt Đối) */
+[data-theme="midnight"] .spatial-room-bg {
+  background: #000000 !important;
+}
+[data-theme="midnight"] .vision-window {
+  background: rgba(10, 10, 14, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.88) !important;
+}
+[data-theme="midnight"] .vision-glass-panel,
+[data-theme="midnight"] .vision-settings-card {
+  background: rgba(18, 18, 22, 0.72) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 2. Theme: Cyber Aurora (Tím Cực Quang Tương Lai) */
+[data-theme="aurora"] .spatial-room-bg {
+  background:
+    radial-gradient(ellipse 70% 50% at 20% 20%, rgba(139, 92, 246, 0.35), transparent 70%),
+    radial-gradient(ellipse 65% 55% at 80% 25%, rgba(59, 130, 246, 0.3), transparent 72%),
+    radial-gradient(ellipse 75% 60% at 50% 90%, rgba(236, 72, 153, 0.22), transparent 75%),
+    linear-gradient(165deg, #1e1b4b 0%, #0f172a 45%, #020617 100%) !important;
+}
+[data-theme="aurora"] .vision-window {
+  background: linear-gradient(145deg, rgba(30, 27, 75, 0.72) 0%, rgba(15, 23, 42, 0.78) 100%) !important;
+  border-color: rgba(168, 85, 247, 0.38) !important;
+  box-shadow: inset 0 1.5px 1px rgba(216, 180, 254, 0.4), 0 32px 80px rgba(76, 29, 149, 0.35) !important;
+}
+[data-theme="aurora"] .vision-nav-pill.active,
+[data-theme="aurora"] .filter-chip.active,
+[data-theme="aurora"] .vision-btn-watch {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1) !important;
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.45) !important;
+}
+
+/* 3. Theme: Sunset Amber (Hoàng Hôn Amber - Rạp Phim Cổ Điển) */
+[data-theme="amber"] .spatial-room-bg {
+  background:
+    radial-gradient(ellipse 70% 50% at 20% 20%, rgba(245, 158, 11, 0.3), transparent 70%),
+    radial-gradient(ellipse 65% 55% at 80% 25%, rgba(239, 68, 68, 0.24), transparent 72%),
+    radial-gradient(ellipse 75% 60% at 50% 90%, rgba(120, 53, 15, 0.35), transparent 75%),
+    linear-gradient(165deg, #2a1b14 0%, #1c1512 45%, #0f0b09 100%) !important;
+}
+[data-theme="amber"] .vision-window {
+  background: linear-gradient(145deg, rgba(45, 30, 24, 0.78) 0%, rgba(26, 19, 16, 0.82) 100%) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  box-shadow: inset 0 1.5px 1px rgba(253, 230, 138, 0.35), 0 32px 80px rgba(180, 83, 9, 0.3) !important;
+}
+[data-theme="amber"] .vision-nav-pill.active,
+[data-theme="amber"] .filter-chip.active,
+[data-theme="amber"] .vision-btn-watch {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  color: #1c1307 !important;
+  font-weight: 700;
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4) !important;
+}
+
+/* 4. Theme: Emerald Mint (Ngọc Lục Bảo Dịu Mắt) */
+[data-theme="emerald"] .spatial-room-bg {
+  background:
+    radial-gradient(ellipse 70% 50% at 20% 20%, rgba(16, 185, 129, 0.28), transparent 70%),
+    radial-gradient(ellipse 65% 55% at 80% 25%, rgba(6, 182, 212, 0.24), transparent 72%),
+    radial-gradient(ellipse 75% 60% at 50% 90%, rgba(6, 78, 59, 0.35), transparent 75%),
+    linear-gradient(165deg, #06261f 0%, #061e19 45%, #03100e 100%) !important;
+}
+[data-theme="emerald"] .vision-window {
+  background: linear-gradient(145deg, rgba(6, 38, 31, 0.76) 0%, rgba(4, 26, 21, 0.84) 100%) !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+  box-shadow: inset 0 1.5px 1px rgba(167, 243, 208, 0.35), 0 32px 80px rgba(5, 150, 105, 0.3) !important;
+}
+[data-theme="emerald"] .vision-nav-pill.active,
+[data-theme="emerald"] .filter-chip.active,
+[data-theme="emerald"] .vision-btn-watch {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4) !important;
+}
+
+/* Glassmorphism Blur Levels */
+[data-glass="clear"] .vision-window,
+[data-glass="clear"] .vision-glass-panel,
+[data-glass="clear"] .vision-settings-card {
+  backdrop-filter: blur(14px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+}
+[data-glass="frost"] .vision-window,
+[data-glass="frost"] .vision-glass-panel,
+[data-glass="frost"] .vision-settings-card {
+  backdrop-filter: blur(48px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(48px) saturate(180%) !important;
+  background-color: rgba(22, 24, 30, 0.9) !important;
+}
+
+/* Ambient Spatial Glow Animation */
+[data-ambient="true"] .spatial-room-bg {
+  animation: ambientSpatialPulse 16s ease-in-out infinite alternate;
+}
+@keyframes ambientSpatialPulse {
+  0% { transform: scale(1) rotate(0deg); opacity: 0.9; }
+  50% { transform: scale(1.05) rotate(1deg); opacity: 1; }
+  100% { transform: scale(1.02) rotate(-1deg); opacity: 0.85; }
 }
