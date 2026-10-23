@@ -2130,16 +2130,42 @@ class AppleCinemaApp {
       streamUrl = (episode && episode.source) || (ncEp && ncEp.source) || "";
     }
 
-    const isDirectM3u8 = Boolean(streamUrl && (streamUrl.includes(".m3u8") || streamUrl.includes("/hls/")));
+    // Kiểm tra URL bị cấm nhúng iframe vì X-Frame-Options: SAMEORIGIN (player.php, hhpanda.st, yanhh3d.ee, streamfree.vip)
+    const isForbiddenIframe = (url) => {
+      if (!url || typeof url !== "string") return false;
+      return url.includes("player.php") || url.includes("hhpanda.st") || url.includes("yanhh3d.ee") || url.includes("streamfree.vip");
+    };
+
+    // Nếu streamUrl dính domain cấm nhúng, tự động tìm luồng m3u8 thật của phim
+    if (isForbiddenIframe(streamUrl)) {
+      const validEp = (episode?.source && !isForbiddenIframe(episode.source)) ? episode :
+                      movie.episodes?.find((e) => e.source && !isForbiddenIframe(e.source));
+      if (validEp) {
+        streamUrl = validEp.source;
+      } else {
+        streamUrl = "";
+      }
+    }
+
+    let isDirectM3u8 = Boolean(streamUrl && (streamUrl.includes(".m3u8") || streamUrl.includes("/hls/")));
 
     // Cập nhật chất lượng luồng thực tế (4K hoặc 1080p)
     const is4kCurrent = (selectedAltObj && (selectedAltObj.is4k || (selectedAltObj.label && selectedAltObj.label.includes("4K")))) ||
                         (movie.quality && movie.quality.includes("4K"));
     this.currentQuality = is4kCurrent ? "4K" : "1080p";
 
-    // Nếu không có luồng m3u8 trực tiếp hoặc nguồn là player embed/iframe, sử dụng iframe với Sandbox an toàn
+    // Nếu không có luồng m3u8 trực tiếp, thử tìm luồng m3u8 trong altSources hoặc enrich
     if (!isDirectM3u8) {
-      const fallbackEmbed =
+      const altM3u8 = episode?.altSources?.find((a) => a.source && a.source.includes(".m3u8"))?.source;
+      if (altM3u8) {
+        streamUrl = altM3u8;
+        isDirectM3u8 = true;
+      }
+    }
+
+    // Nếu vẫn không có luồng m3u8 trực tiếp, sử dụng iframe với Sandbox an toàn
+    if (!isDirectM3u8) {
+      let fallbackEmbed =
         selectedAltObj ? (selectedAltObj.embed || selectedAltObj.source) :
         (streamUrl && (streamUrl.includes("http") || streamUrl.includes("//")))
           ? streamUrl
@@ -2148,6 +2174,11 @@ class AppleCinemaApp {
           : serverMode === "dub-1"
           ? dubEp?.embed || episode?.embed
           : episode?.embed || ncEp?.embed;
+
+      // Tuyệt đối không nhúng các link dính X-Frame-Options SAMEORIGIN vào iframe
+      if (fallbackEmbed && isForbiddenIframe(fallbackEmbed)) {
+        fallbackEmbed = "";
+      }
 
       if (fallbackEmbed && iframeEl) {
         this.destroyHls();
