@@ -566,6 +566,32 @@ class AppleCinemaApp {
     `;
   }
 
+  applyGlassDynamics(percent) {
+    const p = Math.max(0, Math.min(100, Number(percent)));
+    const t = p / 100;
+
+    // 100% continuous linear interpolation (LERP) - no steps, no thresholds, zero glitch!
+    const blurPx = Math.round(4 + t * 50); // 4px -> 54px
+    const alpha = (0.15 + t * 0.77).toFixed(3); // 0.15 -> 0.92
+    const panelAlpha = (0.025 + t * 0.11).toFixed(3); // 0.025 -> 0.135
+    const dockAlpha = (0.22 + t * 0.72).toFixed(3); // 0.22 -> 0.94
+    const borderAlpha = (0.42 - t * 0.26).toFixed(3); // 0.42 -> 0.16
+    const rimAlpha = (0.65 - t * 0.45).toFixed(3); // 0.65 -> 0.20
+    const shadowAlpha = (0.25 + t * 0.55).toFixed(3); // 0.25 -> 0.80
+    const shadowBlur = Math.round(20 + t * 50); // 20px -> 70px
+
+    const root = document.documentElement;
+    root.style.setProperty("--glass-dyn-blur", `${blurPx}px`);
+    root.style.setProperty("--glass-dyn-alpha", `${alpha}`);
+    root.style.setProperty("--glass-panel-alpha", `${panelAlpha}`);
+    root.style.setProperty("--glass-dock-alpha", `${dockAlpha}`);
+    root.style.setProperty("--glass-border-alpha", `${borderAlpha}`);
+    root.style.setProperty("--glass-rim-alpha", `${rimAlpha}`);
+    root.style.setProperty("--glass-shadow-alpha", `${shadowAlpha}`);
+    root.style.setProperty("--glass-shadow-blur", `${shadowBlur}px`);
+    root.style.setProperty("--range-fill", `${p}%`);
+  }
+
   initGlassSlider() {
     const range = document.getElementById("glassNativeRange");
     const label = document.getElementById("glassSliderValueLabel");
@@ -575,24 +601,17 @@ class AppleCinemaApp {
       const percent = Math.max(0, Math.min(100, Number(val)));
       range.style.setProperty("--range-fill", `${percent}%`);
 
-      // Phổ mờ kính từ 4px (siêu trong suốt thấy rõ phòng) đến 54px (kính mờ đặc bí mật)
-      const blurPx = Math.round(4 + (percent / 100) * 50);
-      const alpha = (0.15 + (percent / 100) * 0.80).toFixed(2);
-      const panelAlpha = (0.02 + (percent / 100) * 0.78).toFixed(2);
-      const root = document.documentElement;
-      root.style.setProperty("--glass-dyn-blur", `${blurPx}px`);
-      root.style.setProperty("--glass-dyn-alpha", `${alpha}`);
-      root.style.setProperty("--glass-panel-alpha", `${panelAlpha}`);
-      root.setAttribute("data-glass", percent < 25 ? "clear" : (percent > 75 ? "frost" : "standard"));
+      // Cập nhật động học mượt mà liên tục từng 1% không hề có nấc gián đoạn
+      this.applyGlassDynamics(percent);
 
       if (label) {
-        const text = percent < 25 ? "Trong Suốt" : (percent > 75 ? "Kính Mờ" : "Tiêu Chuẩn");
+        const text = percent < 30 ? "Trong Suốt" : (percent > 70 ? "Kính Mờ" : "Tiêu Chuẩn");
         label.textContent = `${text} (${percent}%)`;
       }
 
       if (save) {
         this.settings.glassPercent = percent;
-        this.settings.glassBlur = percent < 25 ? "clear" : (percent > 75 ? "frost" : "standard");
+        this.settings.glassBlur = percent < 30 ? "clear" : (percent > 70 ? "frost" : "standard");
         this.saveStorage("apple_cinema_settings", this.settings);
       }
     };
@@ -634,14 +653,7 @@ class AppleCinemaApp {
     else if (s.glassBlur === "clear") percent = 0;
     else if (s.glassBlur === "frost") percent = 100;
 
-    // Phổ mờ kính: Trong Suốt (0% -> 4px, alpha 0.15), Tiêu Chuẩn (50% -> 29px, alpha 0.55), Kính Mờ (100% -> 54px, alpha 0.95)
-    const blurPx = Math.round(4 + (percent / 100) * 50);
-    const alpha = (0.15 + (percent / 100) * 0.80).toFixed(2);
-    const panelAlpha = (0.02 + (percent / 100) * 0.78).toFixed(2);
-    root.style.setProperty("--glass-dyn-blur", `${blurPx}px`);
-    root.style.setProperty("--glass-dyn-alpha", `${alpha}`);
-    root.style.setProperty("--glass-panel-alpha", `${panelAlpha}`);
-    root.setAttribute("data-glass", percent < 25 ? "clear" : (percent > 75 ? "frost" : "standard"));
+    this.applyGlassDynamics(percent);
   }
 
   setThemeMode(theme) {
@@ -1144,7 +1156,7 @@ class AppleCinemaApp {
 
   renderGenreChipsHTML() {
     const genres = [
-      { label: "Tất cả", icon: "fa-sparkles" },
+      { label: "Tất cả", icon: "fa-wand-magic-sparkles" },
       { label: "Hành Động", icon: "fa-fire" },
       { label: "Bí Ẩn", icon: "fa-user-secret" },
       { label: "Cổ Trang", icon: "fa-scroll" },
@@ -1154,7 +1166,7 @@ class AppleCinemaApp {
       { label: "Viễn Tưởng", icon: "fa-rocket" },
       { label: "Hình Sự", icon: "fa-shield-halved" },
       { label: "Chính Kịch", icon: "fa-masks-theater" },
-      { label: "Gia Đình", icon: "fa-house-chimney-heart" }
+      { label: "Gia Đình", icon: "fa-people-roof" }
     ];
 
     return `

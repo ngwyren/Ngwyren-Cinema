@@ -1109,6 +1109,7 @@ body::-webkit-scrollbar {
 .filter-chip {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
   padding: 8px 16px;
   border-radius: var(--radius-pill);
@@ -1121,6 +1122,27 @@ body::-webkit-scrollbar {
   cursor: pointer;
   transition: all 0.28s var(--ease-in-out-smooth);
   font-family: inherit;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.filter-chip i {
+  font-size: 0.82rem;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.filter-chip span {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+  padding-top: 1px;
 }
 
 .filter-chip:hover {
@@ -5710,140 +5732,81 @@ html.dragging-glass .vision-left-dock {
 }
 
 /* --------------------------------------------------------------------------
-   NẤC 1: TRONG SUỐT (CLEAR / 0% - Siêu trong suốt, thấy rõ toàn bộ ánh sáng phòng)
+   APPLE visionOS UNIFIED FLUID GLASS ENGINE (ZERO-GLITCH 0% -> 100% CONTINUOUS LERP)
    -------------------------------------------------------------------------- */
-[data-glass="clear"] .vision-window {
-  background: rgba(18, 20, 28, var(--glass-dyn-alpha, 0.15)) !important;
-  backdrop-filter: blur(var(--glass-dyn-blur, 4px)) saturate(135%) !important;
-  -webkit-backdrop-filter: blur(var(--glass-dyn-blur, 4px)) saturate(135%) !important;
-  border-color: rgba(255, 255, 255, 0.42) !important;
+.vision-window {
+  backdrop-filter: blur(var(--glass-dyn-blur, 28px)) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(var(--glass-dyn-blur, 28px)) saturate(160%) !important;
+  border-color: rgba(255, 255, 255, var(--glass-border-alpha, 0.28)) !important;
   box-shadow:
-    inset 0 1.5px 1px rgba(255, 255, 255, 0.65),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.2),
-    0 20px 50px rgba(0, 0, 0, 0.32) !important;
-}
-
-[data-glass="clear"][data-theme="aurora"] .vision-window {
-  background: rgba(30, 27, 75, var(--glass-dyn-alpha, 0.18)) !important;
-}
-[data-glass="clear"][data-theme="amber"] .vision-window {
-  background: rgba(45, 30, 24, var(--glass-dyn-alpha, 0.18)) !important;
-}
-[data-glass="clear"][data-theme="emerald"] .vision-window {
-  background: rgba(6, 38, 31, var(--glass-dyn-alpha, 0.18)) !important;
-}
-[data-glass="clear"][data-theme="midnight"] .vision-window {
-  background: rgba(10, 10, 14, var(--glass-dyn-alpha, 0.22)) !important;
-}
-
-[data-glass="clear"] .vision-settings-card,
-[data-glass="clear"] .vision-glass-panel {
-  background: rgba(255, 255, 255, var(--glass-panel-alpha, 0.025)) !important;
-  backdrop-filter: blur(calc(var(--glass-dyn-blur, 4px) * 0.8 + 2px)) saturate(125%) !important;
-  -webkit-backdrop-filter: blur(calc(var(--glass-dyn-blur, 4px) * 0.8 + 2px)) saturate(125%) !important;
-  border-color: rgba(255, 255, 255, 0.24) !important;
-  box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.32), 0 8px 24px rgba(0, 0, 0, 0.18) !important;
-}
-
-[data-glass="clear"] .vision-left-dock {
-  background: rgba(18, 20, 26, var(--glass-dyn-alpha, 0.2)) !important;
-  backdrop-filter: blur(var(--glass-dyn-blur, 5px)) saturate(135%) !important;
-  -webkit-backdrop-filter: blur(var(--glass-dyn-blur, 5px)) saturate(135%) !important;
-  border-color: rgba(255, 255, 255, 0.38) !important;
-}
-
-/* --------------------------------------------------------------------------
-   NẤC 2: TIÊU CHUẨN (STANDARD / 50% - Chuẩn Apple visionOS Frosted Spatial Glass)
-   -------------------------------------------------------------------------- */
-[data-glass="standard"] .vision-window {
-  background: linear-gradient(
-    145deg,
-    rgba(82, 86, 96, 0.54) 0%,
-    rgba(42, 45, 52, 0.64) 48%,
-    rgba(22, 24, 30, 0.74) 100%
-  ) !important;
-  backdrop-filter: blur(var(--glass-dyn-blur, 28px)) saturate(165%) !important;
-  -webkit-backdrop-filter: blur(var(--glass-dyn-blur, 28px)) saturate(165%) !important;
-  border-color: rgba(255, 255, 255, 0.28) !important;
-  box-shadow:
-    inset 0 1.5px 1px rgba(255, 255, 255, 0.45),
+    inset 0 1.5px 1px rgba(255, 255, 255, var(--glass-rim-alpha, 0.45)),
     inset 0 -1px 1px rgba(255, 255, 255, 0.12),
-    0 32px 80px rgba(0, 0, 0, 0.52) !important;
-}
-
-[data-glass="standard"][data-theme="aurora"] .vision-window {
-  background: linear-gradient(145deg, rgba(30, 27, 75, 0.72) 0%, rgba(15, 23, 42, 0.78) 100%) !important;
-}
-[data-glass="standard"][data-theme="amber"] .vision-window {
-  background: linear-gradient(145deg, rgba(45, 30, 24, 0.76) 0%, rgba(26, 19, 16, 0.82) 100%) !important;
-}
-[data-glass="standard"][data-theme="emerald"] .vision-window {
-  background: linear-gradient(145deg, rgba(6, 38, 31, 0.74) 0%, rgba(4, 26, 21, 0.82) 100%) !important;
-}
-[data-theme="midnight"] .vision-window,
-[data-glass="standard"][data-theme="midnight"] .vision-window {
-  background: rgba(10, 10, 14, 0.92) !important;
-}
-
-[data-glass="standard"] .vision-settings-card,
-[data-glass="standard"] .vision-glass-panel {
-  background: rgba(255, 255, 255, 0.055) !important;
-  backdrop-filter: blur(20px) saturate(150%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
-  border-color: rgba(255, 255, 255, 0.14) !important;
-}
-
-[data-glass="standard"] .vision-left-dock {
+    0 24px var(--glass-shadow-blur, 50px) rgba(0, 0, 0, var(--glass-shadow-alpha, 0.55)) !important;
   background: linear-gradient(
     145deg,
-    rgba(92, 95, 102, 0.62) 0%,
-    rgba(58, 60, 66, 0.68) 48%,
-    rgba(42, 44, 50, 0.76) 100%
+    rgba(82, 86, 96, var(--glass-dyn-alpha, 0.55)) 0%,
+    rgba(42, 45, 52, calc(var(--glass-dyn-alpha, 0.55) * 1.08)) 48%,
+    rgba(22, 24, 30, calc(var(--glass-dyn-alpha, 0.55) * 1.15)) 100%
   ) !important;
-  backdrop-filter: blur(28px) saturate(165%) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(165%) !important;
 }
 
-/* --------------------------------------------------------------------------
-   NẤC 3: KÍNH MỜ (FROST / 100% - Kính Mờ Đậm Đặc & Tương Phản Tối Đa)
-   -------------------------------------------------------------------------- */
-[data-glass="frost"] .vision-window {
-  background: rgba(12, 14, 18, var(--glass-dyn-alpha, 0.95)) !important;
-  backdrop-filter: blur(var(--glass-dyn-blur, 54px)) saturate(190%) !important;
-  -webkit-backdrop-filter: blur(var(--glass-dyn-blur, 54px)) saturate(190%) !important;
-  border-color: rgba(255, 255, 255, 0.14) !important;
+[data-theme="aurora"] .vision-window {
+  background: linear-gradient(
+    145deg,
+    rgba(30, 27, 75, var(--glass-dyn-alpha, 0.65)) 0%,
+    rgba(15, 23, 42, calc(var(--glass-dyn-alpha, 0.65) * 1.1)) 100%
+  ) !important;
+  border-color: rgba(168, 85, 247, var(--glass-border-alpha, 0.38)) !important;
   box-shadow:
-    inset 0 1.5px 1px rgba(255, 255, 255, 0.22),
-    0 32px 80px rgba(0, 0, 0, 0.9) !important;
+    inset 0 1.5px 1px rgba(216, 180, 254, var(--glass-rim-alpha, 0.45)),
+    0 24px var(--glass-shadow-blur, 50px) rgba(76, 29, 149, var(--glass-shadow-alpha, 0.45)) !important;
 }
 
-[data-glass="frost"][data-theme="aurora"] .vision-window {
-  background: rgba(18, 15, 45, var(--glass-dyn-alpha, 0.95)) !important;
-}
-[data-glass="frost"][data-theme="amber"] .vision-window {
-  background: rgba(28, 18, 12, var(--glass-dyn-alpha, 0.95)) !important;
-}
-[data-glass="frost"][data-theme="emerald"] .vision-window {
-  background: rgba(4, 24, 18, var(--glass-dyn-alpha, 0.95)) !important;
-}
-[data-glass="frost"][data-theme="midnight"] .vision-window {
-  background: #000000 !important;
-}
-
-[data-glass="frost"] .vision-settings-card,
-[data-glass="frost"] .vision-glass-panel {
-  background: rgba(26, 28, 36, var(--glass-panel-alpha, 0.85)) !important;
-  backdrop-filter: blur(42px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(42px) saturate(180%) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45) !important;
+[data-theme="amber"] .vision-window {
+  background: linear-gradient(
+    145deg,
+    rgba(45, 30, 24, var(--glass-dyn-alpha, 0.65)) 0%,
+    rgba(26, 19, 16, calc(var(--glass-dyn-alpha, 0.65) * 1.1)) 100%
+  ) !important;
+  border-color: rgba(245, 158, 11, var(--glass-border-alpha, 0.35)) !important;
+  box-shadow:
+    inset 0 1.5px 1px rgba(253, 230, 138, var(--glass-rim-alpha, 0.45)),
+    0 24px var(--glass-shadow-blur, 50px) rgba(180, 83, 9, var(--glass-shadow-alpha, 0.45)) !important;
 }
 
-[data-glass="frost"] .vision-left-dock {
-  background: rgba(12, 14, 18, 0.95) !important;
-  backdrop-filter: blur(52px) saturate(190%) !important;
-  -webkit-backdrop-filter: blur(52px) saturate(190%) !important;
-  border-color: rgba(255, 255, 255, 0.14) !important;
+[data-theme="emerald"] .vision-window {
+  background: linear-gradient(
+    145deg,
+    rgba(6, 38, 31, var(--glass-dyn-alpha, 0.65)) 0%,
+    rgba(4, 26, 21, calc(var(--glass-dyn-alpha, 0.65) * 1.1)) 100%
+  ) !important;
+  border-color: rgba(16, 185, 129, var(--glass-border-alpha, 0.35)) !important;
+  box-shadow:
+    inset 0 1.5px 1px rgba(110, 231, 183, var(--glass-rim-alpha, 0.45)),
+    0 24px var(--glass-shadow-blur, 50px) rgba(4, 120, 87, var(--glass-shadow-alpha, 0.45)) !important;
+}
+
+[data-theme="midnight"] .vision-window {
+  background: rgba(10, 10, 14, calc(var(--glass-dyn-alpha, 0.7) * 1.15)) !important;
+  border-color: rgba(255, 255, 255, var(--glass-border-alpha, 0.14)) !important;
+}
+
+.vision-settings-card,
+.vision-glass-panel {
+  background: rgba(255, 255, 255, var(--glass-panel-alpha, 0.055)) !important;
+  backdrop-filter: blur(calc(var(--glass-dyn-blur, 20px) * 0.7 + 4px)) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(calc(var(--glass-dyn-blur, 20px) * 0.7 + 4px)) saturate(140%) !important;
+  border-color: rgba(255, 255, 255, var(--glass-border-alpha, 0.16)) !important;
+  box-shadow:
+    inset 0 1px 0.5px rgba(255, 255, 255, var(--glass-rim-alpha, 0.25)),
+    0 8px 24px rgba(0, 0, 0, var(--glass-shadow-alpha, 0.3)) !important;
+}
+
+.vision-left-dock {
+  background: rgba(18, 20, 26, var(--glass-dock-alpha, 0.65)) !important;
+  backdrop-filter: blur(var(--glass-dyn-blur, 28px)) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(var(--glass-dyn-blur, 28px)) saturate(150%) !important;
+  border-color: rgba(255, 255, 255, var(--glass-border-alpha, 0.22)) !important;
 }
 
 /* Ambient Spatial Glow Animation */
