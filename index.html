@@ -44,7 +44,7 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/style.css?v=6.2" />
+  <link rel="stylesheet" href="css/style.css?v=6.4" />
 </head>
 <body>
 
@@ -213,7 +213,7 @@
         <div class="mini-ctrls-row">
           <div class="mini-btn-group">
             <button class="mini-ctrl-btn" onclick="app.seekRelative(-10)" title="Lùi 10 giây">
-              <i class="fas fa-rotate-left"></i><span>10s</span>
+              <i class="fas fa-rotate-left"></i>
             </button>
             <button class="mini-ctrl-btn" onclick="app.stepNowPlayingEpisode(-1)" title="Tập trước">
               <i class="fas fa-backward-step"></i>
@@ -225,13 +225,13 @@
               <i class="fas fa-forward-step"></i>
             </button>
             <button class="mini-ctrl-btn" onclick="app.seekRelative(10)" title="Tiến 10 giây">
-              <i class="fas fa-rotate-right"></i><span>10s</span>
+              <i class="fas fa-rotate-right"></i>
             </button>
           </div>
 
           <div class="mini-actions-group">
-            <button class="mini-icon-btn" onclick="app.toggleMyList(app.playingMovie?.slug, event)" title="Lưu phim">
-              <i class="fas fa-heart"></i>
+            <button class="mini-icon-btn" id="miniPlayerFavBtn" onclick="app.toggleMyList(app.playingMovie?.slug, event)" title="Lưu vào Yêu thích">
+              <i class="far fa-star" id="miniPlayerFavIcon"></i>
             </button>
             <button class="mini-cinema-expand-btn" onclick="app.openMovieModal(app.playingMovie?.slug, true, app.currentEpisodeIndex)" title="Mở rạp phim toàn màn hình">
               <i class="fas fa-expand"></i> <span>Rạp Phim</span>
@@ -287,9 +287,9 @@
   </div>
 
   <!-- Scripts -->
-  <script src="js/movies-catalog.js?v=6.2"></script>
-  <script src="js/data.js?v=6.2"></script>
-  <script src="js/auth-config.js?v=6.2"></script>
-  <script src="js/app.js?v=6.2"></script>
+  <script src="js/movies-catalog.js?v=6.4"></script>
+  <script src="js/data.js?v=6.4"></script>
+  <script src="js/auth-config.js?v=6.4"></script>
+  <script src="js/app.js?v=6.4"></script>
 </body>
 </html>

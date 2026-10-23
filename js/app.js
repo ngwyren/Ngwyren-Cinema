@@ -772,9 +772,6 @@ class AppleCinemaApp {
               </div>
             </section>
 
-            <!-- Quick Genre Chips -->
-            ${this.renderGenreChipsHTML()}
-
             <!-- Anime Row -->
             <section class="vision-shelf-section">
               <div class="vision-shelf-header">
@@ -868,8 +865,6 @@ class AppleCinemaApp {
                  </section>`
               : this.renderHeroHTML(categoryHeroMovie, `${title} (${list.length} phim)`)
           }
-
-          ${this.renderGenreChipsHTML()}
 
           <section class="vision-shelf-section">
             ${
@@ -1066,7 +1061,7 @@ class AppleCinemaApp {
                 <i class="fas fa-play"></i> Xem Ngay
               </button>
               <button class="vision-btn-outline" onclick="app.toggleMyList('${movie.slug}', event)">
-                <i class="fas ${inMyList ? "fa-check" : "fa-download"}"></i>
+                <i class="${inMyList ? "fas fa-star" : "far fa-star"}"></i>
                 ${inMyList ? "Đã Lưu" : "Lưu Phim"}
               </button>
               <button class="vision-btn-dots" onclick="app.openMovieModal('${movie.slug}', false)" title="Chi tiết & Tập phim">
@@ -1129,20 +1124,21 @@ class AppleCinemaApp {
   }
 
   renderVisionFeatureCardHTML(movie) {
-    const mainGenre = movie.genres?.[0] || "Cinema";
+    const inMyList = this.isInMyList(movie);
     return `
       <article class="vision-feature-card" onclick="app.openMovieModal('${movie.slug}', false)">
         <img class="vision-feature-img" src="${movie.poster}" alt="${movie.title}" loading="lazy" decoding="async"
              onerror="this.src='https://phimmoiz.one/wp-content/uploads/2026/10/matchbox-phim-dien-anh-poster.webp'" />
         <div class="vision-feature-shade"></div>
 
-        <button class="vision-card-more" onclick="event.stopPropagation(); app.toggleMyList('${movie.slug}', event)" title="Lưu vào danh sách">
-          <i class="fas ${this.isInMyList(movie) ? "fa-check" : "fa-ellipsis"}"></i>
+        <button class="vision-card-more ${inMyList ? "active" : ""}"
+                onclick="event.stopPropagation(); app.toggleMyList('${movie.slug}', event)"
+                title="${inMyList ? "Đã lưu vào Yêu thích" : "Lưu vào Yêu thích"}">
+          <i class="${inMyList ? "fas fa-star" : "far fa-star"}"></i>
         </button>
 
         <div class="vision-feature-bottom">
           <div class="vision-feature-meta">
-            <span class="vision-card-genre">${mainGenre}</span>
             <h3 class="vision-card-title" title="${movie.title}">${movie.title}</h3>
             <p class="vision-card-desc">${movie.originTitle} (${movie.year}) • ${movie.episodeCurrent || movie.quality}</p>
           </div>
@@ -1155,34 +1151,7 @@ class AppleCinemaApp {
   }
 
   renderGenreChipsHTML() {
-    const genres = [
-      { label: "Tất cả", icon: "fa-wand-magic-sparkles" },
-      { label: "Hành Động", icon: "fa-fire" },
-      { label: "Bí Ẩn", icon: "fa-user-secret" },
-      { label: "Cổ Trang", icon: "fa-scroll" },
-      { label: "Tình Cảm", icon: "fa-heart" },
-      { label: "Anime", icon: "fa-dragon" },
-      { label: "Hài Hước", icon: "fa-face-laugh-beam" },
-      { label: "Viễn Tưởng", icon: "fa-rocket" },
-      { label: "Hình Sự", icon: "fa-shield-halved" },
-      { label: "Chính Kịch", icon: "fa-masks-theater" },
-      { label: "Gia Đình", icon: "fa-people-roof" }
-    ];
-
-    return `
-      <div class="quick-filters-bar">
-        ${genres
-          .map(
-            (g) => `
-          <button class="filter-chip ${this.activeGenreFilter === g.label ? "active" : ""}" onclick="app.selectGenreChip('${g.label}')">
-            <i class="fas ${g.icon}"></i>
-            <span>${g.label}</span>
-          </button>
-        `
-          )
-          .join("")}
-      </div>
-    `;
+    return "";
   }
 
   renderCarouselSection(title, subtitle, movies, navTarget, maxItems = 12) {
@@ -1323,8 +1292,8 @@ class AppleCinemaApp {
               <div class="hover-action-btns">
                 <button class="mini-circle-btn ${inMyList ? "active" : ""}"
                         onclick="app.toggleMyList('${movie.slug}', event)"
-                        title="${inMyList ? "Xóa khỏi Danh sách" : "Thêm vào Danh sách"}">
-                  <i class="fas ${inMyList ? "fa-check" : "fa-plus"}"></i>
+                        title="${inMyList ? "Xóa khỏi Yêu thích" : "Lưu vào Yêu thích"}">
+                  <i class="${inMyList ? "fas fa-star" : "far fa-star"}"></i>
                 </button>
                 <button class="mini-circle-btn"
                         onclick="event.stopPropagation(); app.openMovieModal('${movie.slug}', false)"
@@ -1483,9 +1452,9 @@ class AppleCinemaApp {
                     </button>`
                   : ""
               }
-              <button class="btn-glass-secondary" id="modalMyListBtn" onclick="app.toggleMyList('${movie.slug}', event)">
-                <i class="fas ${inMyList ? "fa-check" : "fa-plus"}"></i>
-                <span>${inMyList ? "Đã Lưu Danh Sách" : "Thêm Danh Sách"}</span>
+              <button class="btn-glass-secondary ${inMyList ? "active" : ""}" id="modalMyListBtn" onclick="app.toggleMyList('${movie.slug}', event)">
+                <i class="${inMyList ? "fas fa-star" : "far fa-star"}"></i>
+                <span>${inMyList ? "Đã Lưu Yêu Thích" : "Lưu Yêu Thích"}</span>
               </button>
             </div>
           </div>
@@ -1640,8 +1609,8 @@ class AppleCinemaApp {
                         <span class="badge-mini" style="background: rgba(255,255,255,0.1); color: #fff;">${rel.year}</span>
                         <button class="mini-circle-btn ${this.isInMyList(rel) ? "active" : ""}"
                                 onclick="app.toggleMyList('${rel.slug}', event)"
-                                title="Thêm vào Danh sách">
-                          <i class="fas ${this.isInMyList(rel) ? "fa-check" : "fa-plus"}"></i>
+                                title="${this.isInMyList(rel) ? "Xóa khỏi Yêu thích" : "Thêm vào Yêu thích"}">
+                          <i class="${this.isInMyList(rel) ? "fas fa-star" : "far fa-star"}"></i>
                         </button>
                       </div>
                     </div>
@@ -2139,6 +2108,17 @@ class AppleCinemaApp {
     if (islandPlayIcon) islandPlayIcon.className = playing ? "fas fa-pause" : "fas fa-play";
     const miniCenterPlay = document.getElementById("miniScreenCenterPlayIcon");
     if (miniCenterPlay) miniCenterPlay.className = playing ? "fas fa-pause" : "fas fa-play";
+
+    // Đồng bộ nút yêu thích mini player
+    const miniFavBtn = document.getElementById("miniPlayerFavBtn");
+    const miniFavIcon = document.getElementById("miniPlayerFavIcon");
+    if (miniFavBtn) {
+      const isFav = this.isInMyList(movie);
+      miniFavBtn.classList.toggle("active", isFav);
+      if (miniFavIcon) {
+        miniFavIcon.className = isFav ? "fas fa-star" : "far fa-star";
+      }
+    }
   }
 
   seekRelative(seconds) {
@@ -2361,10 +2341,10 @@ class AppleCinemaApp {
     const idx = this.myList.findIndex((item) => item === movie.slug || item === movie.id);
     if (idx >= 0) {
       this.myList.splice(idx, 1);
-      this.showToast(`Đã xóa "${movie.title}" khỏi Danh sách đã lưu`);
+      this.showToast(`Đã xóa "${movie.title}" khỏi Danh sách yêu thích`);
     } else {
       this.myList.unshift(movie.slug);
-      this.showToast(`Đã thêm "${movie.title}" vào Danh sách đã lưu`);
+      this.showToast(`Đã thêm "${movie.title}" vào Danh sách yêu thích`);
     }
 
     this.saveStorage("apple_cinema_mylist", this.myList);
@@ -2375,7 +2355,19 @@ class AppleCinemaApp {
     const modalBtn = document.getElementById("modalMyListBtn");
     if (modalBtn && this.selectedMovie && this.selectedMovie.slug === movie.slug) {
       const saved = this.isInMyList(movie);
-      modalBtn.innerHTML = `<i class="fas ${saved ? "fa-check" : "fa-plus"}"></i><span>${saved ? "Đã Lưu Danh Sách" : "Thêm Danh Sách"}</span>`;
+      modalBtn.classList.toggle("active", saved);
+      modalBtn.innerHTML = `<i class="${saved ? "fas fa-star" : "far fa-star"}"></i><span>${saved ? "Đã Lưu Yêu Thích" : "Lưu Yêu Thích"}</span>`;
+    }
+
+    // Cập nhật nút trong Mini Player Bar nếu đang phát phim này
+    const miniFavBtn = document.getElementById("miniPlayerFavBtn");
+    const miniFavIcon = document.getElementById("miniPlayerFavIcon");
+    if (miniFavBtn && this.playingMovie && (this.playingMovie.slug === movie.slug || this.playingMovie.id === movie.id)) {
+      const saved = this.isInMyList(movie);
+      miniFavBtn.classList.toggle("active", saved);
+      if (miniFavIcon) {
+        miniFavIcon.className = saved ? "fas fa-star" : "far fa-star";
+      }
     }
   }
 
