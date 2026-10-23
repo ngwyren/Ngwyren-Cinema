@@ -19,7 +19,7 @@
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/style.css?v=2.8" />
+  <link rel="stylesheet" href="css/style.css?v=2.9" />
 </head>
 <body>
 
@@ -96,13 +96,13 @@
             <i class="fas fa-bell"></i>
             <span class="vision-notif-dot"></span>
           </button>
-          <div class="vision-profile-pill" onclick="app.setNavigation('lich-su')" title="Lịch sử xem phim">
-            <div class="vision-avatar">
-              <i class="fas fa-film"></i>
+          <div class="vision-profile-pill" id="topProfilePill" onclick="app.openAuthModal()" title="Hồ sơ & Đăng nhập">
+            <div class="vision-avatar" id="topProfileAvatar">
+              <span class="profile-avatar-emoji">🎬</span>
             </div>
             <div class="vision-profile-text">
-              <span class="vision-profile-name">Ngwyren Cinema</span>
-              <span class="vision-profile-handle">@ngwyren</span>
+              <span class="vision-profile-name" id="topProfileName">Ngwyren Cinema</span>
+              <span class="vision-profile-handle" id="topProfileHandle">@ngwyren</span>
             </div>
             <i class="fas fa-chevron-down vision-profile-arrow"></i>
           </div>
@@ -200,6 +200,15 @@
   </nav>
 
   <!-- ========================================================================
+       USER PROFILE & AUTH MODAL (GOOGLE LOGIN + GUEST CUSTOMIZATION)
+       ======================================================================== -->
+  <div class="detail-modal-backdrop auth-modal-backdrop" id="authModal" onclick="if(event.target === this) app.closeAuthModal()">
+    <div class="detail-modal-sheet auth-modal-sheet" id="authSheet">
+      <!-- Populated dynamically by js/app.js -->
+    </div>
+  </div>
+
+  <!-- ========================================================================
        MOVIE DETAIL & HLS PLAYER MODAL
        ======================================================================== -->
   <div class="detail-modal-backdrop" id="movieDetailModal" onclick="if(event.target === this) app.closeMovieModal()">
@@ -209,8 +218,8 @@
   </div>
 
   <!-- Scripts -->
-  <script src="js/movies-catalog.js?v=2.8"></script>
-  <script src="js/data.js?v=2.8"></script>
-  <script src="js/app.js?v=2.8"></script>
+  <script src="js/movies-catalog.js?v=2.9"></script>
+  <script src="js/data.js?v=2.9"></script>
+  <script src="js/app.js?v=2.9"></script>
 </body>
 </html>

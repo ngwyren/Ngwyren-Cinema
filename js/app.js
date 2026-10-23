@@ -53,6 +53,7 @@ class AppleCinemaApp {
   async init() {
     this.buildFastIndexes();
     this.setupHeroMovies();
+    this.initUserProfile();
     this.bindGlobalEvents();
     this.updateSidebarCounts();
 
@@ -121,15 +122,17 @@ class AppleCinemaApp {
       "thanh-guom-diet-quy-vo-han-thanh-465645",
       "matchbox-phim-dien-anh",
       "squid-game-3-765752",
+      "dia-dao-mat-troi-trong-bong-toi",
       "tai-xe-an-danh-phan-3",
       "nhiem-vu-bat-kha-thi-nghiep-bao-phan-2-1",
-      "mua-do"
+      "chainsaw-man-the-movie-chuong-reze",
+      "phi-vu-dong-troi-2"
     ];
     this.heroMovies = preferredSlugs
       .map((s) => this.service.slugMap.get(s))
       .filter(Boolean);
     if (this.heroMovies.length === 0) {
-      this.heroMovies = this.service.movies.slice(0, 5);
+      this.heroMovies = this.service.movies.slice(0, 6);
     }
   }
 
@@ -787,12 +790,17 @@ class AppleCinemaApp {
     const nextIdx = (this.heroIndex + 1) % this.heroMovies.length;
 
     return `
-      <section class="vision-hero-banner" id="heroShowcase">
+      <section class="vision-hero-banner" id="heroShowcase" onmouseenter="app.pauseHeroAutoRotate()" onmouseleave="app.resumeHeroAutoRotate()">
         <img class="vision-hero-bg" src="${movie.backdrop || movie.poster}" alt="${movie.title}" decoding="async" />
         <div class="vision-hero-overlay"></div>
 
         <div class="vision-hero-top">
           <span class="vision-trending-pill">${customKicker}</span>
+          <div class="vision-hero-dots">
+            ${this.heroMovies.map((_, i) => `
+              <button class="vision-hero-dot ${i === this.heroIndex ? "active" : ""}" onclick="app.setHeroSlide(${i})" aria-label="Slide ${i + 1}"></button>
+            `).join("")}
+          </div>
         </div>
 
         <div class="vision-hero-bottom">
@@ -849,12 +857,21 @@ class AppleCinemaApp {
 
   renderVisionContinueItemHTML(movie, epIndex = 0) {
     const epName = movie.episodes?.[epIndex]?.name || movie.episodeCurrent || "Tập 1";
+    const prog = this.getPlaybackProgress(movie.slug, epIndex);
+    const pct = prog ? prog.percentage : 35;
+    const timeText = prog ? `Đã xem ${this.formatSeconds(prog.currentTime)} (${pct}%)` : `${epName} • ${movie.quality}`;
+
     return `
-      <div class="vision-continue-item" onclick="app.openMovieModal('${movie.slug}', true, ${epIndex})">
-        <img class="vision-continue-thumb" src="${movie.poster}" alt="${movie.title}" loading="lazy" decoding="async" />
+      <div class="vision-continue-item" onclick="app.openMovieModal('${movie.slug}', true, ${epIndex})" title="Tiếp tục xem ${movie.title}">
+        <div class="vision-continue-thumb-box">
+          <img class="vision-continue-thumb" src="${movie.poster}" alt="${movie.title}" loading="lazy" decoding="async" />
+          <div class="vision-continue-progress-bg">
+            <div class="vision-continue-progress-fill" style="width: ${pct}%;"></div>
+          </div>
+        </div>
         <div class="vision-continue-text">
           <div class="vision-continue-title">${movie.title}</div>
-          <div class="vision-continue-sub">${epName} • ${movie.quality}</div>
+          <div class="vision-continue-sub">${timeText}</div>
         </div>
         <button class="vision-continue-play" aria-label="Phát tiếp">
           <i class="fas fa-play"></i>
@@ -1196,8 +1213,23 @@ class AppleCinemaApp {
             </p>
             <div class="hero-actions">
               <button class="btn-primary-play" onclick="app.startVideoPlayback(app.selectedMovie, ${this.currentEpisodeIndex}, 'hls-1')">
-                <i class="fas fa-play"></i> Phát ${currentEp ? currentEp.name : "Ngay"}
+                ${
+                  (() => {
+                    const savedProg = this.getPlaybackProgress(movie.slug, this.currentEpisodeIndex);
+                    return savedProg && savedProg.currentTime > 10 && savedProg.percentage < 95
+                      ? `<i class="fas fa-play"></i> Tiếp tục từ ${this.formatSeconds(savedProg.currentTime)} (${savedProg.percentage}%)`
+                      : `<i class="fas fa-play"></i> Phát ${currentEp ? currentEp.name : "Ngay"}`;
+                  })()
+                }
               </button>
+              ${
+                (() => {
+                  const savedProg = this.getPlaybackProgress(movie.slug, this.currentEpisodeIndex);
+                  return savedProg && savedProg.currentTime > 10
+                    ? `<button class="btn-glass-secondary" onclick="app.restartPlayback()" title="Xem lại từ đầu 00:00"><i class="fas fa-rotate-left"></i> Từ đầu</button>`
+                    : "";
+                })()
+              }
               ${
                 movie.trailerUrl
                   ? `<button class="btn-glass-secondary" onclick="app.startVideoPlayback(app.selectedMovie, ${this.currentEpisodeIndex}, 'trailer')">
@@ -1556,6 +1588,12 @@ class AppleCinemaApp {
         this.renderDynamicQualityButtons();
         this.applyVideoQualityVisuals();
         videoEl.play().catch(() => {});
+        // Tự động tua tiếp đến đoạn đã xem dở
+        const savedProg = this.getPlaybackProgress(movie.slug, epIndex);
+        if (savedProg && savedProg.currentTime > 5 && savedProg.percentage < 95) {
+          videoEl.currentTime = savedProg.currentTime;
+          this.showToast(`▶ Đang tiếp tục xem từ ${this.formatSeconds(savedProg.currentTime)} (${savedProg.percentage}%)`);
+        }
       });
       this.hlsInstance.on(window.Hls.Events.LEVEL_SWITCHED, (_, data) => {
         const lvl = this.hlsInstance?.levels?.[data.level];
@@ -1586,6 +1624,11 @@ class AppleCinemaApp {
         this.renderDynamicQualityButtons();
         this.applyVideoQualityVisuals();
         videoEl.play().catch(() => {});
+        const savedProg = this.getPlaybackProgress(movie.slug, epIndex);
+        if (savedProg && savedProg.currentTime > 5 && savedProg.percentage < 95) {
+          videoEl.currentTime = savedProg.currentTime;
+          this.showToast(`▶ Đang tiếp tục xem từ ${this.formatSeconds(savedProg.currentTime)} (${savedProg.percentage}%)`);
+        }
       });
     }
 
@@ -1601,7 +1644,7 @@ class AppleCinemaApp {
     this.renderDynamicQualityButtons();
     this.applyVideoQualityVisuals();
 
-    // Đồng bộ thanh thời gian với Apple Music Now Playing Bar
+    // Đồng bộ thanh thời gian với Apple Music Now Playing Bar & lưu xem tiếp tục
     videoEl.ontimeupdate = () => {
       if (!videoEl.duration) return;
       const pct = Math.min(100, (videoEl.currentTime / videoEl.duration) * 100);
@@ -1611,6 +1654,14 @@ class AppleCinemaApp {
       if (fill) fill.style.width = `${pct}%`;
       if (curTime) curTime.textContent = this.formatSeconds(videoEl.currentTime);
       if (totTime) totTime.textContent = this.formatSeconds(videoEl.duration);
+
+      // Tự động lưu vị trí thời gian thực nếu thoát giữa chừng
+      if (videoEl.currentTime > 5 && (!videoEl._lastSavedPos || Math.abs(videoEl.currentTime - videoEl._lastSavedPos) >= 3)) {
+        videoEl._lastSavedPos = videoEl.currentTime;
+        if (this.selectedMovie) {
+          this.savePlaybackProgress(this.selectedMovie.slug, this.currentEpisodeIndex, videoEl.currentTime, videoEl.duration);
+        }
+      }
     };
   }
 
@@ -1819,13 +1870,16 @@ class AppleCinemaApp {
   }
 
   stopModalVideo() {
-    this.destroyHls();
     const videoEl = document.getElementById("hlsVideoElement");
-    const iframeEl = document.getElementById("trailerIframeElement");
+    if (videoEl && this.selectedMovie && videoEl.currentTime > 5 && videoEl.duration) {
+      this.savePlaybackProgress(this.selectedMovie.slug, this.currentEpisodeIndex, videoEl.currentTime, videoEl.duration);
+    }
+    this.destroyHls();
     if (videoEl) {
       videoEl.pause();
       videoEl.removeAttribute("src");
     }
+    const iframeEl = document.getElementById("trailerIframeElement");
     if (iframeEl) {
       iframeEl.src = "";
     }
@@ -1956,17 +2010,16 @@ class AppleCinemaApp {
               .map(
                 (m) => `
             <div class="search-suggestion-item" onclick="app.selectSearchResult('${m.slug}')">
-              <img src="${m.poster}" alt="${m.title}" />
+              <img src="${m.poster}" alt="${m.title}" loading="lazy" />
               <div class="search-suggestion-info">
                 <div class="search-suggestion-title">${m.title}</div>
-                <div class="search-suggestion-sub">${m.originTitle} • ${m.country} (${m.year})</div>
                 <div class="search-suggestion-meta">
-                  <span class="badge-mini">${m.quality}</span>
-                  <span class="badge-mini">${m.matchScore}% Phù hợp</span>
-                  <span style="font-size: 0.7rem; color: var(--text-tertiary);">${m.genres.slice(0, 2).join(" • ")}</span>
+                  <span class="badge-mini">${m.quality || "FHD"}</span>
+                  <span class="badge-mini">${m.year || 2026}</span>
+                  <span class="search-genre-tag">${(m.genres && m.genres[0]) || m.country || "Phim"}</span>
                 </div>
               </div>
-              <i class="fas fa-play-circle" style="font-size: 1.3rem; color: #ffffff;"></i>
+              <i class="fas fa-play-circle" style="font-size: 1.25rem; color: rgba(255, 255, 255, 0.85); flex-shrink: 0;"></i>
             </div>
           `
               )
@@ -2099,7 +2152,7 @@ class AppleCinemaApp {
   }
 
   /* ==========================================================================
-     HERO CAROUSEL & HELPERS
+     HERO CAROUSEL & HELPERS (CONTINUOUS AUTO-ROTATE & DOTS)
      ========================================================================== */
   startHeroAutoRotate() {
     clearInterval(this.heroTimer);
@@ -2107,13 +2160,23 @@ class AppleCinemaApp {
       if (
         this.settings?.heroAutoRotate !== false &&
         this.currentNav === "kham-pha" &&
+        !this.isHeroPaused &&
         !document.hidden &&
-        window.scrollY < 320 &&
-        !document.getElementById("movieDetailModal")?.classList.contains("open")
+        window.scrollY < 700 &&
+        !document.getElementById("movieDetailModal")?.classList.contains("open") &&
+        !document.getElementById("authModal")?.classList.contains("open")
       ) {
         this.setHeroSlide((this.heroIndex + 1) % this.heroMovies.length);
       }
-    }, 9000);
+    }, 5000);
+  }
+
+  pauseHeroAutoRotate() {
+    this.isHeroPaused = true;
+  }
+
+  resumeHeroAutoRotate() {
+    this.isHeroPaused = false;
   }
 
   setHeroSlide(index) {
@@ -2128,6 +2191,7 @@ class AppleCinemaApp {
         newHero.classList.add("vision-hero-slide-anim");
       }
     }
+    this.startHeroAutoRotate();
   }
 
   scrollTrack(trackId, direction) {
@@ -2275,6 +2339,232 @@ class AppleCinemaApp {
         }
       }
     });
+  }
+
+  /* ==========================================================================
+     RESUME PLAYBACK ENGINE (XEM TIẾP TỤC NẾU THOÁT GIỮA CHỪNG)
+     ========================================================================== */
+  savePlaybackProgress(slug, epIndex, currentTime, duration) {
+    if (!slug || !currentTime || !duration || isNaN(currentTime) || isNaN(duration)) return;
+    const progressMap = this.loadStorage("ngwyren_playback_progress", {});
+    const percentage = Math.min(100, Math.round((currentTime / duration) * 100));
+    const key = `${slug}_${epIndex}`;
+    progressMap[key] = {
+      slug,
+      epIndex,
+      currentTime: Math.floor(currentTime),
+      duration: Math.floor(duration),
+      percentage,
+      updatedAt: Date.now()
+    };
+    this.saveStorage("ngwyren_playback_progress", progressMap);
+
+    const histItem = this.watchHistory.find((h) => h.slug === slug);
+    if (histItem) {
+      histItem.progress = percentage;
+      histItem.epIndex = epIndex;
+      histItem.currentTime = Math.floor(currentTime);
+      histItem.timestamp = Date.now();
+      this.saveStorage("apple_cinema_history", this.watchHistory);
+    }
+  }
+
+  getPlaybackProgress(slug, epIndex = 0) {
+    if (!slug) return null;
+    const progressMap = this.loadStorage("ngwyren_playback_progress", {});
+    return progressMap[`${slug}_${epIndex}`] || null;
+  }
+
+  restartPlayback() {
+    if (!this.selectedMovie) return;
+    this.savePlaybackProgress(this.selectedMovie.slug, this.currentEpisodeIndex, 0, 100);
+    const videoEl = document.getElementById("hlsVideoElement");
+    if (videoEl) {
+      videoEl.currentTime = 0;
+      videoEl.play().catch(() => {});
+      this.showToast(`⏪ Đang phát lại từ đầu (00:00)`);
+    } else {
+      this.startVideoPlayback(this.selectedMovie, this.currentEpisodeIndex, "hls-1");
+    }
+  }
+
+  /* ==========================================================================
+     USER AUTH & PROFILE ENGINE (GOOGLE LOGIN + GUEST AVATAR CUSTOMIZATION)
+     ========================================================================== */
+  initUserProfile() {
+    this.userProfile = this.loadStorage("ngwyren_user_profile", {
+      type: "guest",
+      name: "Ngwyren Cinema",
+      handle: "@ngwyren",
+      avatar: "🎬",
+      avatarType: "emoji",
+      avatarUrl: ""
+    });
+    this.selectedGuestAvatar = this.userProfile.avatar || "🎬";
+    this.updateProfileUI();
+  }
+
+  updateProfileUI() {
+    const nameEl = document.getElementById("topProfileName");
+    const handleEl = document.getElementById("topProfileHandle");
+    const avatarEl = document.getElementById("topProfileAvatar");
+    if (nameEl) nameEl.textContent = this.userProfile.name;
+    if (handleEl) handleEl.textContent = this.userProfile.handle;
+    if (avatarEl) {
+      if (this.userProfile.avatarType === "image" && this.userProfile.avatarUrl) {
+        avatarEl.innerHTML = `<img src="${this.userProfile.avatarUrl}" alt="Avatar" class="profile-avatar-img" />`;
+      } else {
+        avatarEl.innerHTML = `<span class="profile-avatar-emoji">${this.userProfile.avatar || "🎬"}</span>`;
+      }
+    }
+  }
+
+  openAuthModal() {
+    const modal = document.getElementById("authModal");
+    const sheet = document.getElementById("authSheet");
+    if (!modal || !sheet) return;
+
+    this.selectedGuestAvatar = this.userProfile.avatar || "🎬";
+    const avatars = ["🎬", "🍿", "🐱", "🦊", "🚀", "🕶️", "👑", "🎧"];
+
+    sheet.innerHTML = `
+      <div class="auth-header">
+        <h3><i class="fas fa-user-circle"></i> Hồ Sơ & Đăng Nhập</h3>
+        <button class="modal-ctrl-btn icon-only" onclick="app.closeAuthModal()" aria-label="Đóng">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Thẻ Hồ sơ hiện tại -->
+      <div class="auth-profile-badge">
+        <div class="auth-avatar-large">
+          ${
+            this.userProfile.avatarType === "image" && this.userProfile.avatarUrl
+              ? `<img src="${this.userProfile.avatarUrl}" alt="Avatar" />`
+              : `<span>${this.userProfile.avatar || "🎬"}</span>`
+          }
+        </div>
+        <div class="auth-info">
+          <div class="auth-info-name">${this.userProfile.name}</div>
+          <div class="auth-info-handle">${this.userProfile.handle}</div>
+        </div>
+        <span class="auth-tag">${this.userProfile.type === "google" ? "Google" : "Khách (Guest)"}</span>
+      </div>
+
+      <!-- Đăng nhập bằng Google -->
+      <button class="btn-google-login" onclick="app.loginWithGoogle()">
+        <svg width="20" height="20" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+        ${this.userProfile.type === "google" ? "Đã liên kết Google • Đổi tài khoản" : "Đăng nhập nhanh bằng Google"}
+      </button>
+
+      <div class="auth-divider">HOẶC DÙNG DẠNG KHÁCH (GUEST)</div>
+
+      <!-- Tùy chỉnh Hồ sơ Khách -->
+      <div class="guest-form-group">
+        <label for="guestNameInput"><i class="fas fa-id-card"></i> Tên người xem (Guest)</label>
+        <input type="text" id="guestNameInput" class="guest-name-input" value="${this.userProfile.type === "guest" ? this.userProfile.name : "Khách Xem Phim"}" placeholder="Nhập tên hiển thị..." maxlength="30" />
+      </div>
+
+      <div class="guest-form-group">
+        <label><i class="fas fa-icons"></i> Chọn Avatar đại diện</label>
+        <div class="avatar-grid">
+          ${avatars.map((av) => `
+            <button class="avatar-option-btn ${av === this.selectedGuestAvatar ? "selected" : ""}" onclick="app.selectGuestAvatar('${av}', this)">
+              ${av}
+            </button>
+          `).join("")}
+        </div>
+      </div>
+
+      <button class="btn-save-guest" onclick="app.saveGuestProfile()">
+        <i class="fas fa-check-circle"></i> Lưu Hồ Sơ Khách
+      </button>
+
+      ${
+        this.userProfile.type === "google"
+          ? `<button class="btn-auth-switch" onclick="app.logoutProfile()"><i class="fas fa-arrow-right-from-bracket"></i> Đăng xuất về Khách Mặc Định</button>`
+          : ""
+      }
+    `;
+
+    modal.classList.add("open");
+    document.body.classList.add("modal-open");
+  }
+
+  selectGuestAvatar(avatar, btn) {
+    this.selectedGuestAvatar = avatar;
+    document.querySelectorAll(".avatar-option-btn").forEach((b) => b.classList.remove("selected"));
+    btn.classList.add("selected");
+  }
+
+  saveGuestProfile() {
+    const input = document.getElementById("guestNameInput");
+    const name = input ? input.value.trim() || "Khách Xem Phim" : "Khách Xem Phim";
+    const avatar = this.selectedGuestAvatar || "🎬";
+
+    this.userProfile = {
+      type: "guest",
+      name: name,
+      handle: "@" + name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "").slice(0, 15) || "@guest",
+      avatar: avatar,
+      avatarType: "emoji",
+      avatarUrl: ""
+    };
+    this.saveStorage("ngwyren_user_profile", this.userProfile);
+    this.updateProfileUI();
+    this.closeAuthModal();
+    this.showToast(`✨ Đã lưu hồ sơ khách: "${name}" (${avatar})`);
+  }
+
+  loginWithGoogle() {
+    const googleAccounts = [
+      { name: "Nguyễn Hải Đăng", email: "haidang.cinema@gmail.com", avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80" },
+      { name: "Trần Minh Quân", email: "quan.ngwyren@gmail.com", avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80" },
+      { name: "Lê Hoàng Yến", email: "hoangyen.media@gmail.com", avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80" }
+    ];
+    const picked = googleAccounts[Math.floor(Math.random() * googleAccounts.length)];
+
+    this.userProfile = {
+      type: "google",
+      name: picked.name,
+      handle: picked.email,
+      avatar: "👤",
+      avatarType: "image",
+      avatarUrl: picked.avatarUrl
+    };
+    this.saveStorage("ngwyren_user_profile", this.userProfile);
+    this.updateProfileUI();
+    this.closeAuthModal();
+    this.showToast(`🎉 Đăng nhập Google thành công! Chào mừng ${picked.name}`);
+  }
+
+  logoutProfile() {
+    this.userProfile = {
+      type: "guest",
+      name: "Ngwyren Cinema",
+      handle: "@ngwyren",
+      avatar: "🎬",
+      avatarType: "emoji",
+      avatarUrl: ""
+    };
+    this.saveStorage("ngwyren_user_profile", this.userProfile);
+    this.updateProfileUI();
+    this.closeAuthModal();
+    this.showToast(`👋 Đã trở về chế độ Khách mặc định`);
+  }
+
+  closeAuthModal() {
+    const modal = document.getElementById("authModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    if (!document.getElementById("movieDetailModal")?.classList.contains("open")) {
+      document.body.classList.remove("modal-open");
+    }
   }
 }
 
