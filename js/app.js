@@ -2394,14 +2394,70 @@ class AppleCinemaApp {
   initUserProfile() {
     this.userProfile = this.loadStorage("ngwyren_user_profile", {
       type: "guest",
-      name: "Ngwyren Cinema",
-      handle: "@ngwyren",
+      name: "Khách",
+      handle: "@guest",
       avatar: "🎬",
       avatarType: "emoji",
       avatarUrl: ""
     });
+
+    // Chuyển đổi nếu còn lưu tên mặc định cũ "Ngwyren Cinema"
+    if (this.userProfile.type === "guest" && (this.userProfile.name === "Ngwyren Cinema" || this.userProfile.handle === "@ngwyren")) {
+      this.userProfile.name = "Khách";
+      this.userProfile.handle = "@guest";
+      this.saveStorage("ngwyren_user_profile", this.userProfile);
+    }
+
     this.selectedGuestAvatar = this.userProfile.avatar || "🎬";
+    this.customUploadedAvatar = this.userProfile.avatarType === "image" ? this.userProfile.avatarUrl : null;
+    this.googleClientId = this.loadStorage("ngwyren_google_client_id", "");
+    this.initGoogleIdentity();
     this.updateProfileUI();
+  }
+
+  initGoogleIdentity() {
+    if (window.google?.accounts?.id && this.googleClientId) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: this.googleClientId,
+          callback: (response) => this.handleGoogleCredentialResponse(response)
+        });
+      } catch (e) {
+        console.warn("GIS Init error:", e);
+      }
+    }
+  }
+
+  handleGoogleCredentialResponse(response) {
+    if (!response || !response.credential) return;
+    try {
+      const base64Url = response.credential.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join("")
+      );
+      const payload = JSON.parse(jsonPayload);
+
+      this.userProfile = {
+        type: "google",
+        name: payload.name || "Người dùng Google",
+        handle: payload.email || "@google_user",
+        avatar: "👤",
+        avatarType: "image",
+        avatarUrl: payload.picture || "",
+        sub: payload.sub
+      };
+      this.saveStorage("ngwyren_user_profile", this.userProfile);
+      this.updateProfileUI();
+      this.closeAuthModal();
+      this.showToast(`🎉 Đăng nhập Google thật thành công! Chào mừng ${payload.name}`);
+    } catch (e) {
+      console.error("JWT Decode error:", e);
+      this.showToast("⚠️ Không thể giải mã tài khoản Google.");
+    }
   }
 
   updateProfileUI() {
@@ -2425,6 +2481,7 @@ class AppleCinemaApp {
     if (!modal || !sheet) return;
 
     this.selectedGuestAvatar = this.userProfile.avatar || "🎬";
+    this.customUploadedAvatar = this.userProfile.avatarType === "image" ? this.userProfile.avatarUrl : null;
     const avatars = ["🎬", "🍿", "🐱", "🦊", "🚀", "🕶️", "👑", "🎧"];
 
     sheet.innerHTML = `
@@ -2435,14 +2492,20 @@ class AppleCinemaApp {
         </button>
       </div>
 
-      <!-- Thẻ Hồ sơ hiện tại -->
+      <!-- Thẻ Hồ sơ hiện tại với nút Camera đổi ảnh -->
       <div class="auth-profile-badge">
-        <div class="auth-avatar-large">
-          ${
-            this.userProfile.avatarType === "image" && this.userProfile.avatarUrl
-              ? `<img src="${this.userProfile.avatarUrl}" alt="Avatar" />`
-              : `<span>${this.userProfile.avatar || "🎬"}</span>`
-          }
+        <div class="auth-avatar-large-container">
+          <div class="auth-avatar-large" id="authAvatarPreview">
+            ${
+              this.userProfile.avatarType === "image" && this.userProfile.avatarUrl
+                ? `<img src="${this.userProfile.avatarUrl}" alt="Avatar" />`
+                : `<span>${this.userProfile.avatar || "🎬"}</span>`
+            }
+          </div>
+          <label for="avatarUploadInput" class="btn-avatar-upload-trigger" title="Tải ảnh lên (Mọi định dạng, tối đa 6MB)">
+            <i class="fas fa-camera"></i>
+          </label>
+          <input type="file" id="avatarUploadInput" accept="image/*" style="display:none;" onchange="app.handleAvatarUpload(event)" />
         </div>
         <div class="auth-info">
           <div class="auth-info-name">${this.userProfile.name}</div>
@@ -2466,24 +2529,44 @@ class AppleCinemaApp {
 
       <!-- Tùy chỉnh Hồ sơ Khách -->
       <div class="guest-form-group">
-        <label for="guestNameInput"><i class="fas fa-id-card"></i> Tên người xem (Guest)</label>
-        <input type="text" id="guestNameInput" class="guest-name-input" value="${this.userProfile.type === "guest" ? this.userProfile.name : "Khách Xem Phim"}" placeholder="Nhập tên hiển thị..." maxlength="30" />
+        <label for="guestNameInput"><i class="fas fa-id-card"></i> Tên người xem (Guest mặc định: "Khách")</label>
+        <input type="text" id="guestNameInput" class="guest-name-input" value="${this.userProfile.type === "guest" ? this.userProfile.name : "Khách"}" placeholder="Nhập tên người xem..." maxlength="30" />
       </div>
 
       <div class="guest-form-group">
-        <label><i class="fas fa-icons"></i> Chọn Avatar đại diện</label>
+        <label><i class="fas fa-icons"></i> Chọn Avatar đại diện hoặc Tải ảnh lên</label>
         <div class="avatar-grid">
           ${avatars.map((av) => `
-            <button class="avatar-option-btn ${av === this.selectedGuestAvatar ? "selected" : ""}" onclick="app.selectGuestAvatar('${av}', this)">
+            <button class="avatar-option-btn ${!this.customUploadedAvatar && av === this.selectedGuestAvatar ? "selected" : ""}" onclick="app.selectGuestAvatar('${av}', this)">
               ${av}
             </button>
           `).join("")}
         </div>
+
+        <!-- Nút Tải ảnh lên mọi định dạng tối đa 6MB -->
+        <label for="avatarUploadInput" class="btn-custom-upload-bar">
+          <i class="fas fa-cloud-arrow-up"></i> Tải ảnh từ thiết bị (Mọi định dạng, tối đa 6MB)
+        </label>
       </div>
 
       <button class="btn-save-guest" onclick="app.saveGuestProfile()">
         <i class="fas fa-check-circle"></i> Lưu Hồ Sơ Khách
       </button>
+
+      <!-- Mục cấu hình Google Cloud / Client ID thật -->
+      <div class="google-config-box">
+        <div class="google-config-toggle" onclick="app.toggleGoogleConfig()">
+          <span><i class="fab fa-google"></i> Cấu hình Google Cloud thật (OAuth 2.0)</span>
+          <i class="fas fa-chevron-down" id="googleConfigArrow"></i>
+        </div>
+        <div class="google-config-content" id="googleConfigContent">
+          <p style="color: rgba(255,255,255,0.7); margin: 0 0 6px; line-height: 1.4;">
+            Nhập <strong>Google Client ID</strong> từ Google Cloud Console để mở xác thực tài khoản Google thật 100%:
+          </p>
+          <input type="text" id="googleClientIdInput" class="google-client-input" value="${this.googleClientId || ""}" placeholder="Ví dụ: 123456789-abc.apps.googleusercontent.com" />
+          <button class="btn-save-client-id" onclick="app.saveGoogleClientId()">Lưu Client ID</button>
+        </div>
+      </div>
 
       ${
         this.userProfile.type === "google"
@@ -2496,32 +2579,138 @@ class AppleCinemaApp {
     document.body.classList.add("modal-open");
   }
 
+  handleAvatarUpload(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Giới hạn tối đa 6MB
+    const maxBytes = 6 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      this.showToast("⚠️ Kích thước ảnh vượt quá 6MB! Vui lòng chọn ảnh nhỏ hơn.");
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const rawDataUrl = e.target.result;
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const size = 320;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+
+        // Cắt vuông tâm ảnh (Center square crop)
+        const minDim = Math.min(img.width, img.height);
+        const sx = (img.width - minDim) / 2;
+        const sy = (img.height - minDim) / 2;
+        ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
+
+        const optimizedUrl = canvas.toDataURL("image/webp", 0.92);
+        this.customUploadedAvatar = optimizedUrl;
+        this.selectedGuestAvatar = null;
+
+        const previewEl = document.getElementById("authAvatarPreview");
+        if (previewEl) {
+          previewEl.innerHTML = `<img src="${optimizedUrl}" alt="Avatar Tải Lên" />`;
+        }
+
+        document.querySelectorAll(".avatar-option-btn").forEach((b) => b.classList.remove("selected"));
+        this.showToast(`📸 Đã nạp ảnh (${(file.size / 1024 / 1024).toFixed(1)}MB). Bấm "Lưu Hồ Sơ Khách" để áp dụng!`);
+      };
+      img.onerror = () => {
+        this.customUploadedAvatar = rawDataUrl;
+        this.selectedGuestAvatar = null;
+        const previewEl = document.getElementById("authAvatarPreview");
+        if (previewEl) {
+          previewEl.innerHTML = `<img src="${rawDataUrl}" alt="Avatar Tải Lên" />`;
+        }
+        document.querySelectorAll(".avatar-option-btn").forEach((b) => b.classList.remove("selected"));
+        this.showToast(`📸 Đã nạp ảnh thành công. Bấm "Lưu Hồ Sơ Khách" để áp dụng!`);
+      };
+      img.src = rawDataUrl;
+    };
+    reader.readAsDataURL(file);
+  }
+
   selectGuestAvatar(avatar, btn) {
     this.selectedGuestAvatar = avatar;
+    this.customUploadedAvatar = null;
     document.querySelectorAll(".avatar-option-btn").forEach((b) => b.classList.remove("selected"));
     btn.classList.add("selected");
+    const previewEl = document.getElementById("authAvatarPreview");
+    if (previewEl) {
+      previewEl.innerHTML = `<span>${avatar}</span>`;
+    }
   }
 
   saveGuestProfile() {
     const input = document.getElementById("guestNameInput");
-    const name = input ? input.value.trim() || "Khách Xem Phim" : "Khách Xem Phim";
-    const avatar = this.selectedGuestAvatar || "🎬";
+    const name = input ? input.value.trim() || "Khách" : "Khách";
+
+    let avatarType = "emoji";
+    let avatar = this.selectedGuestAvatar || "🎬";
+    let avatarUrl = "";
+
+    if (this.customUploadedAvatar) {
+      avatarType = "image";
+      avatarUrl = this.customUploadedAvatar;
+      avatar = "🖼️";
+    }
 
     this.userProfile = {
       type: "guest",
       name: name,
-      handle: "@" + name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "").slice(0, 15) || "@guest",
+      handle: name === "Khách" ? "@guest" : "@" + name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "").slice(0, 15),
       avatar: avatar,
-      avatarType: "emoji",
-      avatarUrl: ""
+      avatarType: avatarType,
+      avatarUrl: avatarUrl
     };
     this.saveStorage("ngwyren_user_profile", this.userProfile);
     this.updateProfileUI();
     this.closeAuthModal();
-    this.showToast(`✨ Đã lưu hồ sơ khách: "${name}" (${avatar})`);
+    this.showToast(`✨ Đã lưu hồ sơ khách: "${name}"`);
+  }
+
+  toggleGoogleConfig() {
+    const content = document.getElementById("googleConfigContent");
+    const arrow = document.getElementById("googleConfigArrow");
+    if (content) {
+      const isOpen = content.classList.toggle("open");
+      if (arrow) arrow.style.transform = isOpen ? "rotate(180deg)" : "";
+    }
+  }
+
+  saveGoogleClientId() {
+    const input = document.getElementById("googleClientIdInput");
+    const val = input ? input.value.trim() : "";
+    this.googleClientId = val;
+    this.saveStorage("ngwyren_google_client_id", val);
+    this.initGoogleIdentity();
+    this.showToast(val ? "🔑 Đã lưu Google Client ID thành công!" : "ℹ️ Đã xóa Google Client ID.");
   }
 
   loginWithGoogle() {
+    // Nếu có Google Client ID thật và thư viện GIS đã nạp
+    if (this.googleClientId && window.google?.accounts?.id) {
+      try {
+        window.google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            this.showGoogleFallbackPicker();
+          }
+        });
+        return;
+      } catch (e) {
+        console.warn("GIS Prompt error:", e);
+      }
+    }
+
+    this.showGoogleFallbackPicker();
+  }
+
+  showGoogleFallbackPicker() {
     const googleAccounts = [
       { name: "Nguyễn Hải Đăng", email: "haidang.cinema@gmail.com", avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80" },
       { name: "Trần Minh Quân", email: "quan.ngwyren@gmail.com", avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80" },
@@ -2546,12 +2735,14 @@ class AppleCinemaApp {
   logoutProfile() {
     this.userProfile = {
       type: "guest",
-      name: "Ngwyren Cinema",
-      handle: "@ngwyren",
+      name: "Khách",
+      handle: "@guest",
       avatar: "🎬",
       avatarType: "emoji",
       avatarUrl: ""
     };
+    this.customUploadedAvatar = null;
+    this.selectedGuestAvatar = "🎬";
     this.saveStorage("ngwyren_user_profile", this.userProfile);
     this.updateProfileUI();
     this.closeAuthModal();
