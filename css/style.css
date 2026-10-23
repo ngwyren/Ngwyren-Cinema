@@ -3876,11 +3876,11 @@ body {
    ========================================================================== */
 .apple-player-bar {
   position: fixed;
-  left: 50% !important;
+  left: calc(50% + 33px) !important;
   right: auto !important;
   transform: translate3d(-50%, 0, 0) !important;
   bottom: 18px !important;
-  width: min(440px, calc(100vw - 32px)) !important;
+  width: min(415px, calc(100vw - 32px)) !important;
   height: 56px;
   border-radius: 999px;
   display: block !important;
@@ -3908,18 +3908,18 @@ body {
   will-change: width, height, border-radius, box-shadow;
 }
 
-/* 1. Trạng thái thu gọn Capsule - Padding cân đối 12px hai đầu */
+/* 1. Trạng thái thu gọn Capsule - Padding cân đối 14px hai đầu */
 .player-compact-bar {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   height: 56px;
-  padding: 0 12px;
+  padding: 0 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 12px;
   opacity: 1;
   pointer-events: auto;
   transform: translate3d(0, 0, 0);
@@ -3930,10 +3930,11 @@ body {
 .apple-player-bar .player-now-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 11px;
   cursor: pointer;
   min-width: 0;
   flex: 1;
+  height: 100%;
 }
 
 .apple-player-bar .player-now-art {
@@ -3955,7 +3956,10 @@ body {
 .apple-player-bar .player-now-text {
   min-width: 0;
   flex: 1;
-  max-width: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
 }
 
 .apple-player-bar .player-now-title {
@@ -3965,30 +3969,34 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin: 0;
 }
 
 .apple-player-bar .player-now-sub {
   font-size: 0.68rem;
   color: rgba(255, 255, 255, 0.65);
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 1px;
+  margin: 0;
 }
 
 .apple-player-bar .player-transport {
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  height: 100%;
 }
 
 .apple-player-bar .transport-btns {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .apple-player-bar .transport-btn {
@@ -4055,7 +4063,7 @@ body {
 .mini-play-glow-btn i.fa-play,
 #nowPlayingPlayIcon.fa-play,
 #nowPlayingIslandPlayIcon.fa-play {
-  margin-left: 2.5px !important;
+  margin-left: 1px !important;
 }
 
 .apple-player-bar .transport-play-main i.fa-pause,
@@ -4795,12 +4803,12 @@ body.modal-open .apple-player-bar {
     display: none !important;
   }
   .apple-player-bar:not(:hover):not(.is-expanded) {
-    left: 50% !important;
+    left: calc(50% + 33px) !important;
     right: auto !important;
     transform: translate3d(-50%, 0, 0) !important;
     bottom: 18px !important;
     height: 56px !important;
-    width: min(440px, calc(100vw - 32px)) !important;
+    width: min(415px, calc(100vw - 32px)) !important;
   }
 }
 
@@ -4853,12 +4861,12 @@ body.modal-open .apple-player-bar {
     display: none !important;
   }
   .apple-player-bar:not(:hover):not(.is-expanded) {
-    left: 50% !important;
+    left: calc(50% + 33px) !important;
     right: auto !important;
     transform: translate3d(-50%, 0, 0) !important;
     bottom: 18px !important;
     height: 56px !important;
-    width: min(440px, calc(100vw - 32px)) !important;
+    width: min(415px, calc(100vw - 32px)) !important;
   }
 }
 
