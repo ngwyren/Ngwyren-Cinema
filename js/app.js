@@ -989,11 +989,7 @@ class AppleCinemaApp {
             isPersonalPage
               ? `<section class="vision-settings-banner">
                    <div class="vision-settings-banner-left">
-                     <span class="vision-trending-pill">
-                       <i class="fas ${this.currentNav === "yeu-thich" ? "fa-star" : "fa-clock-rotate-left"}"></i>
-                       Thư Viện Cá Nhân
-                     </span>
-                     <h1 class="vision-hero-title" style="margin-top: 8px;">${title} (${list.length} phim)</h1>
+                     <h1 class="vision-hero-title">${title} (${list.length} phim)</h1>
                    </div>
                    <div class="vision-settings-banner-actions">
                      ${
@@ -1183,7 +1179,6 @@ class AppleCinemaApp {
         <div class="vision-hero-overlay"></div>
 
         <div class="vision-hero-top">
-          <span class="vision-trending-pill">${customKicker}</span>
           <div class="vision-hero-dots">
             ${this.heroMovies.map((_, i) => `
               <button class="vision-hero-dot ${i === this.heroIndex ? "active" : ""}" onclick="app.setHeroSlide(${i})" aria-label="Slide ${i + 1}"></button>
@@ -1639,14 +1634,11 @@ class AppleCinemaApp {
 
         <!-- Active Video Container (Apple Cinema Player - Không viền xanh, chuẩn Apple TV+) -->
         <div class="active-video-container ${isPlayingNow ? "playing" : ""}" id="activeVideoContainer" tabindex="-1">
-          <!-- Phản xạ ánh sáng LED điện ảnh (Ambient LED Glow) -->
-          <div class="apple-ambient-glow" id="appleAmbientGlow" style="background-image: url('${movie.backdrop || movie.poster}');"></div>
-
           <!-- Video Element (đã bỏ controls mặc định của trình duyệt để triệt tiêu hoàn toàn viền xanh khi bấm phím cách) -->
           <video id="hlsVideoElement" class="${this.getQualityVideoClass(this.currentQuality)}" playsinline poster="${movie.backdrop || movie.poster}" tabindex="-1"></video>
           <iframe id="trailerIframeElement" style="display: none;" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen tabindex="-1"></iframe>
 
-          <!-- Apple Center HUD Pulse (Đĩa kính mờ Apple nhảy giữa màn hình khi Play/Pause/Tua) -->
+          <!-- Apple Center HUD Pulse (Icon Apple nhảy giữa màn hình khi Play/Pause/Tua - Không shape tròn) -->
           <div class="apple-video-hud" id="appleVideoHud">
             <div class="apple-hud-disc" id="appleHudDisc">
               <i class="fas fa-play" id="appleHudIcon"></i>
@@ -1661,21 +1653,9 @@ class AppleCinemaApp {
                  onclick="app.handleAppleVideoClick(event)"
                  ondblclick="app.toggleVideoFullscreen(event)"></div>
 
-            <!-- Thanh đỉnh Apple: Tiêu đề + Chế độ rạp phim + PiP -->
+            <!-- Thanh đỉnh Apple: Chỉ hiển thị tên phim -->
             <div class="apple-player-topbar" id="applePlayerTopbar">
-              <div class="apple-player-title-info">
-                <span class="apple-player-badge"><i class="fab fa-apple"></i> CINEMA</span>
-                <span class="apple-player-movie-name" title="${movie.title}">${movie.title}</span>
-                <span class="apple-player-ep-pill" id="applePlayerEpPill">${this.formatEpisodeLabel(currentEp ? currentEp.name : "Tập 1")}</span>
-              </div>
-              <div class="apple-player-top-actions">
-                <button class="apple-pill-btn" onclick="app.toggleVideoTheaterMode(event)" title="Chế độ Rạp phim Apple (T)">
-                  <i class="fas fa-masks-theater"></i> <span>Rạp phim</span>
-                </button>
-                <button class="apple-pill-btn" onclick="app.toggleVideoPip(event)" title="Hình trong hình (PiP)">
-                  <i class="fas fa-clone"></i>
-                </button>
-              </div>
+              <span class="apple-player-movie-name" title="${movie.title}">${movie.title}</span>
             </div>
 
             <!-- Thanh đáy Apple: Timeline Scrubber + Cụm điều khiển Kính mờ -->
@@ -1733,12 +1713,6 @@ class AppleCinemaApp {
                 </div>
 
                 <div class="apple-ctrls-right">
-                  <!-- Chip hiển thị chất lượng luồng thực tế -->
-                  <div class="apple-quality-chip" id="appleQualityChip" onclick="document.getElementById('srvBtnHls1')?.scrollIntoView({behavior: 'smooth'})" title="Độ phân giải luồng">
-                    <span class="apple-dot-live"></span>
-                    <span id="appleQualityChipText">${this.getQualityLabel(this.currentQuality)}</span>
-                  </div>
-
                   <!-- Tốc độ phát -->
                   <button class="apple-ctrl-btn apple-speed-btn" id="appleSpeedBtn" onclick="app.cyclePlaybackSpeed(event)" title="Tốc độ phát">
                     <span id="appleSpeedText">1.0x</span>
@@ -2090,9 +2064,13 @@ class AppleCinemaApp {
       this.hlsInstance = new window.Hls({
         enableWorker: true,
         lowLatencyMode: true,
-        capLevelToPlayerSize: false,
-        maxBufferLength: 60,
-        maxMaxBufferLength: 120,
+        progressive: true,
+        backBufferLength: 30,
+        maxBufferLength: 30,
+        maxMaxBufferLength: 60,
+        maxBufferSize: 60 * 1000 * 1000,
+        maxBufferHole: 0.5,
+        startLevel: -1,
         abrEwmaDefaultEstimate: 25000000
       });
       this.hlsInstance.loadSource(streamUrl);

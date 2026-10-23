@@ -899,21 +899,9 @@ body::-webkit-scrollbar {
   }
 }
 
-.hero-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.26);
-  padding: 5px 12px;
-  border-radius: var(--radius-pill);
-  margin-bottom: 14px;
-  backdrop-filter: blur(12px);
+.hero-kicker,
+.vision-trending-pill {
+  display: none !important;
 }
 
 .hero-title {
@@ -1719,7 +1707,9 @@ body::-webkit-scrollbar {
 }
 
 .active-video-container video,
-.active-video-container iframe {
+.active-video-container iframe,
+#hlsVideoElement,
+#trailerIframeElement {
   width: 100%;
   height: 100%;
   border: none !important;
@@ -1728,19 +1718,10 @@ body::-webkit-scrollbar {
   box-shadow: none !important;
   -webkit-focus-ring-color: transparent !important;
   background: #000;
-  transition: filter 0.35s var(--ease-in-out-smooth);
-}
-
-.active-video-container video.quality-4k {
-  filter: url(#ngwyren-4k-upscale) contrast(1.06) saturate(1.08);
-}
-
-.active-video-container video.quality-2k {
-  filter: url(#ngwyren-2k-upscale) contrast(1.03) saturate(1.04);
-}
-
-.active-video-container video.quality-720p {
-  filter: blur(0.35px);
+  filter: none !important;
+  -webkit-filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .player-quality-floating-badge {
@@ -3520,16 +3501,7 @@ body {
 }
 
 .vision-trending-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: rgba(25, 27, 32, 0.68);
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  font-size: 0.76rem;
-  font-weight: 600;
-  color: #ffffff;
+  display: none !important;
 }
 
 .vision-hero-bottom {
@@ -5277,6 +5249,7 @@ body.modal-open .apple-player-bar {
   display: flex;
   align-items: center;
   gap: 7px;
+  margin-left: auto;
   background: rgba(18, 20, 24, 0.45);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -6753,22 +6726,18 @@ iframe:focus-within,
   -webkit-tap-highlight-color: transparent !important;
 }
 
-/* 2. Apple Ambient LED Glow Projection (Phản xạ ánh sáng điện ảnh sau màn hình) */
+/* 2. Apple Ambient LED Glow Projection - Đã tắt hoàn toàn theo yêu cầu người dùng */
 .apple-ambient-glow {
-  position: absolute;
-  inset: -15px;
-  background-size: cover;
-  background-position: center;
-  filter: blur(50px) saturate(160%);
-  opacity: 0.22;
-  pointer-events: none;
-  z-index: 0;
-  transition: opacity 0.5s ease;
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 .detail-modal-sheet.apple-theater-mode .apple-ambient-glow {
-  opacity: 0.45;
-  filter: blur(80px) saturate(200%);
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
 }
 
 /* 3. Apple Center HUD Pulse Animation (Icon đĩa kính mờ Apple nhảy giữa màn hình khi Play/Pause/Tua) */
@@ -6816,32 +6785,31 @@ iframe:focus-within,
 }
 
 .apple-hud-disc {
-  width: 76px;
-  height: 76px;
-  border-radius: 50%;
-  background: rgba(18, 18, 24, 0.75);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  border: 1.5px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65), inset 0 1px 1.5px rgba(255, 255, 255, 0.45);
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  font-size: 1.85rem;
+  color: #ffffff !important;
+  font-size: 3.8rem !important;
+  filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.85)) !important;
 }
 
 .apple-hud-text {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: #ffffff;
-  background: rgba(15, 15, 20, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  padding: 4px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  background: transparent;
+  padding: 2px 8px;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.9));
   letter-spacing: 0.02em;
 }
 
@@ -7186,18 +7154,7 @@ iframe:focus-within,
 }
 
 .apple-quality-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #ffffff;
-  font-size: 0.74rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  display: none !important;
 }
 
 .apple-quality-chip:hover {

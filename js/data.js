@@ -1083,6 +1083,7 @@ class PhimmoiService {
     });
 
     this.slugMap = new Map();
+    this._smartCache = new Map();
     this.movies.forEach((m) => this.slugMap.set(m.slug, m));
 
     // Tự động nạp toàn bộ kho phim đầy đủ (1739+ phim) từ js/movies-catalog.js với 100% luồng .m3u8 thật
@@ -1284,9 +1285,12 @@ class PhimmoiService {
   }
 
   /**
-   * Fetch thông minh hỗ trợ kết nối trực tiếp + tự động fallback qua CORS proxy nếu trình duyệt chặn
+   * Fetch thông minh hỗ trợ bộ nhớ đệm 0ms + kết nối trực tiếp + tự động fallback qua CORS proxy nếu trình duyệt chặn
    */
   async smartFetchJson(url, timeoutMs = 7500) {
+    if (this._smartCache && this._smartCache.has(url)) {
+      return this._smartCache.get(url);
+    }
     const attempts = [
       url,
       `${PHIMMOI_CONFIG.corsProxies[0]}${encodeURIComponent(url)}`,
@@ -1300,7 +1304,9 @@ class PhimmoiService {
         const res = await fetch(targetUrl, { signal: controller.signal });
         clearTimeout(timer);
         if (res.ok) {
-          return await res.json();
+          const data = await res.json();
+          if (this._smartCache) this._smartCache.set(url, data);
+          return data;
         }
       } catch (err) {
         // Thử sang endpoint kế tiếp
@@ -1501,6 +1507,9 @@ class PhimmoiService {
    */
   async enrichMovieStreams(movie) {
     if (!movie) return movie;
+    if (movie._isEnriched && movie.episodes && movie.episodes.length > 0 && movie.episodes[0].source) {
+      return movie;
+    }
     const slugToTry = movie.crawlSlug || movie.slug.replace(/-\d+$/, "");
 
     let [phimApiRes, nguoncRes, wpPosts] = await Promise.all([
@@ -1696,6 +1705,7 @@ class PhimmoiService {
       }
     }
 
+    movie._isEnriched = true;
     return movie;
   }
 
