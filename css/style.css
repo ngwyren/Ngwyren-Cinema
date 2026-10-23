@@ -3213,14 +3213,30 @@ body {
   color: #ffffff;
 }
 
-/* Left Panel 1: New Trailer Stack */
+/* Left Panel 1: New Trailer Stack (Chuẩn xác 3 phim 1 khung hình, triệt tiêu mép viền phim thứ 4) */
 .vision-trailer-stack {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 410px;
+  height: 396px;
+  max-height: 396px;
   overflow-y: auto;
-  padding-right: 2px;
+  overflow-x: hidden;
+  padding-right: 4px;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.vision-trailer-stack::-webkit-scrollbar {
+  width: 4px;
+}
+.vision-trailer-stack::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+}
+.vision-trailer-stack::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .vision-trailer-card {
@@ -3233,6 +3249,9 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.16);
   flex-shrink: 0;
   contain: layout style paint;
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+  box-sizing: border-box;
 }
 
 .vision-trailer-card img {

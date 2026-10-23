@@ -252,11 +252,21 @@ class AppleCinemaApp {
   }
 
   renderLeftSideColumnHTML(contextMovies = null, panelTitle = "🔥 Phim & Trailer Mới") {
-    const sourceTrailers = (contextMovies && contextMovies.length >= 2 ? contextMovies : this.service.movies).slice(0, 5);
+    // Luôn đảm bảo đủ đúng 15 phim mới và cuộn mượt mà
+    let list15 = contextMovies && contextMovies.length ? [...contextMovies] : [];
+    if (list15.length < 15) {
+      for (const m of this.service.movies) {
+        if (!list15.some((x) => x.slug === m.slug)) {
+          list15.push(m);
+          if (list15.length >= 15) break;
+        }
+      }
+    }
+    const sourceTrailers = list15.slice(0, 15);
     const continueItems = this.watchHistory
       .map((h) => ({ movie: this.findMovie(h.slug), epIndex: h.epIndex || 0 }))
       .filter((x) => x.movie);
-    const fallbackContinue = this.service.movies.slice(5, 10).map((m) => ({ movie: m, epIndex: 0 }));
+    const fallbackContinue = this.service.movies.slice(15, 20).map((m) => ({ movie: m, epIndex: 0 }));
     const finalContinue = [...continueItems, ...fallbackContinue].slice(0, 5);
 
     return `
