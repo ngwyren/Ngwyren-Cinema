@@ -3876,11 +3876,11 @@ body {
    ========================================================================== */
 .apple-player-bar {
   position: fixed;
-  left: calc(50% + 33px) !important;
+  left: calc(50% + 40px) !important;
   right: auto !important;
   transform: translate3d(-50%, 0, 0) !important;
   bottom: 18px !important;
-  width: min(415px, calc(100vw - 32px)) !important;
+  width: min(385px, calc(100vw - 32px)) !important;
   height: 56px !important;
   border-radius: 999px;
   display: block !important;
@@ -3909,17 +3909,17 @@ body {
   will-change: width, height, border-radius, box-shadow;
 }
 
-/* 1. Trạng thái thu gọn Capsule - Nằm trọn vẹn và căn giữa hoàn hảo trong khung */
+/* 1. Trạng thái thu gọn Capsule - Padding đồng tâm 9px chuẩn chỉ, không dư thừa, hoàn toàn đều nhau */
 .player-compact-bar {
   position: absolute;
   inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  padding: 0 14px;
+  padding: 0 12px 0 9px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  gap: 12px;
+  gap: 10px !important;
   box-sizing: border-box !important;
   opacity: 1;
   pointer-events: auto;
@@ -3929,13 +3929,15 @@ body {
 }
 
 .apple-player-bar .player-now-info {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  cursor: pointer;
-  min-width: 0;
-  flex: 1;
-  height: 100%;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  cursor: pointer !important;
+  min-width: 0 !important;
+  flex: 1 !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .apple-player-bar .player-now-art {
@@ -4006,7 +4008,7 @@ body {
   height: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
-  gap: 10px !important;
+  gap: 8px !important;
 }
 
 .apple-player-bar .transport-btn {
@@ -4825,12 +4827,12 @@ body.modal-open .apple-player-bar {
     display: none !important;
   }
   .apple-player-bar:not(:hover):not(.is-expanded) {
-    left: calc(50% + 33px) !important;
+    left: calc(50% + 40px) !important;
     right: auto !important;
     transform: translate3d(-50%, 0, 0) !important;
     bottom: 18px !important;
     height: 56px !important;
-    width: min(415px, calc(100vw - 32px)) !important;
+    width: min(385px, calc(100vw - 32px)) !important;
   }
 }
 
@@ -4883,12 +4885,12 @@ body.modal-open .apple-player-bar {
     display: none !important;
   }
   .apple-player-bar:not(:hover):not(.is-expanded) {
-    left: calc(50% + 33px) !important;
+    left: calc(50% + 34px) !important;
     right: auto !important;
     transform: translate3d(-50%, 0, 0) !important;
     bottom: 18px !important;
     height: 56px !important;
-    width: min(415px, calc(100vw - 32px)) !important;
+    width: min(385px, calc(100vw - 32px)) !important;
   }
 }
 
