@@ -232,6 +232,7 @@ class AppleCinemaApp {
 
     // Đồng bộ chính xác thanh Dock bên trái với trang lớn
     this.syncLeftDockIndicator(navKey);
+    this.syncNavPillIndicator();
 
     // Đóng sidebar mobile nếu đang mở
     this.toggleMobileSidebar(false);
@@ -240,6 +241,38 @@ class AppleCinemaApp {
     window.scrollTo({ top: 0, behavior: "smooth" });
     this.renderMainView();
     this.triggerPageTransition();
+  }
+
+  syncNavPillIndicator() {
+    const container = document.getElementById("visionNavPills");
+    const activePill = container?.querySelector(".vision-nav-pill.active");
+    const indicator = document.getElementById("visionNavIndicator");
+    if (!container || !activePill || !indicator) return;
+
+    const cRect = container.getBoundingClientRect();
+    const pRect = activePill.getBoundingClientRect();
+    const x = pRect.left - cRect.left + container.scrollLeft;
+    const w = pRect.width;
+
+    indicator.style.setProperty("--nav-pill-x", `${x}px`);
+    indicator.style.setProperty("--nav-pill-w", `${w}px`);
+    indicator.style.opacity = "1";
+  }
+
+  triggerHaptic(type = "light") {
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      try {
+        if (type === "medium") {
+          navigator.vibrate(14);
+        } else if (type === "heavy") {
+          navigator.vibrate([12, 35, 16]);
+        } else {
+          navigator.vibrate(8);
+        }
+      } catch (e) {
+        // Safe fallback
+      }
+    }
   }
 
   syncLeftDockIndicator(navKey) {
@@ -261,10 +294,7 @@ class AppleCinemaApp {
     const targetIdx = dockMap[navKey] !== undefined ? dockMap[navKey] : 0;
 
     // Hiệu ứng co giãn thấu kính chất lỏng Liquid Glass
-    if (indicator && dockEl.style.getPropertyValue("--dock-idx") !== String(targetIdx)) {
-      indicator.classList.add("is-morphing");
-      setTimeout(() => indicator.classList.remove("is-morphing"), 220);
-    }
+    
 
     dockEl.style.setProperty("--dock-idx", String(targetIdx));
     document.querySelectorAll(".vision-dock-icon").forEach((btn) => {
@@ -861,7 +891,17 @@ class AppleCinemaApp {
 
     container.innerHTML = `
       <div class="vision-dashboard-grid">
-        ${this.renderLeftSideColumnHTML(distinctListForLeft.length >= 2 ? distinctListForLeft : list, `🎬 Đề Cử: ${title}`)}
+        ${(() => {
+        const shortMap = {
+          "anime": "Đề Cử Anime",
+          "phim-le": "Đề Cử Phim Lẻ",
+          "phim-bo": "Đề Cử Phim Bộ",
+          "netflix": "Đề Cử Netflix",
+          "vietsub": "Đề Cử Vietsub"
+        };
+        const shortTitle = shortMap[this.currentNav] || "Đề Cử";
+        return this.renderLeftSideColumnHTML(distinctListForLeft.length >= 2 ? distinctListForLeft : list, shortTitle);
+      })()}
 
         <div class="vision-main-col vision-col-transition">
           <!-- Category Header Banner / Hero -->
@@ -1184,7 +1224,7 @@ class AppleCinemaApp {
       { label: "Bí Ẩn", icon: "fa-user-secret" },
       { label: "Cổ Trang", icon: "fa-scroll" },
       { label: "Tình Cảm", icon: "fa-heart" },
-      { label: "Anime", icon: "fa-wand-magic-sparkles" },
+      { label: "Anime", icon: "fa-dragon" },
       { label: "Hài Hước", icon: "fa-face-laugh-beam" },
       { label: "Viễn Tưởng", icon: "fa-rocket" },
       { label: "Hình Sự", icon: "fa-shield-halved" },
@@ -2508,6 +2548,27 @@ class AppleCinemaApp {
   }
 
   bindGlobalEvents() {
+    // Apple Haptic Feedback on touch & click
+    document.addEventListener(
+      "pointerdown",
+      (e) => {
+        const interactive = e.target.closest(
+          "button, a, .vision-nav-pill, .vision-dock-icon, .dock-tab-btn, .filter-chip, .vision-movie-card, .vision-feature-card, .mini-ctrl-btn, .mini-play-glow-btn, .mini-cinema-expand-btn, .btn-action, .quality-pill-btn, .server-btn"
+        );
+        if (interactive) {
+          this.triggerHaptic("light");
+        }
+      },
+      { passive: true }
+    );
+
+    // Dynamic Liquid Nav Pill Indicator sync
+    window.addEventListener("resize", () => this.syncNavPillIndicator(), { passive: true });
+    const navPillsBox = document.getElementById("visionNavPills");
+    if (navPillsBox) {
+      navPillsBox.addEventListener("scroll", () => this.syncNavPillIndicator(), { passive: true });
+    }
+    setTimeout(() => this.syncNavPillIndicator(), 150);
     // Segmented control trên Topbar
     document.querySelectorAll(".segment-btn").forEach((btn) => {
       btn.addEventListener("click", () => {

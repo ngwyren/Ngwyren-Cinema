@@ -44,7 +44,7 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/style.css?v=4.6" />
+  <link rel="stylesheet" href="css/style.css?v=4.8" />
 </head>
 <body>
 
@@ -72,7 +72,7 @@
         <i class="fas fa-download"></i>
       </button>
       <button class="vision-dock-icon" data-nav="anime" data-dock-idx="3" data-label="Anime" onclick="app.setNavigation('anime')" title="Kho Phim Anime">
-        <i class="fas fa-wand-magic-sparkles"></i>
+        <i class="fas fa-dragon"></i>
       </button>
       <button class="vision-dock-icon" data-nav="cai-dat" data-dock-idx="4" data-label="Cài Đặt" onclick="app.setNavigation('cai-dat')" title="Cài Đặt Hệ Thống">
         <i class="fas fa-gear"></i>
@@ -103,7 +103,8 @@
         </div>
 
         <!-- Center Category Pills (Khám Phá | Phim Lẻ | Phim Bộ | Hoạt Hình | Netflix | Vietsub) -->
-        <nav class="vision-nav-pills" aria-label="Danh mục chính">
+        <nav class="vision-nav-pills" id="visionNavPills" aria-label="Danh mục chính">
+          <span class="vision-nav-indicator" id="visionNavIndicator" aria-hidden="true"></span>
           <button class="vision-nav-pill active" data-nav="kham-pha" onclick="app.resetAllFilters()">Khám Phá</button>
           <button class="vision-nav-pill" data-nav="phim-le" onclick="app.setNavigation('phim-le')">Phim Lẻ</button>
           <button class="vision-nav-pill" data-nav="phim-bo" onclick="app.setNavigation('phim-bo')">Phim Bộ</button>
@@ -237,8 +238,8 @@
             <button class="mini-icon-btn" onclick="app.toggleMyList(app.playingMovie?.slug, event)" title="Lưu phim">
               <i class="fas fa-heart"></i>
             </button>
-            <button class="mini-cinema-expand-btn" onclick="app.openMovieModal(app.playingMovie?.slug, true, app.currentEpisodeIndex)">
-              <i class="fas fa-expand"></i> Mở Rạp Phim
+            <button class="mini-cinema-expand-btn" onclick="app.openMovieModal(app.playingMovie?.slug, true, app.currentEpisodeIndex)" title="Mở rạp phim toàn màn hình">
+              <i class="fas fa-expand"></i> <span>Rạp Phim</span>
             </button>
           </div>
         </div>
@@ -259,7 +260,7 @@
       <span>Movies</span>
     </button>
     <button class="dock-tab-btn" data-nav="anime" onclick="app.setNavigation('anime')">
-      <i class="fas fa-wand-magic-sparkles"></i>
+      <i class="fas fa-dragon"></i>
       <span>Anime</span>
     </button>
     <button class="dock-tab-btn" data-nav="netflix" onclick="app.setNavigation('netflix')">
@@ -291,9 +292,9 @@
   </div>
 
   <!-- Scripts -->
-  <script src="js/movies-catalog.js?v=4.6"></script>
-  <script src="js/data.js?v=4.6"></script>
-  <script src="js/auth-config.js?v=4.6"></script>
-  <script src="js/app.js?v=4.6"></script>
+  <script src="js/movies-catalog.js?v=4.8"></script>
+  <script src="js/data.js?v=4.8"></script>
+  <script src="js/auth-config.js?v=4.8"></script>
+  <script src="js/app.js?v=4.8"></script>
 </body>
 </html>
