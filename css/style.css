@@ -5984,3 +5984,61 @@ body.modal-open .apple-player-bar {
   transform: scale(0.95) !important;
   transition: transform 0.08s cubic-bezier(0.2, 0.9, 0.3, 1) !important;
 }
+
+/* ==========================================================================
+   CATEGORY NAV PILLS (SURGICALLY REMOVED INACTIVE BORDER & FOCUS RINGS)
+   ========================================================================== */
+.vision-nav-pill,
+.vision-nav-pill:focus,
+.vision-nav-pill:focus-visible {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-focus-ring-color: transparent !important;
+}
+
+.vision-nav-pill:not(.active) {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+
+.vision-nav-pill:not(.active):hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+.vision-nav-pill.active {
+  border: none !important;
+  outline: none !important;
+}
+
+[data-theme="emerald"] .vision-nav-pill.active {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  border: none !important;
+  outline: none !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 14px rgba(16, 185, 129, 0.4), inset 0 1px 0.5px rgba(255, 255, 255, 0.4) !important;
+}
+
+[data-theme="aurora"] .vision-nav-pill.active {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1) !important;
+  border: none !important;
+  outline: none !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 14px rgba(139, 92, 246, 0.4), inset 0 1px 0.5px rgba(255, 255, 255, 0.4) !important;
+}
+
+[data-theme="amber"] .vision-nav-pill.active {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  border: none !important;
+  outline: none !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 14px rgba(245, 158, 11, 0.4), inset 0 1px 0.5px rgba(255, 255, 255, 0.4) !important;
+}

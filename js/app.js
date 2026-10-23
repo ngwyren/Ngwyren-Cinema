@@ -271,9 +271,9 @@ class AppleCinemaApp {
       "vietsub": 0,
       "moi-cap-nhat": 0,
       "yeu-thich": 1,
-      "lich-su": 2,
-      "anime": 3,
-      "cai-dat": 4
+      "lich-su": 1,
+      "anime": 2,
+      "cai-dat": 3
     };
     const targetIdx = dockMap[navKey] !== undefined ? dockMap[navKey] : 0;
 
