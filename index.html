@@ -142,9 +142,9 @@
   <!-- ========================================================================
        FLOATING MINI-PLAYER BAR (COMPACT VISION OS PILL)
        ======================================================================== -->
-  <footer class="apple-player-bar" id="applePlayerBar" aria-label="Thanh phát Dynamic Island">
-    <!-- 1. COMPACT DYNAMIC ISLAND (Trạng thái thu gọn ban đầu) -->
-    <div class="island-compact-view">
+  <footer class="apple-player-bar" id="applePlayerBar" aria-label="Thanh phát phim thu nhỏ">
+    <!-- 1. Trạng thái thu gọn (Capsule Bar ban đầu) -->
+    <div class="player-compact-bar">
       <div class="player-now-info" onclick="app.openMovieModal(app.playingMovie?.slug || 'thanh-guom-diet-quy-vo-han-thanh-465645', false)">
         <div class="player-now-art">
           <img id="nowPlayingArt" src="https://phimimg.com/upload/vod/20250722-1/66ee196318069c6ede9450a5f76a4648.jpg" alt="Now Playing" />
@@ -166,13 +166,13 @@
       <div class="player-transport">
         <div class="transport-btns">
           <button class="transport-btn" onclick="app.stepNowPlayingEpisode(-1)" title="Tập trước / Phim liên quan">
-            <i class="fas fa-backward-step" style="font-size: 1rem;"></i>
+            <i class="fas fa-backward-step"></i>
           </button>
           <button class="transport-play-main" onclick="app.toggleNowPlayingPlayPause()" title="Phát / Tạm dừng">
-            <i class="fas fa-play" id="nowPlayingPlayIcon" style="font-size: 0.9rem;"></i>
+            <i class="fas fa-play" id="nowPlayingPlayIcon"></i>
           </button>
           <button class="transport-btn" onclick="app.stepNowPlayingEpisode(1)" title="Tập tiếp theo / Phim liên quan">
-            <i class="fas fa-forward-step" style="font-size: 1rem;"></i>
+            <i class="fas fa-forward-step"></i>
           </button>
         </div>
 
@@ -197,82 +197,69 @@
       </div>
     </div>
 
-    <!-- 2. EXPANDED DYNAMIC ISLAND (Alcove visionOS Spatial Player khi rê chuột) -->
-    <div class="island-expanded-view" id="islandExpandedView">
-      <!-- Màn hình phim 16:9 thu nhỏ phong cách Alcove Cinema -->
-      <div class="island-preview-screen" onclick="app.openMovieModal(app.playingMovie?.slug, true, app.currentEpisodeIndex)" title="Bấm để mở rạp phim toàn màn hình">
-        <img id="nowPlayingIslandBackdrop" src="https://phimimg.com/upload/vod/20250722-1/66ee196318069c6ede9450a5f76a4648.jpg" alt="Preview" class="island-screen-img" />
-        <div class="island-screen-overlay"></div>
-        <div class="island-screen-play-pulse">
-          <i class="fas fa-play"></i>
+    <!-- 2. Trạng thái phóng to thành MÀN HÌNH NHỎ (Chỉ hiện phim) -->
+    <div class="player-mini-screen-view" id="playerMiniScreenView">
+      <!-- Màn hình phim 16:9 thu nhỏ -->
+      <div class="mini-screen-display" onclick="app.openMovieModal(app.playingMovie?.slug, true, app.currentEpisodeIndex)" title="Bấm để mở rạp phim toàn màn hình">
+        <img id="nowPlayingIslandBackdrop" src="https://phimimg.com/upload/vod/20250722-1/66ee196318069c6ede9450a5f76a4648.jpg" alt="Preview" class="mini-screen-backdrop" />
+        <div class="mini-screen-gradient"></div>
+        <div class="mini-screen-play-pulse">
+          <i class="fas fa-play" id="miniScreenCenterPlayIcon"></i>
         </div>
-        <span class="island-screen-live-badge"><span class="island-live-dot"></span> ĐANG XEM</span>
-        <span class="island-screen-duration" id="nowPlayingIslandDuration">FHD</span>
+        <div class="mini-screen-badges">
+          <span class="mini-badge-live"><span class="badge-dot"></span> ĐANG PHÁT</span>
+          <span class="mini-badge-meta" id="nowPlayingIslandDuration">Full HD</span>
+        </div>
       </div>
 
-      <!-- Bảng điều khiển không gian & thông tin phim chi tiết -->
-      <div class="island-content-col">
-        <div class="island-top-row">
-          <div class="island-pill-tag">
-            <span class="island-sound-wave">
-              <span></span><span></span><span></span>
-            </span>
-            <span>Dynamic Island • Alcove Player</span>
-          </div>
-          <div class="island-header-actions">
-            <button class="island-icon-action" onclick="app.toggleMyList(app.playingMovie?.slug, event)" title="Lưu phim vào danh sách">
-              <i class="fas fa-heart"></i>
-            </button>
-            <button class="island-icon-action" onclick="app.openMovieModal(app.playingMovie?.slug, true, app.currentEpisodeIndex)" title="Phóng to rạp phim">
-              <i class="fas fa-up-right-and-down-left-from-center"></i>
-            </button>
+      <!-- Bảng điều khiển tinh gọn phía dưới màn hình -->
+      <div class="mini-screen-footer">
+        <div class="mini-footer-title-row">
+          <h4 class="mini-movie-title" id="nowPlayingIslandTitle">Thanh Gươm Diệt Quỷ: Vô Hạn Thành</h4>
+          <div class="mini-movie-tags">
+            <span class="mini-chip" id="nowPlayingIslandQuality">FHD</span>
+            <span class="mini-chip" id="nowPlayingIslandLang">Vietsub</span>
+            <span class="mini-chip" id="nowPlayingIslandEp">Full</span>
           </div>
         </div>
 
-        <div class="island-title-row">
-          <h3 class="island-movie-title" id="nowPlayingIslandTitle">Thanh Gươm Diệt Quỷ: Vô Hạn Thành</h3>
-          <div class="island-meta-chips" id="nowPlayingIslandMeta">
-            <span class="island-chip quality" id="nowPlayingIslandQuality">FHD</span>
-            <span class="island-chip lang" id="nowPlayingIslandLang">Vietsub</span>
-            <span class="island-chip ep" id="nowPlayingIslandEp">Full</span>
+        <!-- Scrubber tua thời gian -->
+        <div class="mini-scrub-row">
+          <span class="mini-time-label" id="nowPlayingIslandCurrentTime">00:00</span>
+          <div class="mini-scrub-bar" onclick="app.openMovieModal(app.playingMovie?.slug, true, app.currentEpisodeIndex)">
+            <div class="mini-scrub-progress" id="nowPlayingIslandScrubFill"></div>
           </div>
+          <span class="mini-time-label" id="nowPlayingIslandTotalTime">--:--</span>
         </div>
 
-        <!-- Thanh tua thời gian Scrubber -->
-        <div class="island-scrub-row">
-          <span class="island-time-text" id="nowPlayingIslandCurrentTime">00:00</span>
-          <div class="island-scrub-track" onclick="app.openMovieModal(app.playingMovie?.slug, true, app.currentEpisodeIndex)">
-            <div class="island-scrub-fill" id="nowPlayingIslandScrubFill"></div>
-          </div>
-          <span class="island-time-text" id="nowPlayingIslandTotalTime">--:--</span>
-        </div>
-
-        <!-- Bộ nút điều khiển pro -->
-        <div class="island-controls-row">
-          <div class="island-nav-group">
-            <button class="island-ctrl-btn" onclick="app.seekRelative(-10)" title="Lùi 10 giây">
-              <i class="fas fa-rotate-left"></i>
-              <span class="btn-sub-label">10s</span>
+        <!-- Các nút điều khiển Pro -->
+        <div class="mini-ctrls-row">
+          <div class="mini-btn-group">
+            <button class="mini-ctrl-btn" onclick="app.seekRelative(-10)" title="Lùi 10 giây">
+              <i class="fas fa-rotate-left"></i><span>10s</span>
             </button>
-            <button class="island-ctrl-btn" onclick="app.stepNowPlayingEpisode(-1)" title="Tập trước / Phim liên quan">
+            <button class="mini-ctrl-btn" onclick="app.stepNowPlayingEpisode(-1)" title="Tập trước">
               <i class="fas fa-backward-step"></i>
             </button>
-            <button class="island-play-btn-glow" onclick="app.toggleNowPlayingPlayPause()" title="Phát / Tạm dừng">
+            <button class="mini-play-glow-btn" onclick="app.toggleNowPlayingPlayPause()" title="Phát / Tạm dừng">
               <i class="fas fa-play" id="nowPlayingIslandPlayIcon"></i>
             </button>
-            <button class="island-ctrl-btn" onclick="app.stepNowPlayingEpisode(1)" title="Tập tiếp theo / Phim liên quan">
+            <button class="mini-ctrl-btn" onclick="app.stepNowPlayingEpisode(1)" title="Tập tiếp theo">
               <i class="fas fa-forward-step"></i>
             </button>
-            <button class="island-ctrl-btn" onclick="app.seekRelative(10)" title="Tiến 10 giây">
-              <i class="fas fa-rotate-right"></i>
-              <span class="btn-sub-label">10s</span>
+            <button class="mini-ctrl-btn" onclick="app.seekRelative(10)" title="Tiến 10 giây">
+              <i class="fas fa-rotate-right"></i><span>10s</span>
             </button>
           </div>
 
-          <button class="island-open-theater-btn" onclick="app.openMovieModal(app.playingMovie?.slug, true, app.currentEpisodeIndex)">
-            <i class="fas fa-expand"></i>
-            <span>Mở Rạp Phim</span>
-          </button>
+          <div class="mini-actions-group">
+            <button class="mini-icon-btn" onclick="app.toggleMyList(app.playingMovie?.slug, event)" title="Lưu phim">
+              <i class="fas fa-heart"></i>
+            </button>
+            <button class="mini-cinema-expand-btn" onclick="app.openMovieModal(app.playingMovie?.slug, true, app.currentEpisodeIndex)">
+              <i class="fas fa-expand"></i> Mở Rạp Phim
+            </button>
+          </div>
         </div>
       </div>
     </div>

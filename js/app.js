@@ -2205,6 +2205,8 @@ class AppleCinemaApp {
     if (islandLang) islandLang.textContent = movie.language || "Vietsub";
     if (islandEp) islandEp.textContent = ep ? ep.name : "Full";
     if (islandPlayIcon) islandPlayIcon.className = playing ? "fas fa-pause" : "fas fa-play";
+    const miniCenterPlay = document.getElementById("miniScreenCenterPlayIcon");
+    if (miniCenterPlay) miniCenterPlay.className = playing ? "fas fa-pause" : "fas fa-play";
   }
 
   seekRelative(seconds) {

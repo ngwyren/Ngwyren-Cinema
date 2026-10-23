@@ -3804,49 +3804,50 @@ body {
 }
 
 /* ==========================================================================
-   DYNAMIC ISLAND / ALCOVE SPATIAL PLAYER BAR (Normal Compact -> Hover Expanded)
+   MINI FLOATING THEATER SCREEN (Màn Hình Nhỏ Khi Rê Chuột — Chỉ Hiện Phim)
    ========================================================================== */
 .apple-player-bar {
-  left: calc(50% + 32px);
-  right: auto;
-  transform: translateX(-50%);
-  width: min(740px, calc(100vw - 104px));
-  height: 56px;
-  bottom: 12px;
+  position: fixed;
+  left: calc(50% + 32px) !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+  bottom: 12px !important;
+  width: min(620px, calc(100vw - 100px));
+  height: 54px;
   padding: 0 14px;
   border-radius: 999px;
   display: block !important;
   background: linear-gradient(
     145deg,
-    rgba(45, 48, 56, 0.88) 0%,
-    rgba(26, 28, 34, 0.94) 100%
+    rgba(40, 42, 50, 0.9) 0%,
+    rgba(22, 24, 30, 0.95) 100%
   ) !important;
   backdrop-filter: blur(32px) saturate(180%);
   -webkit-backdrop-filter: blur(32px) saturate(180%);
   border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
   box-shadow:
     inset 0 1.5px 1px rgba(255, 255, 255, 0.45),
-    0 16px 40px rgba(0, 0, 0, 0.58);
-  transition: width 0.44s cubic-bezier(0.16, 1, 0.3, 1),
-              height 0.44s cubic-bezier(0.16, 1, 0.3, 1),
-              border-radius 0.44s cubic-bezier(0.16, 1, 0.3, 1),
-              padding 0.44s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.44s cubic-bezier(0.16, 1, 0.3, 1),
-              background 0.44s ease;
+    0 16px 40px rgba(0, 0, 0, 0.6);
+  transition: width 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+              border-radius 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+              padding 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.38s ease;
   overflow: hidden;
   z-index: 60;
   will-change: width, height, transform, border-radius;
 }
 
-/* 1. Trạng thái thu gọn (Compact View) */
-.island-compact-view {
+/* 1. Trạng thái thu gọn Capsule */
+.player-compact-bar {
   width: 100%;
-  height: 56px;
+  height: 54px;
   display: grid;
-  grid-template-columns: minmax(170px, 1fr) minmax(220px, 1.25fr) auto;
+  grid-template-columns: minmax(160px, 1fr) minmax(200px, 1.2fr) auto;
   align-items: center;
-  gap: 14px;
-  transition: opacity 0.22s ease, transform 0.22s ease;
+  gap: 12px;
+  transition: opacity 0.2s ease;
 }
 
 .apple-player-bar .player-now-info {
@@ -3858,8 +3859,8 @@ body {
 }
 
 .apple-player-bar .player-now-art {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
@@ -3878,7 +3879,7 @@ body {
 }
 
 .apple-player-bar .player-now-title {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: #ffffff;
   display: flex;
@@ -3890,7 +3891,7 @@ body {
 }
 
 .apple-player-bar .player-now-sub {
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   color: rgba(255, 255, 255, 0.65);
   white-space: nowrap;
   overflow: hidden;
@@ -3916,6 +3917,7 @@ body {
   color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
   padding: 4px;
+  font-size: 0.95rem;
   transition: color 0.2s ease, transform 0.2s ease;
 }
 
@@ -3928,13 +3930,14 @@ body {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.85);
   background: #ffffff;
   color: #111216;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  font-size: 0.85rem;
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
   transition: all 0.2s ease;
 }
@@ -3946,11 +3949,11 @@ body {
 
 .apple-player-bar .transport-scrubber {
   width: 100%;
-  max-width: 240px;
+  max-width: 220px;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.63rem;
+  font-size: 0.62rem;
   color: rgba(255, 255, 255, 0.6);
   font-variant-numeric: tabular-nums;
 }
@@ -3985,7 +3988,7 @@ body {
   align-items: center;
   gap: 6px;
   padding: 6px 13px;
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-weight: 600;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.16);
@@ -4000,118 +4003,123 @@ body {
   transform: scale(1.04);
 }
 
-/* 2. Trạng thái mở rộng (Expanded Dynamic Island - Alcove Cinema) */
-.island-expanded-view {
-  display: none;
-  opacity: 0;
-  width: 100%;
-  height: 100%;
-  gap: 18px;
-  align-items: stretch;
-  transform: translateY(8px);
-  transition: opacity 0.34s cubic-bezier(0.16, 1, 0.3, 1) 0.06s,
-              transform 0.34s cubic-bezier(0.16, 1, 0.3, 1) 0.06s;
-}
-
-/* KHI RÊ CHUỘT: TỰ ĐỘNG PHÓNG TO NHƯ DYNAMIC ISLAND & APP ALCOVE */
+/* 2. KHI RÊ CHUỘT: TỰ ĐỘNG PHÓNG TO THÀNH MÀN HÌNH NHỎ (CHỈ HIỆN PHIM) */
 @media (hover: hover) and (min-width: 769px) {
   .apple-player-bar:hover {
-    width: min(850px, calc(100vw - 84px));
-    height: 196px;
-    border-radius: 26px;
-    padding: 14px 18px;
+    width: min(480px, calc(100vw - 32px)) !important;
+    height: 310px !important;
+    border-radius: 22px !important;
+    padding: 10px !important;
     background: linear-gradient(
       155deg,
-      rgba(32, 34, 42, 0.96) 0%,
-      rgba(18, 19, 25, 0.98) 100%
+      rgba(26, 28, 36, 0.97) 0%,
+      rgba(14, 15, 20, 0.98) 100%
     ) !important;
     border-color: rgba(255, 255, 255, 0.32) !important;
     box-shadow:
-      0 28px 70px rgba(0, 0, 0, 0.8),
-      0 0 0 1px rgba(255, 255, 255, 0.25),
-      inset 0 1.5px 1px rgba(255, 255, 255, 0.55),
-      0 0 35px rgba(255, 255, 255, 0.08) !important;
+      0 28px 70px rgba(0, 0, 0, 0.85),
+      0 0 0 1px rgba(255, 255, 255, 0.22),
+      inset 0 1.5px 1px rgba(255, 255, 255, 0.5),
+      0 0 40px rgba(255, 255, 255, 0.08) !important;
   }
 
-  .apple-player-bar:hover .island-compact-view {
+  .apple-player-bar:hover .player-compact-bar {
     display: none !important;
     opacity: 0;
   }
 
-  .apple-player-bar:hover .island-expanded-view {
+  .apple-player-bar:hover .player-mini-screen-view {
     display: flex !important;
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-/* Màn hình phim 16:9 Alcove Preview Screen */
-.island-preview-screen {
-  position: relative;
-  width: 252px;
-  min-width: 252px;
+/* Cấu trúc Màn Hình Nhỏ */
+.player-mini-screen-view {
+  display: none;
+  opacity: 0;
+  width: 100%;
   height: 100%;
-  border-radius: 18px;
-  overflow: hidden;
-  cursor: pointer;
-  background: #000;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+  flex-direction: column;
+  justify-content: space-between;
+  transform: translateY(6px);
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1) 0.05s,
+              transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) 0.05s;
 }
 
-.island-screen-img {
+/* Màn hình phim 16:9 thu nhỏ */
+.mini-screen-display {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.mini-screen-backdrop {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
 }
 
-.island-preview-screen:hover .island-screen-img {
-  transform: scale(1.06);
+.mini-screen-display:hover .mini-screen-backdrop {
+  transform: scale(1.04);
   filter: brightness(1.08);
 }
 
-.island-screen-overlay {
+.mini-screen-gradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.4) 55%, rgba(0, 0, 0, 0.88) 100%);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.3) 55%, rgba(0, 0, 0, 0.85) 100%);
   pointer-events: none;
 }
 
-.island-screen-play-pulse {
+.mini-screen-play-pulse {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.26);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1.5px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  font-size: 0.95rem;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease;
+  font-size: 1rem;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s ease;
 }
 
-.island-preview-screen:hover .island-screen-play-pulse {
+.mini-screen-display:hover .mini-screen-play-pulse {
   transform: translate(-50%, -50%) scale(1.15);
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.45);
 }
 
-.island-screen-live-badge {
+.mini-screen-badges {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  inset: 10px 10px auto 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.mini-badge-live {
   background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 3px 8px;
   border-radius: 999px;
   font-size: 0.6rem;
@@ -4123,24 +4131,21 @@ body {
   gap: 5px;
 }
 
-.island-live-dot {
+.mini-badge-live .badge-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: #34c759;
   box-shadow: 0 0 6px #34c759;
-  animation: islandLivePulse 1.8s infinite;
+  animation: miniLivePulse 1.8s infinite;
 }
 
-@keyframes islandLivePulse {
+@keyframes miniLivePulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.4; transform: scale(0.85); }
 }
 
-.island-screen-duration {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
+.mini-badge-meta {
   background: rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -4151,64 +4156,151 @@ body {
   color: rgba(255, 255, 255, 0.9);
 }
 
-/* Bảng nội dung bên phải Alcove Dynamic Island */
-.island-content-col {
-  flex: 1;
-  min-width: 0;
+/* Footer bảng điều khiển Màn Hình Nhỏ */
+.mini-screen-footer {
+  padding: 6px 4px 2px 4px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 6px;
 }
 
-.island-top-row {
+.mini-footer-title-row {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 }
 
-.island-pill-tag {
+.mini-movie-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+.mini-movie-tags {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  font-size: 0.65rem;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.mini-chip {
+  padding: 1.5px 6px;
+  border-radius: 5px;
+  font-size: 0.6rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
-.island-sound-wave {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 10px;
-}
-
-.island-sound-wave span {
-  width: 2px;
-  background: #ffffff;
-  border-radius: 1px;
-  animation: islandWave 1.2s ease-in-out infinite alternate;
-}
-.island-sound-wave span:nth-child(1) { height: 4px; animation-delay: 0.1s; }
-.island-sound-wave span:nth-child(2) { height: 10px; animation-delay: 0.3s; }
-.island-sound-wave span:nth-child(3) { height: 6px; animation-delay: 0.2s; }
-
-@keyframes islandWave {
-  0% { height: 3px; }
-  100% { height: 10px; }
-}
-
-.island-header-actions {
+/* Scrubber tua thời gian */
+.mini-scrub-row {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.island-icon-action {
+.mini-time-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.mini-scrub-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: height 0.2s ease;
+}
+
+.mini-scrub-bar:hover {
+  height: 6px;
+}
+
+.mini-scrub-progress {
+  height: 100%;
+  width: 0%;
+  background: #ffffff;
+  border-radius: 999px;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.7);
+}
+
+/* Hàng nút bấm điều khiển */
+.mini-ctrls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mini-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mini-ctrl-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.88rem;
+  cursor: pointer;
+  padding: 3px;
+  transition: all 0.2s ease;
+}
+
+.mini-ctrl-btn span {
+  font-size: 0.5rem;
+  font-weight: 700;
+}
+
+.mini-ctrl-btn:hover {
+  color: #ffffff;
+  transform: scale(1.15);
+}
+
+.mini-play-glow-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  background: #ffffff;
+  color: #111216;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.5);
+  transition: all 0.2s ease;
+}
+
+.mini-play-glow-btn:hover {
+  transform: scale(1.12);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+}
+
+.mini-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mini-icon-btn {
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -4220,174 +4312,32 @@ body {
   justify-content: center;
   font-size: 0.72rem;
   cursor: pointer;
-  transition: all 0.22s ease;
+  transition: all 0.2s ease;
 }
 
-.island-icon-action:hover {
-  background: rgba(255, 255, 255, 0.22);
+.mini-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.24);
   color: #fff;
   transform: scale(1.08);
 }
 
-.island-title-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 4px;
-}
-
-.island-movie-title {
-  font-size: 0.96rem;
-  font-weight: 700;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  letter-spacing: -0.01em;
-}
-
-.island-meta-chips {
+.mini-cinema-expand-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-shrink: 0;
-}
-
-.island-chip {
-  padding: 2px 7px;
-  border-radius: 6px;
-  font-size: 0.62rem;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.island-chip.quality {
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.35);
-}
-
-/* Thanh Scrubber tua thời gian */
-.island-scrub-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 6px 0;
-}
-
-.island-time-text {
-  font-size: 0.64rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.65);
-}
-
-.island-scrub-track {
-  flex: 1;
-  height: 5px;
-  background: rgba(255, 255, 255, 0.18);
-  border-radius: 999px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: height 0.2s ease;
-}
-
-.island-scrub-track:hover {
-  height: 7px;
-}
-
-.island-scrub-fill {
-  height: 100%;
-  width: 0%;
-  background: #ffffff;
-  border-radius: 999px;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
-  transition: width 0.15s linear;
-}
-
-/* Hàng nút điều khiển Pro */
-.island-controls-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.island-nav-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.island-ctrl-btn {
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.75);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.95rem;
-  cursor: pointer;
-  padding: 4px;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.island-ctrl-btn .btn-sub-label {
-  font-size: 0.52rem;
-  font-weight: 700;
-  margin-top: 1px;
-}
-
-.island-ctrl-btn:hover {
-  color: #ffffff;
-  transform: scale(1.15);
-}
-
-.island-play-btn-glow {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.85);
-  background: radial-gradient(circle at center, #ffffff 0%, #e0e0e0 100%);
-  color: #111216;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.95rem;
-  cursor: pointer;
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.5), inset 0 1px 1px #ffffff;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.island-play-btn-glow:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 22px rgba(255, 255, 255, 0.8);
-}
-
-.island-open-theater-btn {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 16px;
+  padding: 5px 13px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   color: #ffffff;
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.4);
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s ease;
 }
 
-.island-open-theater-btn:hover {
+.mini-cinema-expand-btn:hover {
   background: rgba(255, 255, 255, 0.28);
-  border-color: rgba(255, 255, 255, 0.55);
   transform: scale(1.04);
 }
 
@@ -4760,13 +4710,13 @@ body.modal-open .apple-player-bar {
   .liquid-mobile-dock {
     display: none !important;
   }
-  .apple-player-bar {
-    left: 50% !important;
+  .apple-player-bar:not(:hover) {
+    left: calc(50% + 32px) !important;
     right: auto !important;
     transform: translateX(-50%) !important;
-    bottom: 18px !important;
-    height: 56px !important;
-    width: min(740px, calc(100vw - 120px)) !important;
+    bottom: 14px !important;
+    height: 54px !important;
+    width: min(620px, calc(100vw - 120px)) !important;
   }
 }
 
@@ -4818,13 +4768,13 @@ body.modal-open .apple-player-bar {
   .liquid-mobile-dock {
     display: none !important;
   }
-  .apple-player-bar {
+  .apple-player-bar:not(:hover) {
     left: 50% !important;
     right: auto !important;
     transform: translateX(-50%) !important;
     bottom: 16px !important;
-    height: 56px !important;
-    width: min(680px, calc(100vw - 100px)) !important;
+    height: 54px !important;
+    width: min(600px, calc(100vw - 100px)) !important;
   }
 }
 
