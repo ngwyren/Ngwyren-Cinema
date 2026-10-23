@@ -1610,14 +1610,6 @@ class AppleCinemaApp {
                 ${this.getPlayButtonHTML(movie, this.currentEpisodeIndex)}
               </button>
               ${
-                (() => {
-                  const savedProg = this.getPlaybackProgress(movie.slug, this.currentEpisodeIndex);
-                  return savedProg && savedProg.currentTime > 10
-                    ? `<button class="btn-glass-secondary" onclick="app.restartPlayback()" title="Xem lại từ đầu 00:00"><i class="fas fa-rotate-left"></i> Từ đầu</button>`
-                    : "";
-                })()
-              }
-              ${
                 movie.trailerUrl
                   ? `<button class="btn-glass-secondary" onclick="app.startVideoPlayback(app.selectedMovie, ${this.currentEpisodeIndex}, 'trailer')">
                       <i class="fab fa-youtube"></i> Xem Trailer
@@ -1638,12 +1630,10 @@ class AppleCinemaApp {
           <video id="hlsVideoElement" class="${this.getQualityVideoClass(this.currentQuality)}" playsinline poster="${movie.backdrop || movie.poster}" tabindex="-1"></video>
           <iframe id="trailerIframeElement" style="display: none;" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen tabindex="-1"></iframe>
 
-          <!-- Apple Center HUD Pulse (Icon Apple nhảy giữa màn hình khi Play/Pause/Tua - Không shape tròn) -->
+          <!-- Apple Center HUD Pulse: Không vòng tròn, chỉ hiển thị icon -->
           <div class="apple-video-hud" id="appleVideoHud">
-            <div class="apple-hud-disc" id="appleHudDisc">
-              <i class="fas fa-play" id="appleHudIcon"></i>
-            </div>
-            <div class="apple-hud-text" id="appleHudText"></div>
+            <i class="fas fa-play" id="appleHudIcon"></i>
+            <div class="apple-hud-text" id="appleHudText" style="display: none;"></div>
           </div>
 
           <!-- Apple Glass Player Overlay Controls (Giao diện điều khiển kính mờ chuẩn Apple visionOS / Apple TV+) -->
@@ -1681,16 +1671,14 @@ class AppleCinemaApp {
                     <i class="fas fa-play" id="applePlayIcon"></i>
                   </button>
 
-                  <!-- Tua lùi 10s -->
+                  <!-- Tua lùi -->
                   <button class="apple-ctrl-btn apple-skip-btn" onclick="app.seekRelative(-10, true, event)" title="Tua lùi 10 giây (←)">
                     <i class="fas fa-rotate-left"></i>
-                    <span class="apple-skip-num">10</span>
                   </button>
 
-                  <!-- Tua tới 10s -->
+                  <!-- Tua tới -->
                   <button class="apple-ctrl-btn apple-skip-btn" onclick="app.seekRelative(10, true, event)" title="Tua tới 10 giây (→)">
                     <i class="fas fa-rotate-right"></i>
-                    <span class="apple-skip-num">10</span>
                   </button>
 
                   <!-- Điều chỉnh âm lượng dạng trượt Apple -->

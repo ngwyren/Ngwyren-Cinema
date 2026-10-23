@@ -6784,33 +6784,31 @@ iframe:focus-within,
   }
 }
 
-.apple-hud-disc {
+#appleHudIcon,
+.apple-hud-disc,
+.apple-video-hud i {
   width: auto !important;
   height: auto !important;
   min-width: 0 !important;
   min-height: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
+  background-color: transparent !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   border: none !important;
   box-shadow: none !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   color: #ffffff !important;
-  font-size: 3.8rem !important;
-  filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.85)) !important;
+  font-size: 4.8rem !important;
+  filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.95)) !important;
+  -webkit-filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.95)) !important;
 }
 
 .apple-hud-text {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #ffffff;
-  background: transparent;
-  padding: 2px 8px;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.9));
-  letter-spacing: 0.02em;
+  display: none !important;
 }
 
 /* 4. Apple Glass Player Overlay & Controls */
@@ -7085,18 +7083,11 @@ iframe:focus-within,
 }
 
 .apple-skip-btn {
-  position: relative;
+  font-size: 1rem;
 }
 
 .apple-skip-num {
-  position: absolute;
-  font-size: 0.55rem;
-  font-weight: 800;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  line-height: 1;
+  display: none !important;
 }
 
 .apple-volume-cluster {
