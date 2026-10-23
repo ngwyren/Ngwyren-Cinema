@@ -6277,7 +6277,8 @@ html.dragging-glass .vision-left-dock {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85)) !important;
   color: #111216 !important;
   border-color: #ffffff !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 1px #ffffff !important;
+  box-shadow: inset 0 1px 1px #ffffff !important;
+  filter: none !important;
   transform: translateY(-2px);
 }
 
@@ -6321,13 +6322,14 @@ html.dragging-glass .vision-left-dock {
 }
 
 /* ==========================================================================
-   HÔM NAY CHIẾU THÌ CHO NÓ MÀU XANH (APPLE EMERALD GREEN)
+   HÔM NAY CHIẾU THÌ CHO NÓ MÀU XANH (APPLE EMERALD GREEN) - TRIỆT TIÊU GLOW PHÍA SAU
    ========================================================================== */
 .schedule-tab-btn.is-today {
   background: rgba(48, 209, 88, 0.12) !important;
   border: 1.5px solid rgba(48, 209, 88, 0.5) !important;
   color: #38ef7d !important;
-  box-shadow: 0 4px 18px rgba(48, 209, 88, 0.2) !important;
+  box-shadow: none !important;
+  filter: none !important;
 }
 
 .schedule-tab-btn.is-today .tab-day-label {
@@ -6351,15 +6353,13 @@ html.dragging-glass .vision-left-dock {
   color: rgba(56, 239, 125, 0.9) !important;
 }
 
-/* KHI TAB HÔM NAY ĐƯỢC CHỌN (ACTIVE) - NỔI BẬT TÔNG XANH LÁ APPLE SANG TRỌNG */
+/* KHI TAB HÔM NAY ĐƯỢC CHỌN (ACTIVE) - SẠCH SẼ, TUYỆT ĐỐI KHÔNG BỊ GLOW LEM RA PHÍA SAU */
 .schedule-tab-btn.is-today.active {
   background: linear-gradient(135deg, #30d158 0%, #24b049 100%) !important;
   color: #ffffff !important;
   border-color: #30d158 !important;
-  box-shadow:
-    0 10px 28px rgba(48, 209, 88, 0.45),
-    inset 0 1px 1.5px rgba(255, 255, 255, 0.8),
-    0 0 18px rgba(48, 209, 88, 0.35) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6) !important;
+  filter: none !important;
   transform: translateY(-2px);
 }
 
@@ -6377,7 +6377,8 @@ html.dragging-glass .vision-left-dock {
   background: #ffffff !important;
   color: #15803d !important;
   border-color: #ffffff !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: none !important;
+  filter: none !important;
 }
 
 .schedule-tab-btn.is-today.active .tab-count-tag {
