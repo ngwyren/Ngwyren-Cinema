@@ -644,7 +644,7 @@ class AppleCinemaApp {
                   <h3 class="schedule-movie-title" title="${m.title}">${m.title}</h3>
                   <div class="schedule-movie-sub">${m.originTitle || m.country}</div>
                   <div class="schedule-movie-chips">
-                    <span class="sch-ep-pill"><i class="fas fa-tv"></i> ${m.currentEpisode || "Tập Mới"}</span>
+                    <span class="sch-ep-pill"><i class="fas fa-tv"></i> ${this.formatEpisodeLabel(m.currentEpisode || "Tập Mới", "Tập Mới")}</span>
                     <span class="sch-lang-pill"><i class="fas fa-microphone"></i> ${m.language || "Vietsub + Thuyết Minh"}</span>
                   </div>
                   <div class="schedule-movie-genres">${genresHTML}</div>
@@ -1539,6 +1539,43 @@ class AppleCinemaApp {
     this.closeMovieModal();
   }
 
+  formatEpisodeLabel(name, fallback = "Tập 1") {
+    if (!name) return fallback;
+    const str = String(name).trim();
+    if (/^tập$/i.test(str)) return "Tập 1";
+    if (/^tập\s*mới$/i.test(str)) return "Tập Mới";
+    if (/^hoàn$/i.test(str) || /^full$/i.test(str) || /^trọn\s*bộ$/i.test(str)) return "Trọn Bộ";
+    const matchTapNum = str.match(/^tập\s*(\d+.*)$/i);
+    if (matchTapNum) {
+      return `Tập ${matchTapNum[1]}`;
+    }
+    const matchEpNum = str.match(/^ep(?:isode)?\s*(\d+.*)$/i);
+    if (matchEpNum) {
+      return `Tập ${matchEpNum[1]}`;
+    }
+    // Chuẩn hóa viết hoa chữ cái đầu tiên, không để nguyên khối viết hoa
+    if (str === str.toUpperCase() && str.length > 2) {
+      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    }
+    return str;
+  }
+
+  getPlayButtonHTML(movie, epIndex) {
+    const savedProg = this.getPlaybackProgress(movie.slug, epIndex);
+    if (savedProg && savedProg.currentTime > 10 && savedProg.percentage < 95) {
+      return `<i class="fas fa-play"></i> Tiếp tục từ ${this.formatSeconds(savedProg.currentTime)} (${savedProg.percentage}%)`;
+    }
+    const currentEp = (movie.episodes && movie.episodes[epIndex]) || (movie.episodes && movie.episodes[0]);
+    if (!currentEp || !currentEp.name) {
+      return `<i class="fas fa-play"></i> Phát Ngay`;
+    }
+    const epLabel = this.formatEpisodeLabel(currentEp.name, "Tập 1");
+    if (!epLabel || epLabel === "Tập" || epLabel === "TẬP") {
+      return `<i class="fas fa-play"></i> Phát Ngay`;
+    }
+    return `<i class="fas fa-play"></i> Phát ${epLabel}`;
+  }
+
   renderModalContent(movie, isPlayingNow = false) {
     const sheet = document.getElementById("movieDetailSheet");
     if (!sheet) return;
@@ -1567,9 +1604,6 @@ class AppleCinemaApp {
         <div class="player-cover-preview" id="modalCoverPreview"
              style="background-image: url('${movie.backdrop || movie.poster}'); ${isPlayingNow ? "display:none;" : ""}">
           <div class="player-cover-content">
-            <div class="hero-kicker" style="margin-bottom: 10px;">
-              <i class="fas fa-circle-play"></i> NGWYREN CINEMA STREAMING • ${movie.quality} ${movie.language}
-            </div>
             <h2 style="font-size: clamp(1.6rem, 2.8vw, 2.5rem); font-weight: 800; line-height: 1.12; margin-bottom: 6px;">
               ${movie.title}
             </h2>
@@ -1578,14 +1612,7 @@ class AppleCinemaApp {
             </p>
             <div class="hero-actions">
               <button class="btn-primary-play" onclick="app.startVideoPlayback(app.selectedMovie, ${this.currentEpisodeIndex}, 'hls-1')">
-                ${
-                  (() => {
-                    const savedProg = this.getPlaybackProgress(movie.slug, this.currentEpisodeIndex);
-                    return savedProg && savedProg.currentTime > 10 && savedProg.percentage < 95
-                      ? `<i class="fas fa-play"></i> Tiếp tục từ ${this.formatSeconds(savedProg.currentTime)} (${savedProg.percentage}%)`
-                      : `<i class="fas fa-play"></i> Phát ${currentEp ? currentEp.name : "Ngay"}`;
-                  })()
-                }
+                ${this.getPlayButtonHTML(movie, this.currentEpisodeIndex)}
               </button>
               ${
                 (() => {
@@ -1639,7 +1666,7 @@ class AppleCinemaApp {
               <div class="apple-player-title-info">
                 <span class="apple-player-badge"><i class="fab fa-apple"></i> CINEMA</span>
                 <span class="apple-player-movie-name" title="${movie.title}">${movie.title}</span>
-                <span class="apple-player-ep-pill" id="applePlayerEpPill">${currentEp ? currentEp.name : "Tập 1"}</span>
+                <span class="apple-player-ep-pill" id="applePlayerEpPill">${this.formatEpisodeLabel(currentEp ? currentEp.name : "Tập 1")}</span>
               </div>
               <div class="apple-player-top-actions">
                 <button class="apple-pill-btn" onclick="app.toggleVideoTheaterMode(event)" title="Chế độ Rạp phim Apple (T)">
@@ -1786,7 +1813,15 @@ class AppleCinemaApp {
               <span class="meta-pill">${movie.year}</span>
               <span class="meta-pill"><i class="fas fa-star"></i> ${movie.rating}</span>
             </div>
-            <p class="modal-synopsis">${movie.synopsis}</p>
+            ${
+              (() => {
+                const syn = (movie.synopsis || "").trim();
+                const isBoilerplate = syn.includes("được cập nhật liên tục tại Ngwyren Cinema") ||
+                                      syn.includes("tác phẩm Anime hấp dẫn đang phát sóng");
+                if (!syn || isBoilerplate) return "";
+                return `<p class="modal-synopsis">${syn}</p>`;
+              })()
+            }
           </div>
 
           <div class="modal-cast-meta">
@@ -1911,7 +1946,7 @@ class AppleCinemaApp {
         (ep, idx) => `
       <button class="ep-pill-btn ${idx === this.currentEpisodeIndex ? "active" : ""}"
               onclick="app.startVideoPlayback(app.selectedMovie, ${idx}, app.currentServerMode || 'hls-1')">
-        <span>${ep.name}</span>
+        <span>${this.formatEpisodeLabel(ep.name, "Tập " + (idx + 1))}</span>
         <i class="fas ${idx === this.currentEpisodeIndex ? "fa-volume-high" : "fa-play"}" style="font-size: 0.72rem;"></i>
       </button>
     `
@@ -2372,8 +2407,9 @@ class AppleCinemaApp {
 
     if (artImg) artImg.src = movie.poster;
     if (titleText) titleText.textContent = movie.title;
+    const epLabel = this.formatEpisodeLabel(ep ? ep.name : "Tập 1", "Tập 1");
     if (subText) {
-      subText.textContent = `${ep ? ep.name : "Full"} • ${movie.originTitle} (${movie.quality})`;
+      subText.textContent = `${epLabel} • ${movie.originTitle} (${movie.quality})`;
     }
     if (eqBars) eqBars.classList.toggle("paused", !playing);
     if (playIcon) {
@@ -2394,7 +2430,7 @@ class AppleCinemaApp {
     if (islandDuration) islandDuration.textContent = movie.duration || "Full HD";
     if (islandQuality) islandQuality.textContent = movie.quality || "FHD";
     if (islandLang) islandLang.textContent = movie.language || "Vietsub";
-    if (islandEp) islandEp.textContent = ep ? ep.name : "Full";
+    if (islandEp) islandEp.textContent = epLabel;
     if (islandPlayIcon) islandPlayIcon.className = playing ? "fas fa-pause" : "fas fa-play";
     const miniCenterPlay = document.getElementById("miniScreenCenterPlayIcon");
     if (miniCenterPlay) miniCenterPlay.className = playing ? "fas fa-pause" : "fas fa-play";

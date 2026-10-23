@@ -157,9 +157,9 @@ window.NGWYREN_AIR_SCHEDULE = {
       "slug": "kusuriya-no-hitorigoto-3rd-season-a6095",
       "title": "Dược Sư Tự Sự 3",
       "originTitle": "Dược Sư Tự Sự 3",
-      "poster": "https://cdn.animevietsub.sale/data/poster/animevsub-QLLWDa8YyT.jpg",
-      "backdrop": "https://cdn.animevietsub.sale/data/poster/animevsub-QLLWDa8YyT.jpg",
-      "quality": "1080p Full HD",
+      "poster": "https://image.tmdb.org/t/p/original/w3agwUSMpJ4X9t1jGrDtqqRPjDQ.jpg",
+      "backdrop": "https://image.tmdb.org/t/p/original/tKZeL5kDZbOo8ao1szJZuZT0kqO.jpg",
+      "quality": "4K Ultra HD",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -167,7 +167,7 @@ window.NGWYREN_AIR_SCHEDULE = {
         "Hành Động",
         "Phiêu Lưu"
       ],
-      "currentEpisode": "TẬP",
+      "currentEpisode": "Tập Mới",
       "country": "Nhật Bản",
       "rating": 9.5,
       "source": "animevietsub"
@@ -186,7 +186,7 @@ window.NGWYREN_AIR_SCHEDULE = {
         "Hành Động",
         "Phiêu Lưu"
       ],
-      "currentEpisode": "TẬP",
+      "currentEpisode": "Tập Mới",
       "country": "Nhật Bản",
       "rating": 9.5,
       "source": "animevietsub"
@@ -321,7 +321,7 @@ window.NGWYREN_AIR_SCHEDULE = {
         "Hành Động",
         "Phiêu Lưu"
       ],
-      "currentEpisode": "TẬP",
+      "currentEpisode": "Tập Mới",
       "country": "Nhật Bản",
       "rating": 9.5,
       "source": "animevietsub"
@@ -494,7 +494,7 @@ window.NGWYREN_AIR_SCHEDULE = {
         "Hành Động",
         "Phiêu Lưu"
       ],
-      "currentEpisode": "TẬP",
+      "currentEpisode": "Tập Mới",
       "country": "Nhật Bản",
       "rating": 9.5,
       "source": "animevietsub"
@@ -513,7 +513,7 @@ window.NGWYREN_AIR_SCHEDULE = {
         "Hành Động",
         "Phiêu Lưu"
       ],
-      "currentEpisode": "TẬP",
+      "currentEpisode": "Tập Mới",
       "country": "Nhật Bản",
       "rating": 9.5,
       "source": "animevietsub"
@@ -648,7 +648,7 @@ window.NGWYREN_AIR_SCHEDULE = {
         "Hành Động",
         "Phiêu Lưu"
       ],
-      "currentEpisode": "TẬP",
+      "currentEpisode": "Tập Mới",
       "country": "Nhật Bản",
       "rating": 9.5,
       "source": "animevietsub"
@@ -667,7 +667,7 @@ window.NGWYREN_AIR_SCHEDULE = {
         "Hành Động",
         "Phiêu Lưu"
       ],
-      "currentEpisode": "TẬP",
+      "currentEpisode": "Tập Mới",
       "country": "Nhật Bản",
       "rating": 9.5,
       "source": "animevietsub"
@@ -840,7 +840,7 @@ window.NGWYREN_AIR_SCHEDULE = {
         "Hành Động",
         "Phiêu Lưu"
       ],
-      "currentEpisode": "TẬP",
+      "currentEpisode": "Tập Mới",
       "country": "Nhật Bản",
       "rating": 9.5,
       "source": "animevietsub"
@@ -1051,7 +1051,7 @@ window.NGWYREN_AIR_SCHEDULE = {
         "Hành Động",
         "Phiêu Lưu"
       ],
-      "currentEpisode": "TẬP",
+      "currentEpisode": "Tập Mới",
       "country": "Nhật Bản",
       "rating": 9.5,
       "source": "animevietsub"

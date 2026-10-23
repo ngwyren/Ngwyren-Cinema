@@ -270,7 +270,15 @@ def crawl_animevietsub_sample():
             href = href_m.group(1) if href_m else ""
             title = (title_m.group(1) or title_m.group(2)) if title_m else ""
             poster = (img_m.group(1) or img_m.group(2)) if img_m else ""
-            badge = badge_m.group(1).strip() if badge_m else "TẬP MỚI"
+            badge_raw = badge_m.group(1).strip() if badge_m else "Tập Mới"
+            if badge_raw.upper() in ["TẬP", "TẬP MỚI", "TAP"]:
+                badge = "Tập Mới"
+            elif badge_raw.upper() in ["HOÀN", "FULL", "TRỌN BỘ"]:
+                badge = "Trọn Bộ"
+            elif badge_raw.upper().startswith("TẬP"):
+                badge = "Tập " + badge_raw[3:].strip()
+            else:
+                badge = badge_raw
 
             if not href or not title or len(title) < 2:
                 continue
@@ -279,6 +287,13 @@ def crawl_animevietsub_sample():
             slug = slug_match.group(1) if slug_match else re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')
 
             clean_t = clean_text(title)
+            custom_backdrop = poster
+            custom_synopsis = f"{clean_t} (Bản 4K / 1080p Vietsub + Thuyết Minh)."
+            if "kusuriya-no-hitorigoto" in slug:
+                custom_backdrop = "https://image.tmdb.org/t/p/original/tKZeL5kDZbOo8ao1szJZuZT0kqO.jpg"
+                poster = "https://image.tmdb.org/t/p/original/w3agwUSMpJ4X9t1jGrDtqqRPjDQ.jpg"
+                custom_synopsis = "Dược Sư Tự Sự (The Apothecary Diaries) tiếp tục câu chuyện ly kỳ về Miêu Miêu (Maomao) - thiếu nữ am hiểu dược liệu và độc dược làm việc trong hậu cung. Với trí thông minh xuất chúng và sự sắc sảo, cô cùng quan giám thị điển trai Nhâm Thị (Jinshi) tiếp tục vén màn những âm mưu thâm hiểm, những vụ hạ độc bí ẩn và những xung đột chính trị đầy gay cấn nơi cung đình."
+
             movie_obj = {
                 "id": f"avs-{slug}",
                 "slug": slug,
@@ -286,10 +301,10 @@ def crawl_animevietsub_sample():
                 "title": clean_t,
                 "originTitle": clean_t,
                 "poster": poster,
-                "backdrop": poster,
+                "backdrop": custom_backdrop,
                 "type": "series",
                 "sectionTags": ["anime", "moi-cap-nhat", "de-cu", "vietsub", "1080p"],
-                "quality": "1080p Full HD",
+                "quality": "4K / 1080p",
                 "language": "Vietsub + Thuyết Minh",
                 "duration": "24 phút/tập",
                 "episodeCurrent": badge or "Tập Mới",
@@ -305,7 +320,7 @@ def crawl_animevietsub_sample():
                 "ambientColors": ["#1b1a2f", "#2b2a4c", "#e74c3c"],
                 "trailerUrl": "",
                 "link": href,
-                "synopsis": f"{clean_t} là tác phẩm Anime hấp dẫn đang phát sóng với chất lượng Full HD 1080p Vietsub kèm Thuyết Minh được cập nhật liên tục tại Ngwyren Cinema.",
+                "synopsis": custom_synopsis,
                 "episodes": [
                     {
                         "name": badge or "Tập Mới",

@@ -1682,7 +1682,10 @@ body::-webkit-scrollbar {
   align-items: flex-end;
   padding: 36px;
   background-size: cover;
-  background-position: center;
+  background-position: center 25%;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  filter: contrast(1.06) saturate(1.12) brightness(1.02);
   transition: opacity 0.4s var(--ease-in-out-smooth);
 }
 
@@ -1691,8 +1694,8 @@ body::-webkit-scrollbar {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(10, 10, 14, 0.15) 0%, rgba(10, 10, 14, 0.65) 65%, rgba(20, 20, 26, 1) 100%),
-    linear-gradient(90deg, rgba(10, 10, 14, 0.88) 0%, rgba(10, 10, 14, 0.2) 70%);
+    linear-gradient(180deg, rgba(10, 10, 14, 0.05) 0%, rgba(10, 10, 14, 0.42) 55%, rgba(20, 20, 26, 0.98) 100%),
+    linear-gradient(90deg, rgba(10, 10, 14, 0.82) 0%, rgba(10, 10, 14, 0.25) 55%, rgba(10, 10, 14, 0.05) 100%);
 }
 
 .player-cover-content {
@@ -6315,7 +6318,7 @@ html.dragging-glass .vision-left-dock {
   transform: translateX(-50%);
   font-size: 0.64rem;
   font-weight: 800;
-  text-transform: uppercase;
+  text-transform: none;
   color: #ffffff;
   background: #1e8e3e;
   border: 1.5px solid rgba(255, 255, 255, 0.95);
