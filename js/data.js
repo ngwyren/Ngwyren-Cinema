@@ -1090,8 +1090,11 @@ class PhimmoiService {
     if (Array.isArray(window.NGWYREN_FULL_CATALOG)) {
       window.NGWYREN_FULL_CATALOG.forEach((item) => {
         if (!item || !item.slug) return;
+        const is4k = (item.quality && item.quality.toLowerCase().includes("4k")) ||
+                     (Array.isArray(item.sectionTags) && item.sectionTags.includes("4k"));
         const normalizedItem = {
           ...item,
+          quality: is4k ? "4K Ultra HD" : (item.quality === "CAM" ? "CAM" : "1080p Full HD"),
           genres: Array.isArray(item.genres) ? item.genres : [item.genres || "Chính Kịch"],
           cast: Array.isArray(item.cast) ? item.cast : [item.cast || "Dàn diễn viên chính"],
           sectionTags: Array.isArray(item.sectionTags) ? item.sectionTags : ["hot"],
@@ -1099,13 +1102,37 @@ class PhimmoiService {
             ? item.episodes
             : [item.episodes || { name: "Tập 1 (Vietsub)", slug: "tap-1", source: "", needsEnrich: true }]
         };
+
+        // Pre-populate missing episode slots for series so the user sees all episodes INSTANTLY 0ms
+        if (normalizedItem.type === "series" && Array.isArray(normalizedItem.episodes)) {
+          const match = (normalizedItem.episodeCurrent || "").match(/(\d+)/);
+          const expectedCount = match ? parseInt(match[1], 10) : normalizedItem.episodes.length;
+          if (expectedCount > normalizedItem.episodes.length && expectedCount <= 300) {
+            const currentLen = normalizedItem.episodes.length;
+            for (let i = currentLen + 1; i <= expectedCount; i++) {
+              normalizedItem.episodes.push({
+                name: `Tập ${i}`,
+                slug: `tap-${i}`,
+                source: "",
+                needsEnrich: true
+              });
+            }
+          }
+        }
+
         if (this.slugMap.has(normalizedItem.slug)) {
           const existing = this.slugMap.get(normalizedItem.slug);
-          if (normalizedItem.episodes && normalizedItem.episodes.length > 0 && normalizedItem.episodes[0].source) {
+          if (normalizedItem.episodes && normalizedItem.episodes.length > (existing.episodes ? existing.episodes.length : 0)) {
             existing.episodes = normalizedItem.episodes;
           }
           if (normalizedItem.dubEpisodes && normalizedItem.dubEpisodes.length > 0) {
             existing.dubEpisodes = normalizedItem.dubEpisodes;
+          }
+          if (normalizedItem.quality) {
+            existing.quality = normalizedItem.quality;
+          }
+          if (normalizedItem.episodeCurrent) {
+            existing.episodeCurrent = normalizedItem.episodeCurrent;
           }
           if (normalizedItem.poster && (!existing.poster || existing.poster.includes("phimmoiz.one"))) {
             existing.poster = normalizedItem.poster;
@@ -1667,50 +1694,89 @@ class PhimmoiService {
       }
     }
 
-    // 4. Nguồn YanHH3D & AnimeVietSub (Multi-Server: 1080p, 4K, Vietsub, Thuyết Minh)
-    if (movie.sourceSite === "yanhh3d.ee" || movie.yanPostId) {
-      const postId = movie.yanPostId || String(movie.id).replace("yan-", "");
-      if (postId) {
-        movie.episodes = movie.episodes || [];
-        if (movie.episodes.length === 0) {
-          movie.episodes = [{
-            name: "Tập 1",
-            slug: "tap-1",
-            source: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=tap-1&type=tiktik&sv=1`,
-            embed: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=tap-1&type=tiktik&sv=1`
-          }];
-        }
-        movie.episodes.forEach((ep) => {
-          const epSlug = ep.slug || "tap-1";
-          ep.altSources = [
-            {
-              id: "yan-vt-1",
-              label: "1080p Vietsub V1",
-              source: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=tiktik&sv=1`,
-              embed: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=tiktik&sv=1`
-            },
-            {
-              id: "yan-vt-2",
-              label: "1080p Vietsub V2",
-              source: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=pro&sv=1`,
-              embed: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=pro&sv=1`
-            },
-            {
-              id: "yan-tm",
-              label: "4K Thuyết Minh",
-              source: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=vippro&sv=1`,
-              embed: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=vippro&sv=1`
-            }
-          ];
-        });
+    // 4. Nguồn Hoạt Hình 3D Trung Quốc (HHPanda & YanHH3D - Chuẩn 8 Server: 1080P & 4K Vietsub + Thuyết Minh)
+    const isDonghua = movie.sourceSite === "hhpanda.st" || movie.sourceSite === "yanhh3d.ee" || movie.yanPostId || movie.hhpandaPostId || (Array.isArray(movie.sectionTags) && movie.sectionTags.includes("hoat-hinh-3d"));
+    const postId = movie.hhpandaPostId || movie.yanPostId || (String(movie.id).startsWith("yan-") ? String(movie.id).replace("yan-", "") : "");
+    const baseSite = movie.sourceSite === "yanhh3d.ee" ? "https://yanhh3d.ee" : "https://hhpanda.st";
 
-        movie.dubEpisodes = movie.episodes.map((ep) => ({
-          name: `${ep.name} (Thuyết Minh)`,
-          slug: `${ep.slug}-tm`,
-          source: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${ep.slug || "tap-1"}&type=vippro&sv=1`,
-          embed: `https://yanhh3d.ee/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${ep.slug || "tap-1"}&type=vippro&sv=1`
-        }));
+    if (isDonghua && postId) {
+      movie.episodes = movie.episodes || [];
+      if (movie.episodes.length === 0) {
+        movie.episodes = [{
+          name: "Tập 1",
+          slug: "tap-1",
+          source: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=tap-1&type=tiktik&sv=1`,
+          embed: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=tap-1&type=tiktik&sv=1`
+        }];
       }
+      movie.episodes.forEach((ep, idx) => {
+        const epSlug = ep.slug || `tap-${idx + 1}`;
+        ep.altSources = [
+          {
+            id: `vs-1080-v1-${idx}`,
+            label: "VIETSUB 1080 V1",
+            is4k: false,
+            source: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=tiktik&sv=1`,
+            embed: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=tiktik&sv=1`
+          },
+          {
+            id: `vs-1080-v2-${idx}`,
+            label: "VIETSUB 1080 V2",
+            is4k: false,
+            source: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=pro&sv=1`,
+            embed: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=pro&sv=1`
+          },
+          {
+            id: `vs-4k-v1-${idx}`,
+            label: "VIETSUB 4K V1",
+            is4k: true,
+            source: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=vip4k&sv=1`,
+            embed: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=vip4k&sv=1`
+          },
+          {
+            id: `vs-4k-v2-${idx}`,
+            label: "VIETSUB 4K V2",
+            is4k: true,
+            source: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=vip4kv2&sv=1`,
+            embed: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=vip4kv2&sv=1`
+          },
+          {
+            id: `tm-1080-v1-${idx}`,
+            label: "Thuyết minh 1080 V1",
+            is4k: false,
+            source: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=tiktik&sv=2`,
+            embed: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=tiktik&sv=2`
+          },
+          {
+            id: `tm-1080-v2-${idx}`,
+            label: "Thuyết minh 1080 V2",
+            is4k: false,
+            source: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=pro&sv=2`,
+            embed: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=pro&sv=2`
+          },
+          {
+            id: `tm-4k-v1-${idx}`,
+            label: "Thuyết minh 4k V1",
+            is4k: true,
+            source: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=vip4k&sv=2`,
+            embed: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=vip4k&sv=2`
+          },
+          {
+            id: `tm-4k-v2-${idx}`,
+            label: "Thuyết minh 4k V2",
+            is4k: true,
+            source: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=vip4kv2&sv=2`,
+            embed: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${epSlug}&type=vip4kv2&sv=2`
+          }
+        ];
+      });
+
+      movie.dubEpisodes = movie.episodes.map((ep, idx) => ({
+        name: `${ep.name} (Thuyết Minh)`,
+        slug: `${ep.slug || "tap-" + (idx + 1)}-tm`,
+        source: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${ep.slug || "tap-" + (idx + 1)}&type=vip4k&sv=2`,
+        embed: `${baseSite}/player/player.php?action=dox_ajax_player&post_id=${postId}&chapter_st=${ep.slug || "tap-" + (idx + 1)}&type=vip4k&sv=2`
+      }));
     }
 
     movie._isEnriched = true;

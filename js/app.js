@@ -1474,6 +1474,9 @@ class AppleCinemaApp {
     const modalBackdrop = document.getElementById("movieDetailModal");
     if (!modalBackdrop) return;
 
+    // Chuẩn bị sẵn đầy đủ các slot tập phim tức thì 0ms (không bao giờ để người dùng phải chờ tải)
+    this.prepareMovieEpisodeSlots(movie);
+
     this.renderModalContent(movie, shouldAutoPlay);
     modalBackdrop.classList.add("open");
     modalBackdrop.classList.toggle("lights-off", this.lightsOff);
@@ -1500,16 +1503,50 @@ class AppleCinemaApp {
       this.setNowPlayingBar(movie, epIndex, false);
     }
 
-    // Tự động lấy thêm danh sách tập phim & luồng chất lượng thật từ PhimAPI / NguonC / WP API
-    const enriched = await this.service.enrichMovieStreams(movie);
-    if (this.selectedMovie && this.selectedMovie.slug === enriched.slug) {
-      this.refreshEpisodesInModal(enriched);
-      const newEpSource = enriched.episodes?.[this.currentEpisodeIndex]?.source || "";
-      const isPlayingNow = document.getElementById("activeVideoContainer")?.classList.contains("playing");
-      if (isPlayingNow && newEpSource && newEpSource !== prevEpSource && this.currentServerMode === "hls-1") {
-        this.startVideoPlayback(enriched, this.currentEpisodeIndex, "hls-1");
-      } else {
-        this.renderDynamicQualityButtons();
+    // Làm giàu dữ liệu nguồn phát ngầm (Background Enrich) mà không chặn hiển thị tập phim 0ms
+    const initialEp = movie.episodes?.[epIndex] || movie.episodes?.[0];
+    const isAlreadyFullyReady = movie._isEnriched || (initialEp && initialEp.source && !initialEp.needsEnrich);
+
+    if (!isAlreadyFullyReady) {
+      this.service.enrichMovieStreams(movie).then((enriched) => {
+        if (this.selectedMovie && this.selectedMovie.slug === enriched.slug) {
+          this.refreshEpisodesInModal(enriched);
+          this.renderServerButtons(enriched, this.currentEpisodeIndex);
+          const newEpSource = enriched.episodes?.[this.currentEpisodeIndex]?.source || "";
+          const isPlayingNow = document.getElementById("activeVideoContainer")?.classList.contains("playing");
+          if (isPlayingNow && newEpSource && newEpSource !== prevEpSource && this.currentServerMode === "hls-1") {
+            this.startVideoPlayback(enriched, this.currentEpisodeIndex, "hls-1");
+          } else {
+            this.renderDynamicQualityButtons();
+          }
+        }
+      });
+    }
+  }
+
+  prepareMovieEpisodeSlots(movie) {
+    if (!movie || movie.type !== "series") return;
+    movie.episodes = movie.episodes || [];
+    let expected = 0;
+    if (typeof movie.episodeTotal === "number" && movie.episodeTotal > 0 && movie.episodeTotal <= 300) {
+      expected = movie.episodeTotal;
+    }
+    const currentStr = String(movie.episodeCurrent || "");
+    const match = currentStr.match(/(\d+)/);
+    if (match) {
+      const parsed = parseInt(match[1], 10);
+      if (parsed > expected && parsed <= 300) expected = parsed;
+    }
+
+    if (expected > movie.episodes.length) {
+      const startIdx = movie.episodes.length + 1;
+      for (let i = startIdx; i <= expected; i++) {
+        movie.episodes.push({
+          name: `Tập ${i}`,
+          slug: `tap-${i}`,
+          source: "",
+          needsEnrich: true
+        });
       }
     }
   }
@@ -1651,7 +1688,7 @@ class AppleCinemaApp {
         <div class="active-video-container ${isPlayingNow ? "playing" : ""}" id="activeVideoContainer" tabindex="-1">
           <!-- Video Element (đã bỏ controls mặc định của trình duyệt để triệt tiêu hoàn toàn viền xanh khi bấm phím cách) -->
           <video id="hlsVideoElement" class="${this.getQualityVideoClass(this.currentQuality)}" playsinline poster="${backdropUrl}" tabindex="-1"></video>
-          <iframe id="trailerIframeElement" style="display: none;" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen tabindex="-1"></iframe>
+          <iframe id="trailerIframeElement" style="display: none;" sandbox="allow-scripts allow-same-origin allow-presentation allow-forms" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen tabindex="-1"></iframe>
 
           <!-- Apple Center HUD Pulse: Không vòng tròn, chỉ hiển thị icon -->
           <div class="apple-video-hud" id="appleVideoHud">
@@ -1746,37 +1783,9 @@ class AppleCinemaApp {
       </div>
 
       <!-- Server & Stream Switcher Toolbar (Multi-Source Server 1 / Server 2 & 4K/2K Quality Switcher) -->
-      <div class="player-toolbar">
-        <div class="player-toolbar-left">
-          <span class="server-label"><i class="fas fa-server"></i> Nguồn phát:</span>
-          <button class="server-btn ${this.currentServerMode === "hls-1" || !this.currentServerMode ? "active" : ""}" id="srvBtnHls1"
-                  onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'hls-1')" title="Phát Server 1 chất lượng tốt nhất">
-            <i class="fas fa-server"></i> Server 1
-          </button>
-          ${
-            movie.nguoncEpisodes && movie.nguoncEpisodes.length > 0
-              ? `<button class="server-btn ${this.currentServerMode === "embed-1" ? "active" : ""}" id="srvBtnEmbed1"
-                        onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'embed-1')" title="Phát Server 2">
-                  <i class="fas fa-server"></i> Server 2
-                </button>`
-              : ""
-          }
-          ${
-            movie.dubEpisodes && movie.dubEpisodes.length > 0
-              ? `<button class="server-btn ${this.currentServerMode === "dub-1" ? "active" : ""}" id="srvBtnDub1"
-                        onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'dub-1')" title="Phát bản Thuyết Minh">
-                  <i class="fas fa-microphone"></i> Thuyết Minh
-                </button>`
-              : ""
-          }
-          ${
-            movie.trailerUrl
-              ? `<button class="server-btn ${this.currentServerMode === "trailer" ? "active" : ""}" id="srvBtnTrailer"
-                        onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'trailer')" title="Xem Trailer">
-                  <i class="fab fa-youtube"></i> Trailer
-                </button>`
-              : ""
-          }
+      <div class="player-toolbar ${(movie.episodes?.[this.currentEpisodeIndex]?.altSources?.length > 0 || movie.episodes?.[0]?.altSources?.length > 0) ? "has-server-rack" : ""}" id="playerToolbarContainer">
+        <div class="player-toolbar-left" id="playerToolbarServers">
+          ${this.buildServerButtonsHTML(movie, this.currentEpisodeIndex)}
         </div>
 
         <div class="player-toolbar-right">
@@ -1954,8 +1963,98 @@ class AppleCinemaApp {
   }
 
   /* ==========================================================================
-     HLS (.M3U8) & YOUTUBE TRAILER STREAMING ENGINE
+     HLS (.M3U8) & MULTI-SERVER 4K STREAMING ENGINE
      ========================================================================== */
+  renderServerButtons(movie, epIndex = 0) {
+    const el = document.getElementById("playerToolbarServers");
+    const toolbar = document.getElementById("playerToolbarContainer");
+    if (el) {
+      el.innerHTML = this.buildServerButtonsHTML(movie, epIndex);
+    }
+    if (toolbar) {
+      const ep = movie?.episodes?.[epIndex] || movie?.episodes?.[0];
+      const hasRack = Boolean(ep?.altSources && ep.altSources.length > 0);
+      toolbar.classList.toggle("has-server-rack", hasRack);
+    }
+  }
+
+  buildServerButtonsHTML(movie, epIndex = 0) {
+    if (!movie) return "";
+    const ep = movie.episodes?.[epIndex] || movie.episodes?.[0];
+    const altSources = ep?.altSources || [];
+
+    // 1. Nếu tập phim có danh sách Server chuyên dụng (như 4K Vietsub, 4K Thuyết Minh theo chuẩn HHPanda / YanHH3D)
+    if (altSources.length > 0) {
+      const has4k = altSources.some((s) => s.is4k || (s.label && s.label.toLowerCase().includes("4k")));
+      return `
+        <div class="server-selection-wrapper">
+          ${
+            has4k
+              ? `<div class="banner-4k-pill">4K có chất lượng 4K siêu nét</div>`
+              : `<span class="server-label"><i class="fas fa-server"></i> Nguồn phát:</span>`
+          }
+          <div class="server-buttons-rack">
+            ${altSources
+              .map((alt, idx) => {
+                const isActive = this.currentServerMode === `alt-${idx}` || ((!this.currentServerMode || this.currentServerMode === "hls-1") && idx === 0);
+                const is4kPill = alt.is4k || (alt.label && alt.label.toLowerCase().includes("4k"));
+                return `
+                  <button class="server-btn ${isActive ? "active" : ""} ${is4kPill ? "is-4k-server" : ""}"
+                          onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'alt-${idx}')"
+                          title="Chuyển sang ${alt.label}">
+                    ${alt.label}
+                  </button>
+                `;
+              })
+              .join("")}
+            ${
+              movie.trailerUrl
+                ? `<button class="server-btn ${this.currentServerMode === "trailer" ? "active" : ""}" id="srvBtnTrailer"
+                           onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'trailer')" title="Xem Trailer">
+                     <i class="fab fa-youtube"></i> Trailer
+                   </button>`
+                : ""
+            }
+          </div>
+        </div>
+      `;
+    }
+
+    // 2. Chế độ nguồn phát tiêu chuẩn (Server 1 / Server 2 / Thuyết Minh / Trailer)
+    const is4kMovie = (movie.quality && movie.quality.includes("4K")) || (movie.sectionTags && movie.sectionTags.includes("4k"));
+    return `
+      <span class="server-label"><i class="fas fa-server"></i> Nguồn phát:</span>
+      <button class="server-btn ${this.currentServerMode === "hls-1" || !this.currentServerMode ? "active" : ""}" id="srvBtnHls1"
+              onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'hls-1')" title="Phát Server 1 chất lượng tốt nhất">
+        <i class="fas fa-server"></i> ${is4kMovie ? "Server 1 (4K VIP)" : "Server 1"}
+      </button>
+      ${
+        movie.nguoncEpisodes && movie.nguoncEpisodes.length > 0
+          ? `<button class="server-btn ${this.currentServerMode === "embed-1" ? "active" : ""}" id="srvBtnEmbed1"
+                    onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'embed-1')" title="Phát Server 2">
+              <i class="fas fa-server"></i> Server 2
+            </button>`
+          : ""
+      }
+      ${
+        movie.dubEpisodes && movie.dubEpisodes.length > 0
+          ? `<button class="server-btn ${this.currentServerMode === "dub-1" ? "active" : ""}" id="srvBtnDub1"
+                    onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'dub-1')" title="Phát bản Thuyết Minh">
+              <i class="fas fa-microphone"></i> Thuyết Minh
+            </button>`
+          : ""
+      }
+      ${
+        movie.trailerUrl
+          ? `<button class="server-btn ${this.currentServerMode === "trailer" ? "active" : ""}" id="srvBtnTrailer"
+                    onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'trailer')" title="Xem Trailer">
+              <i class="fab fa-youtube"></i> Trailer
+            </button>`
+          : ""
+      }
+    `;
+  }
+
   async startVideoPlayback(movie, epIndex = 0, serverMode = "hls-1") {
     if (!movie) return;
     this.selectedMovie = movie;
@@ -1969,7 +2068,7 @@ class AppleCinemaApp {
     modalBackdrop?.scrollTo({ top: 0, behavior: "smooth" });
     sheet?.scrollTo({ top: 0, behavior: "smooth" });
 
-    // Nếu tập phim chưa có luồng thật (mới tìm kiếm trực tuyến), tự động nạp luồng thật của đúng bộ phim đó trước khi phát
+    // Nếu tập phim chưa có luồng thật, tự động nạp luồng thật của đúng bộ phim đó trước khi phát
     const initialEp = movie.episodes?.[epIndex] || movie.episodes?.[0];
     if (initialEp?.needsEnrich || (!initialEp?.source && !initialEp?.embed)) {
       await this.service.enrichMovieStreams(movie);
@@ -1988,12 +2087,8 @@ class AppleCinemaApp {
     if (coverPreview) coverPreview.style.display = "none";
     if (videoContainer) videoContainer.classList.add("playing");
 
-    // Highlight server buttons & episode buttons
-    document.getElementById("srvBtnHls1")?.classList.toggle("active", serverMode === "hls-1");
-    document.getElementById("srvBtnEmbed1")?.classList.toggle("active", serverMode === "embed-1");
-    document.getElementById("srvBtnNguonc1")?.classList.toggle("active", serverMode === "nguonc-1");
-    document.getElementById("srvBtnDub1")?.classList.toggle("active", serverMode === "dub-1");
-    document.getElementById("srvBtnTrailer")?.classList.toggle("active", serverMode === "trailer");
+    // Cập nhật lại thanh Server Buttons và danh sách tập phim
+    this.renderServerButtons(movie, epIndex);
     this.refreshEpisodesInModal(movie);
 
     const episode = movie.episodes[epIndex] || movie.episodes[0];
@@ -2018,22 +2113,35 @@ class AppleCinemaApp {
       return;
     }
 
-    // 1. Xác định luồng phát HLS .m3u8 trực tiếp (Zero Quảng Cáo, Zero Popup, 100% Native Player)
+    // 1. Xác định luồng phát HLS .m3u8 trực tiếp hoặc Embed Server
     let streamUrl = "";
-    if (serverMode === "dub-1") {
+    let selectedAltObj = null;
+
+    if (serverMode && serverMode.startsWith("alt-")) {
+      const altIdx = parseInt(serverMode.replace("alt-", ""), 10);
+      selectedAltObj = episode?.altSources?.[altIdx];
+      if (selectedAltObj) {
+        streamUrl = selectedAltObj.source || selectedAltObj.embed || "";
+      }
+    } else if (serverMode === "dub-1") {
       streamUrl = (dubEp && dubEp.source) || (episode && episode.source) || "";
     } else if (serverMode === "embed-1" || serverMode === "nguonc-1") {
-      // Server 2: Ưu tiên luồng m3u8 sạch từ NguonC/StreamC thay vì nhúng embed chứa quảng cáo
       streamUrl = (ncEp && ncEp.source) || (episode && episode.source) || "";
     } else {
       streamUrl = (episode && episode.source) || (ncEp && ncEp.source) || "";
     }
 
-    const isDirectM3u8 = streamUrl && (streamUrl.includes(".m3u8") || streamUrl.includes("/hls/"));
+    const isDirectM3u8 = Boolean(streamUrl && (streamUrl.includes(".m3u8") || streamUrl.includes("/hls/")));
+
+    // Cập nhật chất lượng luồng thực tế (4K hoặc 1080p)
+    const is4kCurrent = (selectedAltObj && (selectedAltObj.is4k || (selectedAltObj.label && selectedAltObj.label.includes("4K")))) ||
+                        (movie.quality && movie.quality.includes("4K"));
+    this.currentQuality = is4kCurrent ? "4K" : "1080p";
 
     // Nếu không có luồng m3u8 trực tiếp hoặc nguồn là player embed/iframe, sử dụng iframe với Sandbox an toàn
     if (!isDirectM3u8) {
       const fallbackEmbed =
+        selectedAltObj ? (selectedAltObj.embed || selectedAltObj.source) :
         (streamUrl && (streamUrl.includes("http") || streamUrl.includes("//")))
           ? streamUrl
           : serverMode === "embed-1"
@@ -2051,6 +2159,8 @@ class AppleCinemaApp {
         }
         iframeEl.src = fallbackEmbed;
         iframeEl.style.display = "block";
+        this.renderDynamicQualityButtons();
+        this.renderServerButtons(movie, epIndex);
         return;
       }
     }
@@ -2232,9 +2342,107 @@ class AppleCinemaApp {
   }
 
   buildQualityButtonsHTML() {
+    const movie = this.selectedMovie;
+    const ep = movie?.episodes?.[this.currentEpisodeIndex] || movie?.episodes?.[0];
+    const altSources = ep?.altSources || [];
+    const has4kAlt = altSources.some((s) => s.is4k || (s.label && s.label.toLowerCase().includes("4k")));
+    const is4kMovie = (movie?.quality && movie.quality.includes("4K")) || (movie?.sectionTags && movie.sectionTags.includes("4k")) || has4kAlt;
+
+    if (is4kMovie) {
+      let is4kActive = false;
+      if (this.currentServerMode && this.currentServerMode.startsWith("alt-")) {
+        const altIdx = parseInt(this.currentServerMode.replace("alt-", ""), 10);
+        const curAlt = altSources[altIdx];
+        if (curAlt && (curAlt.is4k || (curAlt.label && curAlt.label.toLowerCase().includes("4k")))) {
+          is4kActive = true;
+        }
+      } else if (this.currentQuality === "4K" || this.currentQuality === "4K Ultra HD") {
+        is4kActive = true;
+      }
+
+      return `
+        <button class="quality-pill-btn ${is4kActive ? "active" : ""} is-4k-quality" 
+                onclick="app.switchQualityTier('4k')" 
+                title="Chất lượng 4K Ultra HD siêu nét">
+          <i class="fas fa-sparkles"></i> 4K
+        </button>
+        <button class="quality-pill-btn ${!is4kActive ? "active" : ""}" 
+                onclick="app.switchQualityTier('1080p')" 
+                title="Độ phân giải 1080p Full HD">
+          1080p
+        </button>
+      `;
+    }
+
     return `<button class="quality-pill-btn active" data-quality="native-max" title="Độ phân giải Full HD sắc nét">
       1080p
     </button>`;
+  }
+
+  switchQualityTier(tier) {
+    const movie = this.selectedMovie;
+    if (!movie) return;
+    const epIndex = this.currentEpisodeIndex || 0;
+    const ep = movie.episodes?.[epIndex] || movie.episodes?.[0];
+    const altSources = ep?.altSources || [];
+
+    if (tier === "4k") {
+      let targetAltIdx = -1;
+      const isDub =
+        this.currentServerMode &&
+        (this.currentServerMode === "dub-1" ||
+          this.currentServerMode.includes("dub") ||
+          (this.currentServerMode.startsWith("alt-") &&
+            altSources[parseInt(this.currentServerMode.replace("alt-", ""), 10)]?.label?.toLowerCase().includes("thuyết minh")));
+
+      if (isDub) {
+        targetAltIdx = altSources.findIndex(
+          (s) => (s.is4k || (s.label && s.label.toLowerCase().includes("4k"))) && s.label?.toLowerCase().includes("thuyết minh")
+        );
+      }
+      if (targetAltIdx === -1) {
+        targetAltIdx = altSources.findIndex((s) => s.is4k || (s.label && s.label.toLowerCase().includes("4k")));
+      }
+
+      if (targetAltIdx !== -1) {
+        this.startVideoPlayback(movie, epIndex, `alt-${targetAltIdx}`);
+        this.showToast("✨ Đã chuyển sang chất lượng 4K Ultra HD siêu nét!");
+        return;
+      }
+      this.currentQuality = "4K";
+      this.renderDynamicQualityButtons();
+      this.showToast("✨ Đang phát chuẩn 4K Ultra HD");
+    } else {
+      let targetAltIdx = -1;
+      const isDub =
+        this.currentServerMode &&
+        (this.currentServerMode === "dub-1" ||
+          (this.currentServerMode.startsWith("alt-") &&
+            altSources[parseInt(this.currentServerMode.replace("alt-", ""), 10)]?.label?.toLowerCase().includes("thuyết minh")));
+
+      if (isDub) {
+        targetAltIdx = altSources.findIndex(
+          (s) => !s.is4k && (!s.label || !s.label.toLowerCase().includes("4k")) && s.label?.toLowerCase().includes("thuyết minh")
+        );
+      }
+      if (targetAltIdx === -1) {
+        targetAltIdx = altSources.findIndex((s) => !s.is4k && (!s.label || !s.label.toLowerCase().includes("4k")));
+      }
+
+      if (targetAltIdx !== -1) {
+        this.startVideoPlayback(movie, epIndex, `alt-${targetAltIdx}`);
+        this.showToast("Đã chuyển sang chất lượng 1080p Full HD");
+        return;
+      }
+
+      this.currentQuality = "1080p";
+      if (this.currentServerMode && this.currentServerMode.startsWith("alt-")) {
+        this.startVideoPlayback(movie, epIndex, "hls-1");
+      } else {
+        this.renderDynamicQualityButtons();
+      }
+      this.showToast("Đang phát chuẩn 1080p Full HD");
+    }
   }
 
   renderDynamicQualityButtons() {

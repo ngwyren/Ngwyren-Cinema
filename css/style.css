@@ -1776,6 +1776,17 @@ body::-webkit-scrollbar {
   color: #ffffff;
 }
 
+.quality-pill-btn.is-4k-quality {
+  color: #00b4d8;
+}
+
+.quality-pill-btn.is-4k-quality.active {
+  background: rgba(0, 180, 216, 0.22);
+  border-color: #00b4d8;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(0, 180, 216, 0.35);
+}
+
 /* Player Server & Mode Bar */
 .player-toolbar {
   display: flex;
@@ -1786,6 +1797,25 @@ body::-webkit-scrollbar {
   padding: 14px 28px;
   background: rgba(14, 14, 18, 0.95);
   border-bottom: 1px solid var(--border-subtle);
+}
+
+.player-toolbar.has-server-rack {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 20px 14px;
+}
+
+.player-toolbar.has-server-rack .player-toolbar-left {
+  width: 100%;
+  justify-content: center;
+}
+
+.player-toolbar.has-server-rack .player-toolbar-right {
+  width: 100%;
+  justify-content: center;
+  margin-top: 2px;
 }
 
 .player-toolbar-left,
@@ -1830,6 +1860,69 @@ body::-webkit-scrollbar {
   background: rgba(255, 255, 255, 0.18);
   border-color: #ffffff;
   color: #fff;
+}
+
+/* Cụm 8 Server chuyên dụng Donghua / 4K Chuẩn HHPanda & YanHH3D (Khớp 100% media_1792783015975_ee7f0ea7.png) */
+.server-selection-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.banner-4k-pill {
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.2px;
+  text-align: center;
+  user-select: none;
+}
+
+.server-buttons-rack {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 10px;
+  width: 100%;
+  max-width: 900px;
+}
+
+.server-buttons-rack .server-btn {
+  background: #ffffff;
+  color: #050505;
+  border: none;
+  font-weight: 800;
+  font-size: 0.78rem;
+  padding: 7px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  user-select: none;
+  letter-spacing: -0.2px;
+}
+
+.server-buttons-rack .server-btn:hover {
+  background: #e2e8f0;
+  color: #000000;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+
+.server-buttons-rack .server-btn.active {
+  background: #00b4d8 !important;
+  color: #ffffff !important;
+  font-weight: 800;
+  box-shadow: 0 2px 10px rgba(0, 180, 216, 0.5) !important;
+  transform: none;
 }
 
 /* Modal Metadata Body */
