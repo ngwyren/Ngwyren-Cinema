@@ -1671,9 +1671,7 @@ body::-webkit-scrollbar {
   padding: 36px;
   background-size: cover;
   background-position: center 25%;
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-  filter: contrast(1.06) saturate(1.12) brightness(1.02);
+  background-repeat: no-repeat;
   transition: opacity 0.4s var(--ease-in-out-smooth);
 }
 

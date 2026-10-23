@@ -1175,7 +1175,7 @@ class AppleCinemaApp {
 
     return `
       <section class="vision-hero-banner" id="heroShowcase" onmouseenter="app.pauseHeroAutoRotate()" onmouseleave="app.resumeHeroAutoRotate()">
-        <img class="vision-hero-bg" src="${movie.backdrop || movie.poster}" alt="${movie.title}" decoding="async" />
+        <img class="vision-hero-bg" src="${this.getMovieBackdrop(movie)}" alt="${movie.title}" decoding="async" />
         <div class="vision-hero-overlay"></div>
 
         <div class="vision-hero-top">
@@ -1578,6 +1578,20 @@ class AppleCinemaApp {
     return `<i class="fas fa-play"></i> Phát ${epLabel}`;
   }
 
+  getMovieBackdrop(movie) {
+    if (!movie) return "";
+    let b = movie.backdrop || movie.poster || "";
+    if (b && !b.includes("animevietsub") && !b.includes("data/poster")) {
+      return b;
+    }
+    const match = this.service?.movies?.find(
+      (m) => m && m.backdrop && m.backdrop.includes("phimimg") &&
+             (m.slug === movie.slug || m.title === movie.title || m.originTitle === movie.originTitle)
+    );
+    if (match && match.backdrop) return match.backdrop;
+    return b;
+  }
+
   renderModalContent(movie, isPlayingNow = false) {
     const sheet = document.getElementById("movieDetailSheet");
     if (!sheet) return;
@@ -1585,6 +1599,7 @@ class AppleCinemaApp {
     const inMyList = this.isInMyList(movie);
     const relatedItems = this.service.getRelatedMovies(movie, 9);
     const currentEp = movie.episodes[this.currentEpisodeIndex] || movie.episodes[0];
+    const backdropUrl = this.getMovieBackdrop(movie);
 
     sheet.innerHTML = `
       <!-- Top Floating Modal Controls -->
@@ -1604,7 +1619,7 @@ class AppleCinemaApp {
       <!-- 16:9 Cinema Stage (Cover Preview + Active HLS/YouTube Player) -->
       <div class="modal-player-stage">
         <div class="player-cover-preview" id="modalCoverPreview"
-             style="background-image: url('${movie.backdrop || movie.poster}'); ${isPlayingNow ? "display:none;" : ""}">
+             style="background-image: url('${backdropUrl}'); ${isPlayingNow ? "display:none;" : ""}">
           <div class="player-cover-content">
             <h2 style="font-size: clamp(1.6rem, 2.8vw, 2.5rem); font-weight: 800; line-height: 1.12; margin-bottom: 6px;">
               ${movie.title}
@@ -1634,7 +1649,7 @@ class AppleCinemaApp {
         <!-- Active Video Container (Apple Cinema Player - Không viền xanh, chuẩn Apple TV+) -->
         <div class="active-video-container ${isPlayingNow ? "playing" : ""}" id="activeVideoContainer" tabindex="-1">
           <!-- Video Element (đã bỏ controls mặc định của trình duyệt để triệt tiêu hoàn toàn viền xanh khi bấm phím cách) -->
-          <video id="hlsVideoElement" class="${this.getQualityVideoClass(this.currentQuality)}" playsinline poster="${movie.backdrop || movie.poster}" tabindex="-1"></video>
+          <video id="hlsVideoElement" class="${this.getQualityVideoClass(this.currentQuality)}" playsinline poster="${backdropUrl}" tabindex="-1"></video>
           <iframe id="trailerIframeElement" style="display: none;" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen tabindex="-1"></iframe>
 
           <!-- Apple Center HUD Pulse: Không vòng tròn, chỉ hiển thị icon -->
@@ -2403,7 +2418,7 @@ class AppleCinemaApp {
     const islandEp = document.getElementById("nowPlayingIslandEp");
     const islandPlayIcon = document.getElementById("nowPlayingIslandPlayIcon");
 
-    if (islandBackdrop) islandBackdrop.src = movie.backdrop || movie.poster;
+    if (islandBackdrop) islandBackdrop.src = this.getMovieBackdrop(movie);
     if (islandTitle) islandTitle.textContent = movie.title;
     if (islandDuration) islandDuration.textContent = movie.duration || "Full HD";
     if (islandQuality) islandQuality.textContent = movie.quality || "FHD";
