@@ -1120,6 +1120,14 @@ class PhimmoiService {
       });
     }
 
+    // Tối ưu hóa siêu tốc: Tiền lập chỉ mục tìm kiếm 0ms giúp tìm kiếm tức thì không tốn CPU
+    for (let i = 0; i < this.movies.length; i++) {
+      const m = this.movies[i];
+      m._titleLower = (m.title || "").toLowerCase();
+      m._originLower = (m.originTitle || "").toLowerCase();
+      m._metaSearch = `${(m.genres || []).join(" ")} ${(m.cast || []).join(" ")} ${m.director || ""}`.toLowerCase();
+    }
+
     this.isLiveConnected = true;
     this.lastSyncedCount = this.movies.length;
   }

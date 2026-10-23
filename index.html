@@ -34,17 +34,22 @@
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://phimimg.com" crossorigin />
+  <link rel="dns-prefetch" href="https://phimimg.com" />
+  <link rel="dns-prefetch" href="https://phimapi.com" />
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-  <!-- HLS.js for playing .m3u8 streams -->
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <!-- HLS.js for playing .m3u8 streams (deferred for instant non-blocking load) -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest" defer></script>
 
   <!-- Google Identity Services (GIS) for Real Google Sign-In -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/style.css?v=9.4" />
+  <link rel="stylesheet" href="css/style.css?v=9.5" />
 </head>
 <body>
 
@@ -290,11 +295,11 @@
     </div>
   </div>
 
-  <!-- Scripts -->
-  <script src="js/movies-catalog.js?v=9.4"></script>
-  <script src="js/air-schedule.js?v=9.4"></script>
-  <script src="js/data.js?v=9.4"></script>
-  <script src="js/auth-config.js?v=9.4"></script>
-  <script src="js/app.js?v=9.4"></script>
+  <!-- High-Performance Deferred Scripts -->
+  <script src="js/movies-catalog.js?v=9.5" defer></script>
+  <script src="js/air-schedule.js?v=9.5" defer></script>
+  <script src="js/data.js?v=9.5" defer></script>
+  <script src="js/auth-config.js?v=9.5" defer></script>
+  <script src="js/app.js?v=9.5" defer></script>
 </body>
 </html>

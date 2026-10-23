@@ -1175,7 +1175,7 @@ class AppleCinemaApp {
 
     return `
       <section class="vision-hero-banner" id="heroShowcase" onmouseenter="app.pauseHeroAutoRotate()" onmouseleave="app.resumeHeroAutoRotate()">
-        <img class="vision-hero-bg" src="${this.getMovieBackdrop(movie)}" alt="${movie.title}" decoding="async" />
+        <img class="vision-hero-bg" src="${this.getMovieBackdrop(movie)}" alt="${movie.title}" fetchpriority="high" decoding="async" />
         <div class="vision-hero-overlay"></div>
 
         <div class="vision-hero-top">
@@ -1362,7 +1362,7 @@ class AppleCinemaApp {
           (m, idx) => `
         <div class="chart-row-item" onclick="app.openMovieModal('${m.slug}', false)">
           <span class="chart-rank-num">${idx + 1}</span>
-          <img class="chart-thumb" src="${m.poster}" alt="${m.title}" loading="lazy" />
+          <img class="chart-thumb" src="${m.poster}" alt="${m.title}" loading="lazy" decoding="async" />
           <div class="chart-info">
             <div class="chart-title">${m.title}</div>
             <div class="chart-sub">${m.originTitle} • ${m.country}</div>
@@ -1486,8 +1486,9 @@ class AppleCinemaApp {
     if (sheet) {
       sheet.scrollTo({ top: 0, behavior: "smooth" });
       sheet.classList.remove("modal-movie-switch");
-      void sheet.offsetWidth;
-      sheet.classList.add("modal-movie-switch");
+      requestAnimationFrame(() => {
+        sheet.classList.add("modal-movie-switch");
+      });
     }
 
     const prevEpSource = movie.episodes?.[epIndex]?.source || "";
@@ -1873,7 +1874,7 @@ class AppleCinemaApp {
                   ({ movie: rel, matchPercent, reasons }) => `
                 <div class="netflix-related-card" onclick="app.openMovieModal('${rel.slug}', false)">
                   <div class="netflix-related-thumb">
-                    <img src="${rel.backdrop || rel.poster}" alt="${rel.title}" loading="lazy" />
+                    <img src="${rel.backdrop || rel.poster}" alt="${rel.title}" loading="lazy" decoding="async" />
                     <span class="netflix-related-duration">${rel.type === "series" ? rel.episodeCurrent : rel.duration}</span>
                     <div class="hover-play-center" style="width: 44px; height: 44px;"
                          onclick="event.stopPropagation(); app.openMovieModal('${rel.slug}', true)">
@@ -2604,8 +2605,9 @@ class AppleCinemaApp {
     }
 
     hud.classList.remove("hud-active");
-    void hud.offsetWidth; // Force reflow
-    hud.classList.add("hud-active");
+    requestAnimationFrame(() => {
+      hud.classList.add("hud-active");
+    });
 
     if (this._appleHudTimer) clearTimeout(this._appleHudTimer);
     this._appleHudTimer = setTimeout(() => {
@@ -2793,14 +2795,14 @@ class AppleCinemaApp {
       return;
     }
 
-    // 1. TÌM KIẾM TỨC THÌ 0ms VỚI THUẬT TOÁN ĐIỂM CHUẨN XÁC TỪ KHÓA (SMART RELEVANCE RANKING)
+    // 1. TÌM KIẾM TỨC THÌ 0ms VỚI CHỈ MỤC ĐÃ ĐƯỢC TIỀN TÍNH TOÁN (SMART RELEVANCE RANKING)
     const q = query.toLowerCase();
     const scored = [];
     const movies = this.service.movies;
     for (let i = 0; i < movies.length; i++) {
       const m = movies[i];
-      const t = (m.title || "").toLowerCase();
-      const o = (m.originTitle || "").toLowerCase();
+      const t = m._titleLower || (m._titleLower = (m.title || "").toLowerCase());
+      const o = m._originLower || (m._originLower = (m.originTitle || "").toLowerCase());
       let score = 0;
 
       if (t === q || o === q) {
@@ -2814,10 +2816,8 @@ class AppleCinemaApp {
       } else if (o.includes(q)) {
         score = 90; // Tên gốc chứa từ khóa (ví dụ: "Win My Baby Back")
       } else {
-        if (!m._metaSearch) {
-          m._metaSearch = `${(m.genres || []).join(" ")} ${(m.cast || []).join(" ")} ${m.director || ""}`.toLowerCase();
-        }
-        if (m._metaSearch.includes(q)) {
+        const meta = m._metaSearch || (m._metaSearch = `${(m.genres || []).join(" ")} ${(m.cast || []).join(" ")} ${m.director || ""}`.toLowerCase());
+        if (meta.includes(q)) {
           score = 25; // Chỉ nằm trong diễn viên / thể loại
         }
       }
@@ -2862,7 +2862,7 @@ class AppleCinemaApp {
               .map(
                 (m) => `
             <div class="search-suggestion-item" onclick="app.selectSearchResult('${m.slug}')">
-              <img src="${m.poster}" alt="${m.title}" loading="lazy" />
+              <img src="${m.poster}" alt="${m.title}" loading="lazy" decoding="async" />
               <div class="search-suggestion-info">
                 <div class="search-suggestion-title">${m.title}</div>
                 <div class="search-suggestion-meta">
@@ -3051,8 +3051,9 @@ class AppleCinemaApp {
       const newHero = document.getElementById("heroShowcase");
       if (newHero) {
         newHero.classList.remove("vision-hero-slide-anim");
-        void newHero.offsetWidth;
-        newHero.classList.add("vision-hero-slide-anim");
+        requestAnimationFrame(() => {
+          newHero.classList.add("vision-hero-slide-anim");
+        });
       }
     }
     this.startHeroAutoRotate();
@@ -3120,13 +3121,6 @@ class AppleCinemaApp {
       { passive: true }
     );
 
-    // Dynamic Liquid Nav Pill Indicator sync
-    window.addEventListener("resize", () => this.syncNavPillIndicator(), { passive: true });
-    const navPillsBox = document.getElementById("visionNavPills");
-    if (navPillsBox) {
-      navPillsBox.addEventListener("scroll", () => this.syncNavPillIndicator(), { passive: true });
-    }
-    setTimeout(() => this.syncNavPillIndicator(), 150);
     // Segmented control trên Topbar
     document.querySelectorAll(".segment-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
