@@ -434,14 +434,17 @@ class AppleCinemaApp {
               </div>
 
               <!-- Row 2: Độ mờ kính (Kéo thả iPhone) -->
-              <div class="vision-setting-row" style="flex-direction: column; align-items: stretch; gap: 6px;">
-                <div class="vision-setting-info" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                  <strong>Độ mờ kính</strong>
-                  <span id="glassSliderValueLabel">${glassLabel}</span>
+              <div class="vision-setting-row" style="flex-direction: column; align-items: stretch; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                  <div>
+                    <strong style="font-size: 0.86rem; color: #ffffff;">Độ mờ kính</strong>
+                    <span style="font-size: 0.72rem; color: rgba(255, 255, 255, 0.48); display: block; margin-top: 2px;">Tùy chỉnh độ trong suốt của không gian kính</span>
+                  </div>
+                  <span class="vision-badge" id="glassSliderValueLabel" style="font-size: 0.76rem; font-weight: 700; padding: 4px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.18); color: #ffffff;">${glassLabel}</span>
                 </div>
                 <div class="ios-slider-wrapper">
                   <div class="ios-slider-control">
-                    <span class="ios-slider-icon" title="Trong suốt">
+                    <span class="ios-slider-icon" title="Trong suốt (0%)" onclick="app.setGlassStep(0)" style="cursor: pointer;">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="3" width="18" height="18" rx="5" stroke-dasharray="3 3"/>
                       </svg>
@@ -456,16 +459,22 @@ class AppleCinemaApp {
                       <div class="ios-slider-fill" id="glassSliderFill" style="width: ${glassPercent}%;"></div>
                       <div class="ios-slider-thumb" id="glassSliderThumb" style="left: ${glassPercent}%;"></div>
                     </div>
-                    <span class="ios-slider-icon" title="Kính mờ">
+                    <span class="ios-slider-icon" title="Kính mờ (100%)" onclick="app.setGlassStep(100)" style="cursor: pointer;">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="3" width="18" height="18" rx="5" fill="currentColor" fill-opacity="0.45"/>
                       </svg>
                     </span>
                   </div>
                   <div class="ios-slider-labels">
-                    <span class="ios-label-stop ${glassPercent === 0 ? 'active' : ''}" onclick="app.setGlassStep(0)">Trong Suốt</span>
-                    <span class="ios-label-stop ${glassPercent === 50 ? 'active' : ''}" onclick="app.setGlassStep(50)">Tiêu Chuẩn</span>
-                    <span class="ios-label-stop ${glassPercent === 100 ? 'active' : ''}" onclick="app.setGlassStep(100)">Kính Mờ</span>
+                    <button type="button" class="ios-label-stop ${glassPercent === 0 ? 'active' : ''}" onclick="app.setGlassStep(0)">
+                      <i class="fas fa-eye"></i> Trong Suốt
+                    </button>
+                    <button type="button" class="ios-label-stop ${glassPercent === 50 ? 'active' : ''}" onclick="app.setGlassStep(50)">
+                      <i class="fas fa-sliders"></i> Tiêu Chuẩn
+                    </button>
+                    <button type="button" class="ios-label-stop ${glassPercent === 100 ? 'active' : ''}" onclick="app.setGlassStep(100)">
+                      <i class="fas fa-shield"></i> Kính Mờ
+                    </button>
                   </div>
                   <p class="ios-slider-caption">Trong suốt nhìn rõ không gian phòng, kính mờ tăng độ tương phản và tập trung.</p>
                 </div>
@@ -604,6 +613,7 @@ class AppleCinemaApp {
 
     const updateSlider = (clientX, snap = false) => {
       const rect = track.getBoundingClientRect();
+      if (!rect || rect.width <= 0) return 50;
       let pos = (clientX - rect.left) / rect.width;
       pos = Math.max(0, Math.min(1, pos));
       let percent = Math.round(pos * 100);
@@ -638,27 +648,22 @@ class AppleCinemaApp {
       return percent;
     };
 
-    track.onpointerdown = (e) => {
-      isDragging = true;
-      document.documentElement.classList.add("dragging-glass");
-      track.classList.add("dragging");
-      thumb.classList.add("dragging");
-      track.setPointerCapture(e.pointerId);
-      updateSlider(e.clientX, false);
-    };
-
-    track.onpointermove = (e) => {
+    const onPointerMove = (e) => {
       if (!isDragging) return;
       updateSlider(e.clientX, false);
     };
 
-    const handlePointerEnd = (e) => {
+    const onPointerUp = (e) => {
       if (!isDragging) return;
       isDragging = false;
       document.documentElement.classList.remove("dragging-glass");
       track.classList.remove("dragging");
       thumb.classList.remove("dragging");
-      try { track.releasePointerCapture(e.pointerId); } catch (_) {}
+
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+
       const finalPercent = updateSlider(e.clientX, true);
       this.settings.glassPercent = finalPercent;
       this.settings.glassBlur = finalPercent === 0 ? "clear" : (finalPercent === 100 ? "frost" : "standard");
@@ -666,8 +671,19 @@ class AppleCinemaApp {
       this.applyTheme();
     };
 
-    track.onpointerup = handlePointerEnd;
-    track.onpointercancel = handlePointerEnd;
+    track.onpointerdown = (e) => {
+      e.preventDefault();
+      isDragging = true;
+      document.documentElement.classList.add("dragging-glass");
+      track.classList.add("dragging");
+      thumb.classList.add("dragging");
+
+      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointerup", onPointerUp);
+      window.addEventListener("pointercancel", onPointerUp);
+
+      updateSlider(e.clientX, false);
+    };
   }
 
   setGlassStep(percent) {

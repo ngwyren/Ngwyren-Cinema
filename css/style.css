@@ -4593,6 +4593,7 @@ body {
   height: 6px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.16);
+  pointer-events: none;
 }
 
 .ios-slider-ticks {
@@ -4611,6 +4612,7 @@ body {
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.5);
   transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
 .ios-slider-fill {
@@ -4621,7 +4623,7 @@ body {
   background: #007aff;
   box-shadow: 0 0 8px rgba(0, 122, 255, 0.6);
   pointer-events: none;
-  transition: width 0.12s ease-out;
+  transition: width 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .ios-slider-thumb {
@@ -4635,11 +4637,13 @@ body {
   transform: translate(-50%, -50%);
   cursor: grab;
   touch-action: none;
-  transition: transform 0.15s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow 0.15s ease, left 0.12s ease-out;
+  pointer-events: none;
+  transition: left 0.18s cubic-bezier(0.16, 1, 0.3, 1), transform 0.15s ease;
 }
 
 .ios-slider-thumb:active,
-.ios-slider-thumb.dragging {
+.ios-slider-thumb.dragging,
+.ios-slider-track-wrap.dragging .ios-slider-thumb {
   cursor: grabbing;
   transform: translate(-50%, -50%) scale(1.1);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 0 3px rgba(0, 122, 255, 0.35);
@@ -4654,20 +4658,40 @@ body {
 .ios-slider-labels {
   display: flex;
   justify-content: space-between;
-  padding: 0 38px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.5);
+  gap: 10px;
+  padding: 4px 0 0;
 }
 
 .ios-label-stop {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.74rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
 }
 
-.ios-label-stop:hover,
-.ios-label-stop.active {
+.ios-label-stop:hover {
+  background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.ios-label-stop.active {
+  background: #ffffff !important;
+  color: #121316 !important;
+  border-color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.25) !important;
 }
 
 .ios-slider-caption {
