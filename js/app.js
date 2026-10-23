@@ -2464,9 +2464,10 @@ class AppleCinemaApp {
     this.selectedGuestAvatar = this.userProfile.avatar || "🎬";
     this.customUploadedAvatar = this.userProfile.avatarType === "image" ? this.userProfile.avatarUrl : null;
     
-    // Đọc Google Client ID từ cấu hình tự động hoặc từ bộ nhớ máy
-    const configClientId = window.NGWYREN_AUTH_CONFIG?.googleClientId || "";
-    this.googleClientId = this.loadStorage("ngwyren_google_client_id", configClientId) || configClientId;
+    // Đọc Google Client ID chính thức từ Google Cloud Console (Project Ngwyren Cinema)
+    const configClientId = window.NGWYREN_AUTH_CONFIG?.googleClientId || "254225466849-jf2edaghogh3nlcb341j02thvd39m9bt.apps.googleusercontent.com";
+    this.googleClientId = configClientId;
+    this.saveStorage("ngwyren_google_client_id", configClientId);
     
     this.initCloudSync();
     this.initGoogleIdentity();
