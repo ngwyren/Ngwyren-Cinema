@@ -653,15 +653,7 @@ class AppleCinemaApp {
         <div class="vision-main-col vision-col-transition">
           <!-- Spatial Schedule Hero Header -->
           <section class="schedule-hero-panel">
-            <div class="schedule-hero-details">
-              <div class="schedule-hero-kicker">
-                <i class="fas fa-calendar-days"></i> NGWYREN CINEMA AIR SCHEDULE • TỰ ĐỘNG CẬP NHẬT
-              </div>
-              <h1 class="schedule-hero-title">Lịch Chiếu Hoạt Hình 3D & Anime</h1>
-              <p class="schedule-hero-desc">
-                Khám phá lịch phát sóng định kỳ hàng tuần của các siêu phẩm 3D Donghua và Anime nổi tiếng từ YanHH3D & AnimeVietSub. Xem ngay với chất lượng cao nhất 1080p, 4K Vietsub kèm Thuyết minh.
-              </p>
-            </div>
+            <h1 class="schedule-hero-title">Lịch Chiếu Phim</h1>
           </section>
 
           <!-- Day of Week Capsule Scroller Bar -->
