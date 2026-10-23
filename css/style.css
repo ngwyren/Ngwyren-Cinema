@@ -1271,6 +1271,8 @@ i.fas, i.fab, i.far {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
 }
 
 /* Top Ribbons & Badges on Poster */
@@ -1995,6 +1997,8 @@ i.fas, i.fab, i.far {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
   transition: transform 0.5s var(--ease-in-out-cubic);
 }
 
@@ -3256,6 +3260,8 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
 }
 
 .vision-trailer-overlay {
@@ -3395,6 +3401,11 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center 25%;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
+  transform: translateZ(0);
+  backface-visibility: hidden;
   z-index: 0;
 }
 
@@ -3643,6 +3654,10 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center 25%;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
+  transform: translateZ(0);
   z-index: 0;
 }
 
