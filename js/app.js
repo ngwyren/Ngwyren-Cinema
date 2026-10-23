@@ -2266,30 +2266,58 @@ class AppleCinemaApp {
       return;
     }
 
-    // Tối ưu hoá tìm kiếm 120fps: Debounce nhẹ 60ms & cache chuỗi gộp để duyệt cực nhanh
-    clearTimeout(this.searchQuickTimer);
-    this.searchQuickTimer = setTimeout(() => {
-      const q = query.toLowerCase();
-      const quickMatches = this.service.movies
-        .filter((m) => {
-          if (!m._searchIndex) {
-            m._searchIndex = `${m.title || ""} ${m.originTitle || ""} ${Array.isArray(m.genres) ? m.genres.join(" ") : ""} ${Array.isArray(m.cast) ? m.cast.join(" ") : ""}`.toLowerCase();
-          }
-          return m._searchIndex.includes(q);
-        })
-        .slice(0, 6);
+    // 1. TÌM KIẾM TỨC THÌ 0ms VỚI THUẬT TOÁN ĐIỂM CHUẨN XÁC TỪ KHÓA (SMART RELEVANCE RANKING)
+    const q = query.toLowerCase();
+    const scored = [];
+    const movies = this.service.movies;
+    for (let i = 0; i < movies.length; i++) {
+      const m = movies[i];
+      const t = (m.title || "").toLowerCase();
+      const o = (m.originTitle || "").toLowerCase();
+      let score = 0;
 
-      this.renderSearchDropdown(query, quickMatches, false);
-    }, 60);
+      if (t === q || o === q) {
+        score = 250; // Trùng khớp hoàn toàn 100%
+      } else if (t.startsWith(q)) {
+        score = 180; // Tên tiếng Việt bắt đầu bằng từ khóa (ví dụ: "Baby Đến Rồi")
+      } else if (o.startsWith(q)) {
+        score = 150; // Tên gốc bắt đầu bằng từ khóa (ví dụ: "Baby Bandito")
+      } else if (t.includes(q)) {
+        score = 110; // Tên tiếng Việt chứa từ khóa (ví dụ: "Kế Hoạch Baby")
+      } else if (o.includes(q)) {
+        score = 90; // Tên gốc chứa từ khóa (ví dụ: "Win My Baby Back")
+      } else {
+        if (!m._metaSearch) {
+          m._metaSearch = `${(m.genres || []).join(" ")} ${(m.cast || []).join(" ")} ${m.director || ""}`.toLowerCase();
+        }
+        if (m._metaSearch.includes(q)) {
+          score = 25; // Chỉ nằm trong diễn viên / thể loại
+        }
+      }
 
-    // Debounce gọi API tìm kiếm trực tuyến của Phimmoiz.one
+      if (score > 0) {
+        scored.push({ movie: m, score });
+      }
+    }
+
+    // Sắp xếp ưu tiên độ khớp từ khóa cao nhất lên đầu, tiếp đến năm phát hành
+    scored.sort((a, b) => b.score - a.score || (b.movie.year || 0) - (a.movie.year || 0));
+    const quickMatches = scored.slice(0, 8).map((it) => it.movie);
+
+    // Hiển thị NGAY LẬP TỨC (0ms) cho người dùng mà không cần chờ đợi
+    this.renderSearchDropdown(query, quickMatches, false);
+
+    // 2. TÌM NÂNG CAO TRỰC TUYẾN PHIMAPI (Debounce siêu tốc 120ms để mở rộng kết quả)
     clearTimeout(this.searchDebounce);
     this.searchDebounce = setTimeout(async () => {
       const fullMatches = await this.service.searchMovies(query);
-      this.lastSearchQuery = query;
-      this.lastSearchResults = fullMatches;
-      this.renderSearchDropdown(query, fullMatches.slice(0, 8), true);
-    }, 320);
+      const currentInput = (document.getElementById("topSearchInput")?.value || "").trim();
+      if (currentInput === query) {
+        this.lastSearchQuery = query;
+        this.lastSearchResults = fullMatches;
+        this.renderSearchDropdown(query, fullMatches.slice(0, 8), true);
+      }
+    }, 120);
   }
 
   renderSearchDropdown(query, results, isLiveDone) {
@@ -2584,11 +2612,15 @@ class AppleCinemaApp {
       });
     }
 
-    // Đóng dropdown tìm kiếm khi click ra ngoài
+    // Đóng dropdown tìm kiếm hoặc Dynamic Island khi click ra ngoài
     document.addEventListener("click", (e) => {
       const searchBox = document.querySelector(".topbar-search-container");
       if (searchBox && !searchBox.contains(e.target)) {
         document.getElementById("searchDropdown")?.classList.remove("open");
+      }
+      const playerBar = document.getElementById("applePlayerBar");
+      if (playerBar && playerBar.classList.contains("is-expanded") && !playerBar.contains(e.target)) {
+        playerBar.classList.remove("is-expanded");
       }
     });
 
@@ -2663,6 +2695,12 @@ class AppleCinemaApp {
         collapseTimer = setTimeout(() => {
           playerBar.classList.remove("is-expanded");
         }, 220);
+      });
+
+      // Chạm hoặc click để mở rộng / thu nhỏ (Hỗ trợ hoàn hảo cả Mobile, iPad & Desktop)
+      playerBar.addEventListener("click", (e) => {
+        if (e.target.closest("button") || e.target.closest(".mini-scrub-bar")) return;
+        playerBar.classList.toggle("is-expanded");
       });
     }
   }

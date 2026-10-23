@@ -97,21 +97,27 @@ i.fas, i.fab, i.far {
   color: #ffffff;
 }
 
-/* Custom Apple Scrollbar */
+/* Ẩn hoàn toàn thanh cuộn trên toàn bộ trang web và tất cả phần tử (Global No-Scrollbar) */
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+*::-webkit-scrollbar,
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
 }
-::-webkit-scrollbar-track {
-  background: transparent;
+html, body {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.16);
-  border-radius: var(--radius-pill);
-  transition: background 0.3s var(--ease-in-out-smooth);
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.32);
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* ==========================================================================
@@ -3823,7 +3829,7 @@ body {
   right: auto !important;
   transform: translate3d(-50%, 0, 0) !important;
   bottom: 14px !important;
-  width: min(500px, calc(100vw - 36px)) !important;
+  width: min(390px, calc(100vw - 32px)) !important;
   height: 54px;
   border-radius: 999px;
   display: block !important;
@@ -3838,15 +3844,16 @@ body {
   box-shadow:
     inset 0 1.5px 1px rgba(255, 255, 255, 0.42),
     0 14px 36px rgba(0, 0, 0, 0.58);
-  /* Chuyển động Apple Fluid Motion: Êm ái, thanh thoát 0.52s, không giật lag */
-  transition: height 0.52s cubic-bezier(0.16, 1, 0.28, 1),
-              border-radius 0.52s cubic-bezier(0.16, 1, 0.28, 1),
+  /* Chuyển động Apple Fluid Motion: Mở rộng cả chiều ngang & dọc êm ái như Dynamic Island */
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.28, 1),
+              height 0.52s cubic-bezier(0.16, 1, 0.28, 1),
+              border-radius 0.5s cubic-bezier(0.16, 1, 0.28, 1),
               box-shadow 0.46s ease,
               background 0.46s ease;
   overflow: hidden;
   z-index: 60;
   contain: layout paint;
-  will-change: height, border-radius, box-shadow;
+  will-change: width, height, border-radius, box-shadow;
 }
 
 /* 1. Trạng thái thu gọn Capsule */
@@ -4033,6 +4040,7 @@ body {
 @media (hover: hover) and (min-width: 769px) {
   .apple-player-bar.is-expanded,
   .apple-player-bar:hover {
+    width: min(560px, calc(100vw - 32px)) !important;
     height: 316px !important;
     border-radius: 22px !important;
     background: linear-gradient(
@@ -4746,7 +4754,7 @@ body.modal-open .apple-player-bar {
     transform: translate3d(-50%, 0, 0) !important;
     bottom: 14px !important;
     height: 54px !important;
-    width: min(500px, calc(100vw - 36px)) !important;
+    width: min(390px, calc(100vw - 32px)) !important;
   }
 }
 
@@ -4804,7 +4812,7 @@ body.modal-open .apple-player-bar {
     transform: translate3d(-50%, 0, 0) !important;
     bottom: 16px !important;
     height: 54px !important;
-    width: min(500px, calc(100vw - 36px)) !important;
+    width: min(390px, calc(100vw - 32px)) !important;
   }
 }
 

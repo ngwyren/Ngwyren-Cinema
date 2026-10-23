@@ -1332,13 +1332,13 @@ class PhimmoiService {
       );
     });
 
-    // 2. Gọi song song các nguồn API Vietsub & Netflix trực tuyến
+    // 2. Gọi song song API Vietsub & Netflix trực tuyến (Ưu tiên PhimAPI phản hồi siêu tốc ~200ms)
     const encodedQ = encodeURIComponent(query.trim());
-    const [phimApiRes, nguoncRes, remotePosts] = await Promise.all([
-      this.smartFetchJson(`${PHIMMOI_CONFIG.phimApiSearch}?keyword=${encodedQ}&limit=12`, 5000),
-      this.smartFetchJson(`${PHIMMOI_CONFIG.nguoncApiSearch}?keyword=${encodedQ}`, 5000),
-      this.smartFetchJson(`${PHIMMOI_CONFIG.wpApiPosts}?search=${encodedQ}&per_page=10&_embed=1`, 5000)
+    const [phimApiRes, nguoncRes] = await Promise.all([
+      this.smartFetchJson(`${PHIMMOI_CONFIG.phimApiSearch}?keyword=${encodedQ}&limit=12`, 2500).catch(() => null),
+      this.smartFetchJson(`${PHIMMOI_CONFIG.nguoncApiSearch}?keyword=${encodedQ}`, 2000).catch(() => null)
     ]);
+    const remotePosts = [];
 
     // Nguồn 1: PhimAPI (Netflix & KKPhim Vietsub)
     if (phimApiRes && phimApiRes.data && Array.isArray(phimApiRes.data.items)) {
@@ -1434,7 +1434,21 @@ class PhimmoiService {
       });
     }
 
-    return localMatches;
+    // Sắp xếp kết quả trả về theo độ chuẩn xác từ khóa trước, năm phát hành sau
+    const scored = localMatches.map((m) => {
+      const t = (m.title || "").toLowerCase();
+      const o = (m.originTitle || "").toLowerCase();
+      let score = 0;
+      if (t === q || o === q) score = 250;
+      else if (t.startsWith(q)) score = 180;
+      else if (o.startsWith(q)) score = 150;
+      else if (t.includes(q)) score = 110;
+      else if (o.includes(q)) score = 90;
+      else score = 30;
+      return { movie: m, score };
+    });
+    scored.sort((a, b) => b.score - a.score || (b.movie.year || 0) - (a.movie.year || 0));
+    return scored.map((it) => it.movie);
   }
 
   /**
