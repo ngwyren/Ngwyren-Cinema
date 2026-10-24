@@ -159,7 +159,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Dược Sư Tự Sự 3",
       "poster": "https://image.tmdb.org/t/p/original/w3agwUSMpJ4X9t1jGrDtqqRPjDQ.jpg",
       "backdrop": "https://image.tmdb.org/t/p/original/tKZeL5kDZbOo8ao1szJZuZT0kqO.jpg",
-      "quality": "4K Ultra HD",
+      "quality": "1080p Full HD",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [

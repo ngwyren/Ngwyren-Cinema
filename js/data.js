@@ -1094,7 +1094,7 @@ class PhimmoiService {
                      (Array.isArray(item.sectionTags) && item.sectionTags.includes("4k"));
         const normalizedItem = {
           ...item,
-          quality: is4k ? "4K Ultra HD" : (item.quality === "CAM" ? "CAM" : "1080p Full HD"),
+          quality: item.quality === "CAM" ? "CAM" : "1080p Full HD",
           genres: Array.isArray(item.genres) ? item.genres : [item.genres || "Chính Kịch"],
           cast: Array.isArray(item.cast) ? item.cast : [item.cast || "Dàn diễn viên chính"],
           sectionTags: Array.isArray(item.sectionTags) ? item.sectionTags : ["hot"],
@@ -1706,16 +1706,25 @@ class PhimmoiService {
         if (realSource && (realSource.includes(".m3u8") || realSource.includes("/hls/"))) {
           const embedUrl = `https://player.phimapi.com/player/?url=${encodeURIComponent(realSource)}`;
           ep.embed = embedUrl;
+          const hasRealDub =
+            Array.isArray(movie.dubEpisodes) &&
+            movie.dubEpisodes.length > idx &&
+            movie.dubEpisodes[idx]?.source &&
+            movie.dubEpisodes[idx]?.source !== realSource;
+
           ep.altSources = [
-            { id: `vs-1080-v1-${idx}`, label: "VIETSUB 1080 V1", is4k: false, source: realSource, embed: embedUrl },
-            { id: `vs-1080-v2-${idx}`, label: "VIETSUB 1080 V2", is4k: false, source: realSource, embed: embedUrl },
-            { id: `vs-4k-v1-${idx}`, label: "VIETSUB 4K V1", is4k: true, source: realSource, embed: embedUrl },
-            { id: `vs-4k-v2-${idx}`, label: "VIETSUB 4K V2", is4k: true, source: realSource, embed: embedUrl },
-            { id: `tm-1080-v1-${idx}`, label: "Thuyết minh 1080 V1", is4k: false, source: movie.dubEpisodes?.[idx]?.source || realSource, embed: embedUrl },
-            { id: `tm-1080-v2-${idx}`, label: "Thuyết minh 1080 V2", is4k: false, source: movie.dubEpisodes?.[idx]?.source || realSource, embed: embedUrl },
-            { id: `tm-4k-v1-${idx}`, label: "Thuyết minh 4k V1", is4k: true, source: movie.dubEpisodes?.[idx]?.source || realSource, embed: embedUrl },
-            { id: `tm-4k-v2-${idx}`, label: "Thuyết minh 4k V2", is4k: true, source: movie.dubEpisodes?.[idx]?.source || realSource, embed: embedUrl }
+            { id: `vs-vip1-${idx}`, label: "Server VIP 1 (1080p)", is4k: false, source: realSource, embed: embedUrl },
+            { id: `vs-vip2-${idx}`, label: "Server Dự Phòng", is4k: false, source: realSource, embed: embedUrl }
           ];
+          if (hasRealDub) {
+            ep.altSources.push({
+              id: `tm-vip1-${idx}`,
+              label: "Thuyết Minh VIP",
+              is4k: false,
+              source: movie.dubEpisodes[idx].source,
+              embed: embedUrl
+            });
+          }
         }
       });
     }

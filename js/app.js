@@ -56,6 +56,7 @@ class AppleCinemaApp {
   }
 
   async init() {
+    this.initGlobalAdBlocker();
     this.applyTheme();
     this.buildFastIndexes();
     this.setupHeroMovies();
@@ -1695,6 +1696,11 @@ class AppleCinemaApp {
             <div class="apple-hud-text" id="appleHudText" style="display: none;"></div>
           </div>
 
+          <!-- Nút bỏ qua 15s Quảng cáo / Intro (Tự động hiện trong 30s đầu) -->
+          <button class="apple-skip-intro-btn" id="appleSkipIntroBtn" onclick="app.skipAdIntro(15)" style="display: none;" title="Bỏ qua 15 giây quảng cáo / intro (Phím S)">
+            <i class="fas fa-forward-fast"></i> Bỏ qua 15s QC
+          </button>
+
           <!-- Apple Glass Player Overlay Controls (Giao diện điều khiển kính mờ chuẩn Apple visionOS / Apple TV+) -->
           <div class="apple-player-overlay" id="applePlayerOverlay">
             <!-- Click Layer phủ toàn màn hình để Play/Pause và Double click Toàn màn hình -->
@@ -1962,8 +1968,97 @@ class AppleCinemaApp {
   }
 
   /* ==========================================================================
-     HLS (.M3U8) & MULTI-SERVER 4K STREAMING ENGINE
+     HLS (.M3U8) AD-BLOCKER & MULTI-SERVER STREAMING ENGINE
      ========================================================================== */
+  initGlobalAdBlocker() {
+    if (window._adBlockerInitialized) return;
+    window._adBlockerInitialized = true;
+    const originalWindowOpen = window.open;
+    window.open = function (url, target, features) {
+      if (typeof url === "string") {
+        const u = url.toLowerCase();
+        const isAllowed = u.includes("youtube.com") || u.includes("google.com") || u.includes("github.com");
+        if (!isAllowed) {
+          console.warn("[AdBlocker] Đã chặn popup quảng cáo nhảy trang:", url);
+          return null;
+        }
+      }
+      return originalWindowOpen.call(window, url, target, features);
+    };
+  }
+
+  cleanHlsAdSegments(playlistText) {
+    if (!playlistText || typeof playlistText !== "string" || !playlistText.includes("#EXTM3U")) {
+      return playlistText;
+    }
+    const lines = playlistText.split(/\r?\n/);
+    const clean = [];
+    const adSignatures = [
+      "convertv7", "/v7/", "ad/", "/ad/", "ads/", "adv/", "quangcao", "qc/",
+      "promo", "sponsor", "cwin", "kubet", "888", "1xbet", "bet69", "bet88",
+      "track", "banner", "shopee", "lazada"
+    ];
+
+    for (let i = 0; i < lines.length; i++) {
+      const rawLine = lines[i];
+      const line = rawLine.trim();
+
+      // Kiểm tra dòng chứa phân đoạn video quảng cáo (.ts, .mp4, .m4s)
+      const isAdSegment = adSignatures.some((sig) => line.toLowerCase().includes(sig));
+      if (isAdSegment) {
+        if (clean.length > 0 && clean[clean.length - 1].startsWith("#EXTINF:")) {
+          clean.pop();
+        }
+        if (clean.length > 0 && clean[clean.length - 1].startsWith("#EXT-X-KEY:")) {
+          clean.pop();
+        }
+        continue;
+      }
+      clean.push(rawLine);
+    }
+
+    // Tinh gọn các thẻ DISCONTINUITY bị thừa sau khi bóc tách quảng cáo
+    const finalLines = [];
+    let prevDiscont = false;
+    for (let i = 0; i < clean.length; i++) {
+      const l = clean[i].trim();
+      if (l === "#EXT-X-DISCONTINUITY") {
+        if (prevDiscont || finalLines.length === 0) continue;
+        prevDiscont = true;
+      } else {
+        prevDiscont = false;
+      }
+      finalLines.push(clean[i]);
+    }
+
+    while (finalLines.length > 0 && finalLines[finalLines.length - 1].trim() === "#EXT-X-DISCONTINUITY") {
+      finalLines.pop();
+    }
+
+    return finalLines.join("\n");
+  }
+
+  createAdFreePlaylistLoader() {
+    const self = this;
+    if (!window.Hls || !window.Hls.DefaultConfig || !window.Hls.DefaultConfig.loader) return undefined;
+    return class extends window.Hls.DefaultConfig.loader {
+      constructor(config) {
+        super(config);
+        const origLoad = this.load.bind(this);
+        this.load = (context, cfg, callbacks) => {
+          const origSuccess = callbacks.onSuccess;
+          callbacks.onSuccess = (response, stats, ctx, networkDetails) => {
+            if (response && typeof response.data === "string" && response.data.includes("#EXTM3U")) {
+              response.data = self.cleanHlsAdSegments(response.data);
+            }
+            if (origSuccess) origSuccess(response, stats, ctx, networkDetails);
+          };
+          origLoad(context, cfg, callbacks);
+        };
+      }
+    };
+  }
+
   renderServerButtons(movie, epIndex = 0) {
     const el = document.getElementById("playerToolbarServers");
     const toolbar = document.getElementById("playerToolbarContainer");
@@ -1984,14 +2079,12 @@ class AppleCinemaApp {
 
     // 1. Nếu tập phim có danh sách Server chuyên dụng (như 4K Vietsub, 4K Thuyết Minh theo chuẩn HHPanda / YanHH3D)
     if (altSources.length > 0) {
-      const has4k = altSources.some((s) => s.is4k || (s.label && s.label.toLowerCase().includes("4k")));
       return `
         <div class="server-selection-wrapper">
-          ${
-            has4k
-              ? `<div class="banner-4k-pill">4K có chất lượng 4K siêu nét</div>`
-              : `<span class="server-label"><i class="fas fa-server"></i> Nguồn phát:</span>`
-          }
+          <div class="banner-4k-pill">
+            <i class="fas fa-shield-check" style="color: #38ef7d; margin-right: 4px;"></i>
+            Luồng phát 1080p Siêu Nét • Đã tự động lọc sạch quảng cáo API
+          </div>
           <div class="server-buttons-rack">
             ${altSources
               .map((alt, idx) => {
@@ -2149,9 +2242,8 @@ class AppleCinemaApp {
 
     let isDirectM3u8 = Boolean(streamUrl && (streamUrl.includes(".m3u8") || streamUrl.includes("/hls/")));
 
-    // Cập nhật chất lượng luồng thực tế (4K hoặc 1080p)
-    const is4kCurrent = (selectedAltObj && (selectedAltObj.is4k || (selectedAltObj.label && selectedAltObj.label.includes("4K")))) ||
-                        (movie.quality && movie.quality.includes("4K"));
+    // Luồng phát mặc định là 1080p Full HD gốc trung thực, người xem có thể bật Chế độ Nâng Nét 4K AI Upscale bất cứ lúc nào
+    const is4kCurrent = Boolean(selectedAltObj && (selectedAltObj.is4k || (selectedAltObj.label && selectedAltObj.label.includes("4K"))));
     this.currentQuality = is4kCurrent ? "4K" : "1080p";
 
     // Nếu không có luồng m3u8 trực tiếp, thử tìm luồng m3u8 trong altSources hoặc enrich
@@ -2210,7 +2302,9 @@ class AppleCinemaApp {
     this.actualVideoRes = { width: 0, height: 0, bitrateMbps: 0 };
 
     if (window.Hls && window.Hls.isSupported()) {
+      const CustomPlaylistLoader = this.createAdFreePlaylistLoader();
       this.hlsInstance = new window.Hls({
+        pLoader: CustomPlaylistLoader,
         enableWorker: true,
         lowLatencyMode: true,
         progressive: true,
@@ -2224,6 +2318,13 @@ class AppleCinemaApp {
       });
       this.hlsInstance.loadSource(streamUrl);
       this.hlsInstance.attachMedia(videoEl);
+      this.hlsInstance.on(window.Hls.Events.FRAG_LOADING, (_, data) => {
+        const fragUrl = (data?.frag?.url || "").toLowerCase();
+        const adSignatures = ["convertv7", "/v7/", "cwin", "kubet", "888", "1xbet", "quangcao"];
+        if (adSignatures.some((s) => fragUrl.includes(s))) {
+          console.warn("[AdBlocker] Đã chặn tải phân đoạn quảng cáo:", fragUrl);
+        }
+      });
       this.hlsInstance.on(window.Hls.Events.MANIFEST_PARSED, (_, data) => {
         this.inspectHlsLevels(data?.levels || this.hlsInstance.levels || []);
         this.applyHlsQualityLevel();
@@ -2321,6 +2422,16 @@ class AppleCinemaApp {
         applePlayIcon.className = videoEl.paused ? "fas fa-play" : "fas fa-pause";
       }
 
+      // Quản lý hiển thị nút Bỏ qua quảng cáo / Intro trong 30s đầu
+      const skipBtn = document.getElementById("appleSkipIntroBtn");
+      if (skipBtn) {
+        if (videoEl.currentTime > 0.5 && videoEl.currentTime < 30) {
+          skipBtn.style.display = "inline-flex";
+        } else {
+          skipBtn.style.display = "none";
+        }
+      }
+
       // Tự động lưu vị trí thời gian thực nếu thoát giữa chừng
       if (videoEl.currentTime > 5 && (!videoEl._lastSavedPos || Math.abs(videoEl.currentTime - videoEl._lastSavedPos) >= 3)) {
         videoEl._lastSavedPos = videoEl.currentTime;
@@ -2329,6 +2440,16 @@ class AppleCinemaApp {
         }
       }
     };
+  }
+
+  skipAdIntro(seconds = 15) {
+    const videoEl = document.getElementById("hlsVideoElement");
+    if (!videoEl) return;
+    videoEl.currentTime = Math.min((videoEl.duration || 9999) - 1, videoEl.currentTime + seconds);
+    const skipBtn = document.getElementById("appleSkipIntroBtn");
+    if (skipBtn) skipBtn.style.display = "none";
+    this.showToast(`⚡ Đã bỏ qua ${seconds}s quảng cáo / giới thiệu!`);
+    this.showAppleVideoHud("forward", `+${seconds}s`);
   }
 
   inspectHlsLevels(rawLevels) {
@@ -2372,106 +2493,34 @@ class AppleCinemaApp {
   }
 
   buildQualityButtonsHTML() {
-    const movie = this.selectedMovie;
-    const ep = movie?.episodes?.[this.currentEpisodeIndex] || movie?.episodes?.[0];
-    const altSources = ep?.altSources || [];
-    const has4kAlt = altSources.some((s) => s.is4k || (s.label && s.label.toLowerCase().includes("4k")));
-    const is4kMovie = (movie?.quality && movie.quality.includes("4K")) || (movie?.sectionTags && movie.sectionTags.includes("4k")) || has4kAlt;
-
-    if (is4kMovie) {
-      let is4kActive = false;
-      if (this.currentServerMode && this.currentServerMode.startsWith("alt-")) {
-        const altIdx = parseInt(this.currentServerMode.replace("alt-", ""), 10);
-        const curAlt = altSources[altIdx];
-        if (curAlt && (curAlt.is4k || (curAlt.label && curAlt.label.toLowerCase().includes("4k")))) {
-          is4kActive = true;
-        }
-      } else if (this.currentQuality === "4K" || this.currentQuality === "4K Ultra HD") {
-        is4kActive = true;
-      }
-
-      return `
-        <button class="quality-pill-btn ${is4kActive ? "active" : ""} is-4k-quality" 
-                onclick="app.switchQualityTier('4k')" 
-                title="Chất lượng 4K Ultra HD siêu nét">
-          <i class="fas fa-sparkles"></i> 4K
-        </button>
-        <button class="quality-pill-btn ${!is4kActive ? "active" : ""}" 
-                onclick="app.switchQualityTier('1080p')" 
-                title="Độ phân giải 1080p Full HD">
-          1080p
-        </button>
-      `;
-    }
-
-    return `<button class="quality-pill-btn active" data-quality="native-max" title="Độ phân giải Full HD sắc nét">
-      1080p
-    </button>`;
+    const isUpscaleActive = this.currentQuality === "4K" || this.currentQuality === "4K-upscale";
+    return `
+      <button class="quality-pill-btn ${!isUpscaleActive ? "active" : ""}" 
+              onclick="app.switchQualityTier('1080p')" 
+              title="Độ phân giải 1080p Full HD sắc nét gốc từ nguồn API (Đã lọc quảng cáo)">
+        1080p Full HD
+      </button>
+      <button class="quality-pill-btn ${isUpscaleActive ? "active" : ""} is-4k-quality" 
+              onclick="app.switchQualityTier('4k')" 
+              title="Kích hoạt bộ lọc Nâng Nét 4K AI Upscale (Tối ưu độ nét trên màn hình Retina/4K)">
+        <i class="fas fa-sparkles"></i> 4K AI Upscale
+      </button>
+    `;
   }
 
   switchQualityTier(tier) {
-    const movie = this.selectedMovie;
-    if (!movie) return;
-    const epIndex = this.currentEpisodeIndex || 0;
-    const ep = movie.episodes?.[epIndex] || movie.episodes?.[0];
-    const altSources = ep?.altSources || [];
-
     if (tier === "4k") {
-      let targetAltIdx = -1;
-      const isDub =
-        this.currentServerMode &&
-        (this.currentServerMode === "dub-1" ||
-          this.currentServerMode.includes("dub") ||
-          (this.currentServerMode.startsWith("alt-") &&
-            altSources[parseInt(this.currentServerMode.replace("alt-", ""), 10)]?.label?.toLowerCase().includes("thuyết minh")));
-
-      if (isDub) {
-        targetAltIdx = altSources.findIndex(
-          (s) => (s.is4k || (s.label && s.label.toLowerCase().includes("4k"))) && s.label?.toLowerCase().includes("thuyết minh")
-        );
-      }
-      if (targetAltIdx === -1) {
-        targetAltIdx = altSources.findIndex((s) => s.is4k || (s.label && s.label.toLowerCase().includes("4k")));
-      }
-
-      if (targetAltIdx !== -1) {
-        this.startVideoPlayback(movie, epIndex, `alt-${targetAltIdx}`);
-        this.showToast("✨ Đã chuyển sang chất lượng 4K Ultra HD siêu nét!");
-        return;
-      }
       this.currentQuality = "4K";
+      this.applyVideoQualityVisuals();
       this.renderDynamicQualityButtons();
-      this.showToast("✨ Đang phát chuẩn 4K Ultra HD");
+      this.showToast("✨ Đã kích hoạt Chế độ Nâng Nét 4K AI Upscale!");
+      this.showAppleVideoHud("forward", "4K AI");
     } else {
-      let targetAltIdx = -1;
-      const isDub =
-        this.currentServerMode &&
-        (this.currentServerMode === "dub-1" ||
-          (this.currentServerMode.startsWith("alt-") &&
-            altSources[parseInt(this.currentServerMode.replace("alt-", ""), 10)]?.label?.toLowerCase().includes("thuyết minh")));
-
-      if (isDub) {
-        targetAltIdx = altSources.findIndex(
-          (s) => !s.is4k && (!s.label || !s.label.toLowerCase().includes("4k")) && s.label?.toLowerCase().includes("thuyết minh")
-        );
-      }
-      if (targetAltIdx === -1) {
-        targetAltIdx = altSources.findIndex((s) => !s.is4k && (!s.label || !s.label.toLowerCase().includes("4k")));
-      }
-
-      if (targetAltIdx !== -1) {
-        this.startVideoPlayback(movie, epIndex, `alt-${targetAltIdx}`);
-        this.showToast("Đã chuyển sang chất lượng 1080p Full HD");
-        return;
-      }
-
       this.currentQuality = "1080p";
-      if (this.currentServerMode && this.currentServerMode.startsWith("alt-")) {
-        this.startVideoPlayback(movie, epIndex, "hls-1");
-      } else {
-        this.renderDynamicQualityButtons();
-      }
-      this.showToast("Đang phát chuẩn 1080p Full HD");
+      this.applyVideoQualityVisuals();
+      this.renderDynamicQualityButtons();
+      this.showToast("Đang phát chuẩn 1080p Full HD gốc (Đã lọc sạch quảng cáo)");
+      this.showAppleVideoHud("forward", "1080p");
     }
   }
 
@@ -2486,22 +2535,15 @@ class AppleCinemaApp {
     const w = this.actualVideoRes.width || 1920;
     const h = this.actualVideoRes.height || 1080;
     const mbps = this.actualVideoRes.bitrateMbps || 3.5;
-    const nativeTier = this.resolveResolutionTier(w, h);
-    const nativeInfo = `${nativeTier.toUpperCase()} (${w}×${h} • ${mbps} Mbps)`;
-
-    if (q && q.startsWith("level-")) {
-      const idx = parseInt(q.replace("level-", ""), 10);
-      const lvl = this.detectedHlsLevels.find((l) => l.index === idx);
-      if (lvl) return `LUỒNG ${lvl.detailLabel.toUpperCase()}`;
+    const is4k = q === "4K" || q === "4K-upscale";
+    if (is4k) {
+      return `4K AI UPSCALE • ${w}×${h} • ${mbps} Mbps (ĐÃ LỌC SẠCH QC)`;
     }
-    if (q === "Auto") {
-      return `AUTO ABR • ĐANG PHÁT ${nativeInfo}`;
-    }
-    return `CHẤT LƯỢNG TỐT NHẤT • ${nativeInfo}`;
+    return `1080P FULL HD • ${w}×${h} • ${mbps} Mbps (ĐÃ LỌC SẠCH QC)`;
   }
 
-  getQualityVideoClass() {
-    return "";
+  getQualityVideoClass(q) {
+    return q === "4K" || q === "4K-upscale" ? "quality-4k-upscale" : "";
   }
 
   setVideoQuality(qualityMode, showNotification = true) {
@@ -2581,7 +2623,7 @@ class AppleCinemaApp {
   applyVideoQualityVisuals() {
     const videoEl = document.getElementById("hlsVideoElement");
     if (videoEl) {
-      videoEl.classList.remove("quality-4k", "quality-2k", "quality-720p");
+      videoEl.classList.remove("quality-4k", "quality-2k", "quality-720p", "quality-4k-upscale");
       const cls = this.getQualityVideoClass(this.currentQuality);
       if (cls) videoEl.classList.add(cls);
     }
@@ -3492,6 +3534,13 @@ class AppleCinemaApp {
         if (modal?.classList.contains("open") && videoEl && videoEl.style.display !== "none") {
           e.preventDefault();
           this.toggleVideoTheaterMode();
+        }
+      } else if ((e.key === "s" || e.key === "S") && !isInput) {
+        const modal = document.getElementById("movieDetailModal");
+        const videoEl = document.getElementById("hlsVideoElement");
+        if (modal?.classList.contains("open") && videoEl && videoEl.style.display !== "none") {
+          e.preventDefault();
+          this.skipAdIntro(15);
         }
       }
     });
