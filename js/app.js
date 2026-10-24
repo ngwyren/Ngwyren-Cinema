@@ -635,7 +635,7 @@ class AppleCinemaApp {
                        onerror="this.src='https://yanhh3d.ee/wp-content/uploads/2025/12/bach-luyen-thanh-than-3-00.jpg'" />
                   <div class="schedule-card-top-badges">
                     <span class="sch-time-pill"><i class="far fa-clock"></i> ${m.airTime || "10:00 Sáng"}</span>
-                    <span class="sch-quality-pill"><i class="fas fa-sparkles"></i> ${m.quality || "4K / 1080p"}</span>
+                    <span class="sch-quality-pill"><i class="fas fa-sparkles"></i> ${m.quality || "1080"}</span>
                   </div>
                   <div class="schedule-hover-play">
                     <div class="sch-play-icon"><i class="fas fa-play"></i></div>
@@ -1796,7 +1796,7 @@ class AppleCinemaApp {
         <div class="player-toolbar-right">
           <span class="server-label"><i class="fas fa-sliders"></i> Chất lượng luồng:</span>
           <div class="quality-selector-group" id="qualitySelectorGroup" role="group" aria-label="Chọn độ phân giải thực tế">
-            ${this.buildQualityButtonsHTML()}
+            ${this.buildQualityButtonsHTML(movie)}
           </div>
         </div>
       </div>
@@ -2204,9 +2204,13 @@ class AppleCinemaApp {
 
     let isDirectM3u8 = Boolean(streamUrl && (streamUrl.includes(".m3u8") || streamUrl.includes("/hls/")));
 
-    // Luồng phát mặc định là 1080p Full HD gốc trung thực, người xem có thể bật Chế độ Nâng Nét 4K AI Upscale bất cứ lúc nào
-    const is4kCurrent = Boolean(selectedAltObj && (selectedAltObj.is4k || (selectedAltObj.label && selectedAltObj.label.includes("4K"))));
-    this.currentQuality = is4kCurrent ? "4K" : "1080p";
+    // Nếu phim có định dạng 4K thì ưu tiên phát 4K sắc nét nhất, ngược lại phát 1080
+    const has4k = Boolean(
+      (movie.quality && movie.quality.toString().toUpperCase().includes("4K")) ||
+      (Array.isArray(movie.sectionTags) && movie.sectionTags.includes("4k")) ||
+      movie.slug === "quang-am-chi-ngoai"
+    );
+    this.currentQuality = has4k ? "4K" : "1080";
 
     // Nếu không có luồng m3u8 trực tiếp, thử tìm luồng m3u8 trong altSources hoặc enrich
     if (!isDirectM3u8) {
@@ -2454,42 +2458,61 @@ class AppleCinemaApp {
     return "Full HD 1080p";
   }
 
-  buildQualityButtonsHTML() {
-    const isUpscaleActive = this.currentQuality === "4K" || this.currentQuality === "4K-upscale";
+  buildQualityButtonsHTML(movie) {
+    const m = movie || this.selectedMovie;
+    const has4k = Boolean(
+      m && (
+        (m.quality && m.quality.toString().toUpperCase().includes("4K")) ||
+        (Array.isArray(m.sectionTags) && m.sectionTags.includes("4k")) ||
+        m.slug === "quang-am-chi-ngoai"
+      )
+    );
+
+    if (!has4k) {
+      return `
+        <button class="quality-pill-btn active" 
+                onclick="app.switchQualityTier('1080')" 
+                title="Độ phân giải 1080">
+          1080
+        </button>
+      `;
+    }
+
+    const is4kActive = this.currentQuality === "4K" || this.currentQuality === "4K-upscale";
     return `
-      <button class="quality-pill-btn ${!isUpscaleActive ? "active" : ""}" 
-              onclick="app.switchQualityTier('1080p')" 
-              title="Độ phân giải 1080p Full HD sắc nét gốc từ nguồn API (Đã lọc quảng cáo)">
-        1080p Full HD
+      <button class="quality-pill-btn ${!is4kActive ? "active" : ""}" 
+              onclick="app.switchQualityTier('1080')" 
+              title="Độ phân giải 1080">
+        1080
       </button>
-      <button class="quality-pill-btn ${isUpscaleActive ? "active" : ""} is-4k-quality" 
+      <button class="quality-pill-btn ${is4kActive ? "active" : ""} is-4k-quality" 
               onclick="app.switchQualityTier('4k')" 
-              title="Kích hoạt bộ lọc Nâng Nét 4K AI Upscale (Tối ưu độ nét trên màn hình Retina/4K)">
-        <i class="fas fa-sparkles"></i> 4K AI Upscale
+              title="Độ phân giải 4K">
+        4K
       </button>
     `;
   }
 
   switchQualityTier(tier) {
-    if (tier === "4k") {
+    if (tier === "4k" || tier === "4K") {
       this.currentQuality = "4K";
       this.applyVideoQualityVisuals();
       this.renderDynamicQualityButtons();
-      this.showToast("✨ Đã kích hoạt Chế độ Nâng Nét 4K AI Upscale!");
-      this.showAppleVideoHud("forward", "4K AI");
+      this.showToast("✨ Đang phát chất lượng 4K");
+      this.showAppleVideoHud("forward", "4K");
     } else {
-      this.currentQuality = "1080p";
+      this.currentQuality = "1080";
       this.applyVideoQualityVisuals();
       this.renderDynamicQualityButtons();
-      this.showToast("Đang phát chuẩn 1080p Full HD gốc (Đã lọc sạch quảng cáo)");
-      this.showAppleVideoHud("forward", "1080p");
+      this.showToast("Đang phát chất lượng 1080");
+      this.showAppleVideoHud("forward", "1080");
     }
   }
 
   renderDynamicQualityButtons() {
     const group = document.getElementById("qualitySelectorGroup");
     if (group) {
-      group.innerHTML = this.buildQualityButtonsHTML();
+      group.innerHTML = this.buildQualityButtonsHTML(this.selectedMovie);
     }
   }
 
@@ -2499,9 +2522,9 @@ class AppleCinemaApp {
     const mbps = this.actualVideoRes.bitrateMbps || 3.5;
     const is4k = q === "4K" || q === "4K-upscale";
     if (is4k) {
-      return `4K AI UPSCALE • ${w}×${h} • ${mbps} Mbps (ĐÃ LỌC SẠCH QC)`;
+      return `4K • ${w}×${h} • ${mbps} Mbps`;
     }
-    return `1080P FULL HD • ${w}×${h} • ${mbps} Mbps (ĐÃ LỌC SẠCH QC)`;
+    return `1080 • ${w}×${h} • ${mbps} Mbps`;
   }
 
   getQualityVideoClass(q) {
@@ -2661,8 +2684,8 @@ class AppleCinemaApp {
 
     if (islandBackdrop) islandBackdrop.src = this.getMovieBackdrop(movie);
     if (islandTitle) islandTitle.textContent = movie.title;
-    if (islandDuration) islandDuration.textContent = movie.duration || "Full HD";
-    if (islandQuality) islandQuality.textContent = movie.quality || "FHD";
+    if (islandDuration) islandDuration.textContent = movie.duration || "1080";
+    if (islandQuality) islandQuality.textContent = movie.quality || "1080";
     if (islandLang) islandLang.textContent = movie.language || "Vietsub";
     if (islandEp) islandEp.textContent = epLabel;
     if (islandPlayIcon) islandPlayIcon.className = playing ? "fas fa-pause" : "fas fa-play";
@@ -3108,7 +3131,7 @@ class AppleCinemaApp {
               <div class="search-suggestion-info">
                 <div class="search-suggestion-title">${m.title}</div>
                 <div class="search-suggestion-meta">
-                  <span class="badge-mini">${m.quality || "FHD"}</span>
+                  <span class="badge-mini">${m.quality || "1080"}</span>
                   <span class="badge-mini">${m.year || 2026}</span>
                   <span class="search-genre-tag">${(m.genres && m.genres[0]) || m.country || "Phim"}</span>
                 </div>

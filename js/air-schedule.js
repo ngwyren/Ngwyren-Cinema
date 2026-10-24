@@ -7,7 +7,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Giới Môn Chi Hạ",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/08/Gioi-Mon-Chi-Ha.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/08/Gioi-Mon-Chi-Ha.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -26,7 +26,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Thành Dã Tiêu Hà",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/08/Thanh-Da-Tieu-Ha.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/08/Thanh-Da-Tieu-Ha.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -45,7 +45,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Vạn Cổ Chí Tôn: Lý Vân Tiêu Truyện",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/07/Van-Co-Chi-Ton-Ly-Van-Tieu-Truyen-720x923.png",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/07/Van-Co-Chi-Ton-Ly-Van-Tieu-Truyen-720x923.png",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -64,7 +64,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Nhất Trảm Thương Khung",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/07/Nhat-Tram-Thuong-Khung.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/07/Nhat-Tram-Thuong-Khung.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -83,7 +83,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Đại Lục Linh Võ",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Dai-Luc-Linh-Vo.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Dai-Luc-Linh-Vo.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -102,7 +102,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Nghịch Thiên Chí Tôn",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Nghich-Thien-Chi-Ton.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Nghich-Thien-Chi-Ton.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -121,7 +121,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Vô Thượng Thần Đế",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Vo-Thuong-Than-De.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Vo-Thuong-Than-De.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -140,7 +140,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Thôn Phệ Tinh Không",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Thon-Phe-Tinh-Khong-1.webp",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Thon-Phe-Tinh-Khong-1.webp",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -159,7 +159,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Dược Sư Tự Sự 3",
       "poster": "https://image.tmdb.org/t/p/original/w3agwUSMpJ4X9t1jGrDtqqRPjDQ.jpg",
       "backdrop": "https://image.tmdb.org/t/p/original/tKZeL5kDZbOo8ao1szJZuZT0kqO.jpg",
-      "quality": "1080p Full HD",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -178,7 +178,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Thương Nguyên Đồ",
       "poster": "https://cdn.animevietsub.sale/data/banner/2023/06/22/animevsub-K2YT1Om6jX.jpg",
       "backdrop": "https://cdn.animevietsub.sale/data/banner/2023/06/22/animevsub-K2YT1Om6jX.jpg",
-      "quality": "1080p Full HD",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -199,7 +199,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Võ Thần Chúa Tể",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Vo-Than-Chua-Te.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Vo-Than-Chua-Te.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -218,7 +218,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Luyện Khí Mười Vạn Năm",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Luyen-Khi-Muoi-Van-Nam.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Luyen-Khi-Muoi-Van-Nam.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -237,7 +237,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Tuyệt Thế Chiến Hồn",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Tuyet-The-Chien-Hon.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Tuyet-The-Chien-Hon.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -256,7 +256,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Già Thiên",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Gia-Thien.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Gia-Thien.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -275,7 +275,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Vạn Giới Độc Tôn",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Van-Gioi-Doc-Ton.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Van-Gioi-Doc-Ton.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -294,7 +294,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Nhất Niệm Vĩnh Hằng",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Nhat-Niem-Vinh-Hang.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Nhat-Niem-Vinh-Hang.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -313,7 +313,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Sora wa Akai Kawa no Hotori",
       "poster": "https://cdn.animevietsub.sale/data/poster/animevsub-8y5As45Rjq.jpg",
       "backdrop": "https://cdn.animevietsub.sale/data/poster/animevsub-8y5As45Rjq.jpg",
-      "quality": "1080p Full HD",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -334,7 +334,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Đại Lý Tự Nhật Chí Phần 3",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/10/Dai-Ly-Tu-Nhat-Chi-Phan-3.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/10/Dai-Ly-Tu-Nhat-Chi-Phan-3.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "11:00 Trưa",
       "genres": [
@@ -353,7 +353,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Người Giữ Mộ Đại Hạ",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/09/Nguoi-Giu-Mo-Dai-Ha.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/09/Nguoi-Giu-Mo-Dai-Ha.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "11:00 Trưa",
       "genres": [
@@ -372,7 +372,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Giới Môn Chi Hạ",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/08/Gioi-Mon-Chi-Ha.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/08/Gioi-Mon-Chi-Ha.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -391,7 +391,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Linh Cảnh Hành Giả",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/08/Linh-Canh-Hanh-Gia.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/08/Linh-Canh-Hanh-Gia.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "11:00 Trưa",
       "genres": [
@@ -410,7 +410,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Ta Trời Sinh Đã Là Nhân Vật Phản Diện",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/08/Ta-Troi-Sinh-Da-La-Nhan-Vat-Phan-Dien.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/08/Ta-Troi-Sinh-Da-La-Nhan-Vat-Phan-Dien.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "11:00 Trưa",
       "genres": [
@@ -429,7 +429,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Lý Hùng Miêu",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/07/Ly-Hung-Mieu-690x1024.png",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/07/Ly-Hung-Mieu-690x1024.png",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "11:00 Trưa",
       "genres": [
@@ -448,7 +448,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Thần Y Cổ Đại Ở Đô Thị",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Than-Y-Co-Dai-O-Do-Thi.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Than-Y-Co-Dai-O-Do-Thi.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -467,7 +467,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Sư Huynh À Sư Huynh",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Su-Huynh-A-Su-Huynh.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Su-Huynh-A-Su-Huynh.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "11:00 Trưa",
       "genres": [
@@ -486,7 +486,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Đấu La Đại Lục 2: Tuyệt thế Đường Môn",
       "poster": "https://cdn.animevietsub.sale/data/poster/2026/01/18/animevsub-MNr5noGvgU.png",
       "backdrop": "https://cdn.animevietsub.sale/data/poster/2026/01/18/animevsub-MNr5noGvgU.png",
-      "quality": "1080p Full HD",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -505,7 +505,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Nghịch Thiên Chí Tôn",
       "poster": "https://cdn.animevietsub.sale/data/poster/2021/07/17/animevsub-tJWxR8WuKy.png",
       "backdrop": "https://cdn.animevietsub.sale/data/poster/2021/07/17/animevsub-tJWxR8WuKy.png",
-      "quality": "1080p Full HD",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -526,7 +526,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Người Giữ Mộ Đại Hạ",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/09/Nguoi-Giu-Mo-Dai-Ha.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/09/Nguoi-Giu-Mo-Dai-Ha.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "11:00 Trưa",
       "genres": [
@@ -545,7 +545,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Thái Cổ Thần Tôn",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/07/Thai-Co-Than-Ton.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/07/Thai-Co-Than-Ton.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -564,7 +564,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Học Viện Cao Võ Đông Đại",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/07/hocviencaovo.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/07/hocviencaovo.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -583,7 +583,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Thế Giới Hoàn Mỹ",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/The-Gioi-Hoan-My.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/The-Gioi-Hoan-My.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -602,7 +602,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Tru Tiên",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Tru-Tien-Phan-3.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Tru-Tien-Phan-3.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -621,7 +621,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Nghịch Thiên Tà Thần 3D",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Nghich-Thien-Ta-Than-3D.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Nghich-Thien-Ta-Than-3D.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -640,7 +640,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Đại Chúa Tể",
       "poster": "https://cdn.animevietsub.sale/data/poster/2023/06/30/animevsub-gNSCKoXFrC.jpg",
       "backdrop": "https://cdn.animevietsub.sale/data/poster/2023/06/30/animevsub-gNSCKoXFrC.jpg",
-      "quality": "1080p Full HD",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -659,7 +659,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Linh Võ Đại Lục",
       "poster": "https://cdn.animevietsub.sale/data/poster/2024/07/26/animevsub-n9CcZUwcGK.jpeg",
       "backdrop": "https://cdn.animevietsub.sale/data/poster/2024/07/26/animevsub-n9CcZUwcGK.jpeg",
-      "quality": "1080p Full HD",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -680,7 +680,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Pháp Sư Tử Linh: Ta Chính Là Thiên Tai",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/07/Phap-Su-Tu-Linh-Ta-Chinh-La-Thien-Tai.png",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/07/Phap-Su-Tu-Linh-Ta-Chinh-La-Thien-Tai.png",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -699,7 +699,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Bắt Đầu Với Chí Tôn Đan Điền",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/10/Bat-Dau-Voi-Chi-Ton-Dan-Dien.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/10/Bat-Dau-Voi-Chi-Ton-Dan-Dien.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -718,7 +718,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Đại Lục Linh Võ",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Dai-Luc-Linh-Vo.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Dai-Luc-Linh-Vo.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -737,7 +737,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Nghịch Thiên Chí Tôn",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Nghich-Thien-Chi-Ton.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Nghich-Thien-Chi-Ton.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -756,7 +756,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Vô Thượng Thần Đế",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Vo-Thuong-Than-De.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Vo-Thuong-Than-De.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -775,7 +775,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Đấu La Đại Lục 2: Tuyệt Thế Đường Môn",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Dau-La-Dai-Luc-2.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Dau-La-Dai-Luc-2.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -794,7 +794,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Thương Nguyên Đồ",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/photo_2026-03-13_09-30-47.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/photo_2026-03-13_09-30-47.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -813,7 +813,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Đại Chúa Tể",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Dai-Chua-Te-2.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Dai-Chua-Te-2.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -832,7 +832,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Bắt Đầu Với Chí Tôn Đan Điền",
       "poster": "https://cdn.animevietsub.sale/data/poster/2025/10/08/animevsub-umJNWGRQRk.jpg",
       "backdrop": "https://cdn.animevietsub.sale/data/poster/2025/10/08/animevsub-umJNWGRQRk.jpg",
-      "quality": "1080p Full HD",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -853,7 +853,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Đại Lý Tự Nhật Chí Phần 3",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/10/Dai-Ly-Tu-Nhat-Chi-Phan-3.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/10/Dai-Ly-Tu-Nhat-Chi-Phan-3.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "11:00 Trưa",
       "genres": [
@@ -872,7 +872,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Đại Vương Tha Mạng Phần 3",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/07/Dai-Vuong-Tha-Mang-Phan-3.png",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/07/Dai-Vuong-Tha-Mang-Phan-3.png",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -891,7 +891,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Vạn Cổ Chí Tôn: Lý Vân Tiêu Truyện",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/07/Van-Co-Chi-Ton-Ly-Van-Tieu-Truyen-720x923.png",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/07/Van-Co-Chi-Ton-Ly-Van-Tieu-Truyen-720x923.png",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -910,7 +910,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Trạch Nhật Phi Thăng",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/07/Trach-Nhat-Phi-Thang-3.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/07/Trach-Nhat-Phi-Thang-3.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -929,7 +929,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Quang Âm Chi Ngoại",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/12/Quang-Am-Chi-Ngoai-2.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/12/Quang-Am-Chi-Ngoai-2.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -948,7 +948,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Đấu Phá Thương Khung Phần 5",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Dau-Pha-Thuong-Khung-Phan-5.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Dau-Pha-Thuong-Khung-Phan-5.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -967,7 +967,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Phàm Nhân Tu Tiên",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Pham-Nhan-Tu-Tien.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Pham-Nhan-Tu-Tien.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -986,7 +986,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Luyện Khí Mười Vạn Năm",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Luyen-Khi-Muoi-Van-Nam.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Luyen-Khi-Muoi-Van-Nam.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -1005,7 +1005,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Tuyệt Thế Chiến Hồn",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Tuyet-The-Chien-Hon.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Tuyet-The-Chien-Hon.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -1024,7 +1024,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Vạn Giới Độc Tôn",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Van-Gioi-Doc-Ton.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Van-Gioi-Doc-Ton.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -1043,7 +1043,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Chuyển Sinh Thành Kiếm 2",
       "poster": "https://cdn.animevietsub.sale/data/poster/animevsub-HCDXFh6sji.jpg",
       "backdrop": "https://cdn.animevietsub.sale/data/poster/animevsub-HCDXFh6sji.jpg",
-      "quality": "1080p Full HD",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -1064,7 +1064,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Thái Cổ Thần Tôn",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/07/Thai-Co-Than-Ton.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/07/Thai-Co-Than-Ton.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -1083,7 +1083,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Thần Tài Đậu Chiêm Long",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/07/Than-Tai-Dau-Chiem-Long.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/07/Than-Tai-Dau-Chiem-Long.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -1102,7 +1102,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Mục Thần Ký",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Muc-Than-Ky-12-hh3d.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Muc-Than-Ky-12-hh3d.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -1121,7 +1121,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Tiên Nghịch",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Tien-Nghich.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Tien-Nghich.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -1140,7 +1140,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Thần Y Cổ Đại Ở Đô Thị",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Than-Y-Co-Dai-O-Do-Thi.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Than-Y-Co-Dai-O-Do-Thi.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -1159,7 +1159,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Võ Thần Chúa Tể",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2025/04/Vo-Than-Chua-Te.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2025/04/Vo-Than-Chua-Te.jpg",
-      "quality": "4K / 1080p",
+      "quality": "4K",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
