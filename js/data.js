@@ -1090,9 +1090,8 @@ class PhimmoiService {
     if (Array.isArray(window.NGWYREN_FULL_CATALOG)) {
       window.NGWYREN_FULL_CATALOG.forEach((item) => {
         if (!item || !item.slug) return;
-        const is4k = (item.quality && item.quality.toString().toLowerCase().includes("4k")) ||
-                     (Array.isArray(item.sectionTags) && item.sectionTags.includes("4k")) ||
-                     item.slug === "quang-am-chi-ngoai";
+        const is4k = (item.quality && item.quality.toString().toUpperCase().includes("4K")) ||
+                     (Array.isArray(item.sectionTags) && item.sectionTags.includes("4k"));
         const normalizedItem = {
           ...item,
           quality: is4k ? "4K" : "1080",

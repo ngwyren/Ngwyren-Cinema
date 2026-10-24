@@ -538,30 +538,6 @@ class AppleCinemaApp {
                 </button>
               </div>
             </div>
-
-            <!-- Card 3: Quản Lý Dữ Liệu Cá Nhân -->
-            <div class="vision-settings-card" style="grid-column: 1 / -1;">
-              <div class="vision-settings-card-header">
-                <div>
-                  <h3>Quản Lý Dữ Liệu Cá Nhân</h3>
-                </div>
-              </div>
-
-              <div class="vision-setting-actions-row">
-                <button class="vision-btn-outline" onclick="app.setNavigation('yeu-thich')">
-                  Phim Đã Lưu (${this.myList.length})
-                </button>
-                <button class="vision-btn-outline" onclick="app.setNavigation('lich-su')">
-                  Lịch Sử (${this.watchHistory.length})
-                </button>
-                <button class="vision-btn-outline" onclick="app.clearWatchHistory()">
-                  Xóa Lịch Sử
-                </button>
-                <button class="vision-btn-outline" onclick="app.clearMyList()">
-                  Xóa Đã Lưu
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -1690,6 +1666,12 @@ class AppleCinemaApp {
           <video id="hlsVideoElement" class="${this.getQualityVideoClass(this.currentQuality)}" playsinline poster="${backdropUrl}" tabindex="-1"></video>
           <iframe id="trailerIframeElement" style="display: none;" sandbox="allow-scripts allow-same-origin allow-presentation allow-forms" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen tabindex="-1"></iframe>
 
+          <!-- Apple Anti-Watermark / Logo Shield (Khử hoàn toàn Watermark HHPANDA.ME, YanHH3D.ME và logo góc) -->
+          <div class="apple-watermark-shield" id="appleWatermarkShield" aria-hidden="true">
+            <div class="shield-corner shield-top-right"></div>
+            <div class="shield-corner shield-top-left"></div>
+          </div>
+
           <!-- Apple Center HUD Pulse: Không vòng tròn, chỉ hiển thị icon -->
           <div class="apple-video-hud" id="appleVideoHud">
             <i class="fas fa-play" id="appleHudIcon"></i>
@@ -1769,6 +1751,11 @@ class AppleCinemaApp {
                   <!-- Tốc độ phát -->
                   <button class="apple-ctrl-btn apple-speed-btn" id="appleSpeedBtn" onclick="app.cyclePlaybackSpeed(event)" title="Tốc độ phát">
                     <span id="appleSpeedText">1.0x</span>
+                  </button>
+
+                  <!-- Khử Logo & Watermark -->
+                  <button class="apple-ctrl-btn apple-shield-btn active" id="appleShieldBtn" onclick="app.toggleWatermarkShield(event)" title="Khử Logo & Watermark (Đang Bật - Phím W)">
+                    <i class="fas fa-eye-slash" id="appleShieldIcon"></i>
                   </button>
 
                   <!-- Picture in Picture -->
@@ -1997,7 +1984,10 @@ class AppleCinemaApp {
       "convertv7", "/v7/", "segment_00", "9922", "ad/", "/ad/", "ads/", "adv/", "quangcao", "qc/",
       "promo", "sponsor", "cwin", "kubet", "888", "1xbet", "bet69", "bet88", "789", "jun88",
       "hi88", "new88", "f8bet", "shbet", "mb66", "okvip", "777", "123b", "w88", "m88", "fun88",
-      "bk8", "fb88", "dafabet", "track", "banner", "shopee", "lazada"
+      "bk8", "fb88", "dafabet", "go88", "sunwin", "rikvip", "b52", "hitclub", "iwin", "nhacai",
+      "casino", "taixiu", "nohu", "keonhacai", "bong88", "s666", "mu88", "v9bet", "k8cc", "ee88",
+      "sv388", "mig8", "sin88", "debet", "may88", "zbet", "oxbet", "red88", "five88", "gamebaidoithuong",
+      "track", "banner", "shopee", "lazada", "telegram"
     ];
 
     let currTime = 0;
@@ -2077,8 +2067,13 @@ class AppleCinemaApp {
         this.load = (context, cfg, callbacks) => {
           const url = (context?.url || "").toLowerCase();
           const adSignatures = [
-            "convertv7", "/v7/", "segment_00", "9922", "cwin", "kubet", "888", "1xbet",
-            "quangcao", "qc/", "promo", "sponsor", "track", "banner", "shopee", "lazada"
+            "convertv7", "/v7/", "segment_00", "9922", "ad/", "/ad/", "ads/", "adv/", "quangcao", "qc/",
+            "promo", "sponsor", "cwin", "kubet", "888", "1xbet", "bet69", "bet88", "789", "jun88",
+            "hi88", "new88", "f8bet", "shbet", "mb66", "okvip", "777", "123b", "w88", "m88", "fun88",
+            "bk8", "fb88", "dafabet", "go88", "sunwin", "rikvip", "b52", "hitclub", "iwin", "nhacai",
+            "casino", "taixiu", "nohu", "keonhacai", "bong88", "s666", "mu88", "v9bet", "k8cc", "ee88",
+            "sv388", "mig8", "sin88", "debet", "may88", "zbet", "oxbet", "red88", "five88", "gamebaidoithuong",
+            "track", "banner", "shopee", "lazada", "telegram"
           ];
           // Nếu phát hiện request tải trực tiếp file phân đoạn video quảng cáo (.ts, .m4s) -> Vô hiệu hóa và nhảy qua
           if (adSignatures.some((sig) => url.includes(sig))) {
@@ -2343,7 +2338,8 @@ class AppleCinemaApp {
         const fragUrl = (data?.frag?.url || "").toLowerCase();
         const adSignatures = [
           "convertv7", "/v7/", "segment_00", "9922", "cwin", "kubet", "888", "1xbet",
-          "quangcao", "qc/", "promo", "sponsor", "789", "jun88", "hi88", "new88", "f8bet"
+          "quangcao", "qc/", "promo", "sponsor", "789", "jun88", "hi88", "new88", "f8bet",
+          "go88", "sunwin", "rikvip", "b52", "hitclub", "iwin", "nhacai", "casino", "taixiu"
         ];
         if (adSignatures.some((s) => fragUrl.includes(s))) {
           console.warn("[AdBlocker] Đang tải phân đoạn quảng cáo -> Tự động nhảy qua:", fragUrl);
@@ -2569,62 +2565,81 @@ class AppleCinemaApp {
 
   resolveResolutionTier(w, h) {
     const maxDim = Math.max(w || 0, h || 0);
-    if (maxDim >= 1800 || h >= 1000) return "Full HD 1080p";
-    if (maxDim >= 1200 || h >= 680) return "HD 720p";
+    if (maxDim >= 3800 || h >= 2100) return "4K Ultra HD";
+    if (maxDim >= 2500 || h >= 1400) return "2K QHD";
+    if (maxDim >= 1800 || h >= 800) return "1080p Full HD";
+    if (maxDim >= 1200 || h >= 680) return "720p HD";
     if (maxDim >= 800 || h >= 460) return "480p";
     if (maxDim > 0) return `${h}p`;
-    return "Full HD 1080p";
+    return "1080p Full HD";
   }
 
   buildQualityButtonsHTML(movie) {
-    const m = movie || this.selectedMovie;
-    const has4k = Boolean(
-      m && (
-        (m.quality && m.quality.toString().toUpperCase().includes("4K")) ||
-        (Array.isArray(m.sectionTags) && m.sectionTags.includes("4k")) ||
-        m.slug === "quang-am-chi-ngoai"
-      )
-    );
-
-    if (!has4k) {
-      return `
-        <button class="quality-pill-btn active" 
-                onclick="app.switchQualityTier('1080')" 
-                title="Độ phân giải 1080">
-          1080
-        </button>
-      `;
+    // 1. Nếu luồng Hls có nhiều mức chất lượng thực tế (multi-level master playlist)
+    if (this.detectedHlsLevels && this.detectedHlsLevels.length > 1) {
+      return this.detectedHlsLevels.map((lvl) => {
+        const isSelected = this.hlsInstance && (this.hlsInstance.currentLevel === lvl.index || (this.hlsInstance.currentLevel === -1 && lvl.index === this.detectedHlsLevels.length - 1));
+        const label = lvl.height >= 2100 || lvl.width >= 3800 ? "4K" : (lvl.height >= 800 || lvl.width >= 1800) ? "1080" : `${lvl.height}p`;
+        return `
+          <button class="quality-pill-btn ${isSelected ? "active" : ""}" 
+                  onclick="app.switchHlsLevel(${lvl.index})" 
+                  title="${lvl.detailLabel}">
+            ${label}
+          </button>
+        `;
+      }).join("");
     }
 
-    const is4kActive = this.currentQuality === "4K" || this.currentQuality === "4K-upscale";
+    // 2. Nếu luồng đơn: Kiểm tra độ phân giải thực tế từ video element / HLS decoder
+    const w = this.actualVideoRes?.width || 1920;
+    const h = this.actualVideoRes?.height || 1080;
+    const mbps = this.actualVideoRes?.bitrateMbps || 3.5;
+    const isReal4k = (w >= 3800 || h >= 2100);
+    const label = isReal4k ? "4K" : "1080";
+    const titleText = isReal4k ? `4K Ultra HD • ${w}×${h} • ${mbps} Mbps` : `Full HD 1080 • ${w}×${h} • ${mbps} Mbps (Nét nhất)`;
+
     return `
-      <button class="quality-pill-btn ${!is4kActive ? "active" : ""}" 
-              onclick="app.switchQualityTier('1080')" 
-              title="Độ phân giải 1080">
-        1080
-      </button>
-      <button class="quality-pill-btn ${is4kActive ? "active" : ""} is-4k-quality" 
-              onclick="app.switchQualityTier('4k')" 
-              title="Độ phân giải 4K">
-        4K
+      <button class="quality-pill-btn active" 
+              onclick="app.showToast('✨ Đang phát chất lượng thực tế: ${label} (${w}×${h} • ${mbps} Mbps)')" 
+              title="${titleText}">
+        ${label}
       </button>
     `;
   }
 
-  switchQualityTier(tier) {
-    if (tier === "4k" || tier === "4K") {
-      this.currentQuality = "4K";
-      this.applyVideoQualityVisuals();
+  switchHlsLevel(lvlIndex) {
+    if (!this.hlsInstance) return;
+    this.hlsInstance.currentLevel = lvlIndex;
+    this.hlsInstance.loadLevel = lvlIndex;
+    const lvl = this.detectedHlsLevels?.[lvlIndex];
+    if (lvl) {
+      this.actualVideoRes.width = lvl.width;
+      this.actualVideoRes.height = lvl.height;
+      this.actualVideoRes.bitrateMbps = lvl.bitrateMbps;
       this.renderDynamicQualityButtons();
-      this.showToast("✨ Đang phát chất lượng 4K");
-      this.showAppleVideoHud("forward", "4K");
-    } else {
-      this.currentQuality = "1080";
       this.applyVideoQualityVisuals();
-      this.renderDynamicQualityButtons();
-      this.showToast("Đang phát chất lượng 1080");
-      this.showAppleVideoHud("forward", "1080");
+      const is4k = lvl.height >= 2100 || lvl.width >= 3800;
+      this.showToast(`✨ Đã chuyển sang chất lượng thực: ${lvl.tier} (${lvl.width}×${lvl.height} • ${lvl.bitrateMbps} Mbps)`);
+      this.showAppleVideoHud("forward", is4k ? "4K" : "1080");
     }
+  }
+
+  switchQualityTier(tier) {
+    const is4k = tier === "4k" || tier === "4K";
+    if (this.detectedHlsLevels && this.detectedHlsLevels.length > 1) {
+      const targetLvl = this.detectedHlsLevels.find((lvl) => is4k ? (lvl.height >= 2100 || lvl.width >= 3800) : (lvl.height >= 800 && lvl.height < 2100));
+      if (targetLvl) {
+        this.switchHlsLevel(targetLvl.index);
+        return;
+      }
+    }
+    const w = this.actualVideoRes?.width || 1920;
+    const h = this.actualVideoRes?.height || 1080;
+    const mbps = this.actualVideoRes?.bitrateMbps || 3.5;
+    this.renderDynamicQualityButtons();
+    this.applyVideoQualityVisuals();
+    this.showToast(`Đang phát chất lượng thực tế: ${w}×${h} • ${mbps} Mbps`);
+    this.showAppleVideoHud("forward", is4k ? "4K" : "1080");
   }
 
   renderDynamicQualityButtons() {
@@ -2638,15 +2653,15 @@ class AppleCinemaApp {
     const w = this.actualVideoRes.width || 1920;
     const h = this.actualVideoRes.height || 1080;
     const mbps = this.actualVideoRes.bitrateMbps || 3.5;
-    const is4k = q === "4K" || q === "4K-upscale";
+    const is4k = (w >= 3800 || h >= 2100);
     if (is4k) {
-      return `4K • ${w}×${h} • ${mbps} Mbps`;
+      return `4K Ultra HD • ${w}×${h} • ${mbps} Mbps`;
     }
-    return `1080 • ${w}×${h} • ${mbps} Mbps`;
+    return `Full HD 1080 • ${w}×${h} • ${mbps} Mbps`;
   }
 
   getQualityVideoClass(q) {
-    return q === "4K" || q === "4K-upscale" ? "quality-4k-upscale" : "";
+    return "";
   }
 
   setVideoQuality(qualityMode, showNotification = true) {
@@ -3058,6 +3073,29 @@ class AppleCinemaApp {
     const isTheater = sheet.classList.toggle("apple-theater-mode");
     modal?.classList.toggle("lights-off", isTheater);
     this.showAppleVideoHud("theater", isTheater ? "Rạp phim: Bật" : "Rạp phim: Tắt");
+  }
+
+  toggleWatermarkShield(e) {
+    if (e) e.stopPropagation();
+    const shield = document.getElementById("appleWatermarkShield");
+    const icon = document.getElementById("appleShieldIcon");
+    const btn = document.getElementById("appleShieldBtn");
+    if (!shield) return;
+    const isHidden = shield.classList.toggle("disabled");
+    if (icon) {
+      icon.className = isHidden ? "fas fa-eye" : "fas fa-eye-slash";
+    }
+    if (btn) {
+      btn.classList.toggle("active", !isHidden);
+      btn.title = isHidden ? "Khử Logo & Watermark (Đang Tắt - Phím W)" : "Khử Logo & Watermark (Đang Bật - Phím W)";
+    }
+    if (isHidden) {
+      this.showToast("Đã tắt lớp khử Logo & Watermark");
+      this.showAppleVideoHud("forward", "Logo: Hiện");
+    } else {
+      this.showToast("🛡️ Đã bật khử Logo & Watermark (HHPANDA, YanHH3D)");
+      this.showAppleVideoHud("forward", "Khử Logo: Bật");
+    }
   }
 
   toggleVideoPip(e) {
@@ -3647,6 +3685,13 @@ class AppleCinemaApp {
         if (modal?.classList.contains("open") && videoEl && videoEl.style.display !== "none") {
           e.preventDefault();
           this.skipAdIntro(15);
+        }
+      } else if ((e.key === "w" || e.key === "W") && !isInput) {
+        const modal = document.getElementById("movieDetailModal");
+        const videoEl = document.getElementById("hlsVideoElement");
+        if (modal?.classList.contains("open") && videoEl && videoEl.style.display !== "none") {
+          e.preventDefault();
+          this.toggleWatermarkShield();
         }
       }
     });
