@@ -49,7 +49,7 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/style.css?v=2.3.13" />
+  <link rel="stylesheet" href="css/style.css?v=2.3.14" />
 </head>
 <body>
 
@@ -119,10 +119,14 @@
 
         <!-- Right Notification & User Profile Pill -->
         <div class="vision-topbar-right">
-          <button class="vision-circle-btn" onclick="app.setNavigation('yeu-thich')" title="Phim đã lưu">
+          <button class="vision-circle-btn" id="notifBellBtn" onclick="app.toggleNotificationCenter(event)" title="Thông báo phim hôm nay, tin tức & phim sắp chiếu">
             <i class="fas fa-bell"></i>
             <span class="vision-notif-dot"></span>
           </button>
+
+          <!-- Cinema Notification Center Flyout (Hôm nay có phim gì • Tin tức • Sắp chiếu) -->
+          <div class="vision-notif-flyout" id="visionNotifFlyout" style="display: none;" onclick="event.stopPropagation()"></div>
+
           <div class="vision-profile-pill" id="topProfilePill" onclick="app.openAuthModal()" title="Hồ sơ & Đăng nhập">
             <div class="vision-avatar" id="topProfileAvatar">
               <div class="profile-avatar-letter" style="background: rgba(255, 255, 255, 0.16); color: #ffffff;">G</div>
@@ -296,10 +300,10 @@
   </div>
 
   <!-- High-Performance Deferred Scripts -->
-  <script src="js/movies-catalog.js?v=2.3.13" defer></script>
-  <script src="js/air-schedule.js?v=2.3.13" defer></script>
-  <script src="js/data.js?v=2.3.13" defer></script>
-  <script src="js/auth-config.js?v=2.3.13" defer></script>
-  <script src="js/app.js?v=2.3.13" defer></script>
+  <script src="js/movies-catalog.js?v=2.3.14" defer></script>
+  <script src="js/air-schedule.js?v=2.3.14" defer></script>
+  <script src="js/data.js?v=2.3.14" defer></script>
+  <script src="js/auth-config.js?v=2.3.14" defer></script>
+  <script src="js/app.js?v=2.3.14" defer></script>
 </body>
 </html>

@@ -3540,7 +3540,7 @@ class AppleCinemaApp {
       });
     }
 
-    // Đóng dropdown tìm kiếm hoặc Dynamic Island khi click ra ngoài
+    // Đóng dropdown tìm kiếm, notification center hoặc Dynamic Island khi click ra ngoài
     document.addEventListener("click", (e) => {
       const searchBox = document.querySelector(".topbar-search-container");
       if (searchBox && !searchBox.contains(e.target)) {
@@ -3549,6 +3549,13 @@ class AppleCinemaApp {
       const playerBar = document.getElementById("applePlayerBar");
       if (playerBar && playerBar.classList.contains("is-expanded") && !playerBar.contains(e.target)) {
         playerBar.classList.remove("is-expanded");
+      }
+      const flyout = document.getElementById("visionNotifFlyout");
+      const bellBtn = document.getElementById("notifBellBtn");
+      if (flyout && flyout.style.display !== "none") {
+        if (!flyout.contains(e.target) && !bellBtn?.contains(e.target)) {
+          this.closeNotificationCenter();
+        }
       }
     });
 
@@ -3571,6 +3578,7 @@ class AppleCinemaApp {
       } else if (e.key === "Escape") {
         document.getElementById("searchDropdown")?.classList.remove("open");
         this.toggleMobileSidebar(false);
+        this.closeNotificationCenter();
         document.getElementById("applePlayerBar")?.classList.remove("is-expanded");
         if (document.getElementById("movieDetailModal")?.classList.contains("open")) {
           this.closeMovieModal();
@@ -4046,6 +4054,212 @@ class AppleCinemaApp {
         avatarEl.innerHTML = `<div class="profile-avatar-letter" style="background: rgba(255, 255, 255, 0.16); color: #ffffff;">G</div>`;
       }
     }
+  }
+
+  /* ==========================================================================
+     CINEMA NOTIFICATION CENTER (Hôm Nay Có Phim Gì • Tin Tức • Sắp Chiếu)
+     ========================================================================== */
+  toggleNotificationCenter(e) {
+    if (e) e.stopPropagation();
+    const flyout = document.getElementById("visionNotifFlyout");
+    if (!flyout) return;
+    if (flyout.style.display === "none" || !flyout.style.display) {
+      this.renderNotificationFlyout(this.activeNotifTab || "today");
+      flyout.style.display = "flex";
+      const dot = document.querySelector(".vision-notif-dot");
+      if (dot) dot.style.display = "none";
+    } else {
+      flyout.style.display = "none";
+    }
+  }
+
+  closeNotificationCenter() {
+    const flyout = document.getElementById("visionNotifFlyout");
+    if (flyout) flyout.style.display = "none";
+  }
+
+  switchNotifTab(tab) {
+    this.activeNotifTab = tab;
+    this.renderNotificationFlyout(tab);
+  }
+
+  renderNotificationFlyout(activeTab = "today") {
+    const flyout = document.getElementById("visionNotifFlyout");
+    if (!flyout) return;
+
+    this.activeNotifTab = activeTab;
+
+    const schedule = window.NGWYREN_AIR_SCHEDULE || {};
+    const dayNames = {
+      "thu-2": "Thứ 2",
+      "thu-3": "Thứ 3",
+      "thu-4": "Thứ 4",
+      "thu-5": "Thứ 5",
+      "thu-6": "Thứ 6",
+      "thu-7": "Thứ 7",
+      "chu-nhat": "Chủ Nhật"
+    };
+
+    const now = new Date();
+    const jsDay = now.getDay();
+    const todayKey = jsDay === 0 ? "chu-nhat" : `thu-${jsDay + 1}`;
+    const tomorrowJsDay = (jsDay + 1) % 7;
+    const tomorrowKey = tomorrowJsDay === 0 ? "chu-nhat" : `thu-${tomorrowJsDay + 1}`;
+
+    const todayItems = schedule[todayKey] || [];
+    const tomorrowItems = schedule[tomorrowKey] || [];
+
+    // Danh mục tin tức điện ảnh & cập nhật nóng
+    const cinemaNews = [
+      {
+        tag: "Đại Kết Cục 3D",
+        headline: "Phàm Nhân Tu Tiên: Phong Khởi Lãng Lăng",
+        snippet: "Hàn Lập tiến nhập Loạn Tinh Hải, đại kết cục mãn nhãn với kỹ xảo đỉnh cao. Toàn bộ tập mới cập nhật Full HD 1080p chuẩn, không quảng cáo.",
+        slug: "pham-nhan-tu-tien",
+        date: "Hôm nay"
+      },
+      {
+        tag: "Tập Mới Cực Hot",
+        headline: "Quang Âm Chi Ngoại: Tập Mới Lên Sóng",
+        snippet: "Hứa Thanh đột phá cảnh giới mới, đại náo Thất Huyết Đồng. Luồng Full HD 1080p sắc nét, đã bật khử sạch logo watermark.",
+        slug: "quang-am-chi-ngoai",
+        date: "Hôm nay"
+      },
+      {
+        tag: "Lịch Chiếu Cố Định",
+        headline: "Đấu Phá Thương Khung: Niên Phiên 3",
+        snippet: "Tiêu Viêm đại chiến Hồn Điện, các tập mới cập nhật cố định lúc 10:00 Sáng Chủ Nhật hàng tuần tại Ngwyren Cinema.",
+        slug: "dau-pha-thuong-khung-phan-5",
+        date: "Chủ Nhật"
+      },
+      {
+        tag: "Thế Giới Hoàn Mỹ",
+        headline: "Thạch Hạo Nghênh Chiến Thượng Giới Cự Đầu",
+        snippet: "Tập mới vietsub và thuyết minh tiếp tục phát sóng đều đặn lúc 10:00 Sáng Thứ 6 hàng tuần.",
+        slug: "the-gioi-hoan-my",
+        date: "Thứ 6"
+      },
+      {
+        tag: "Bom Tấn Netflix",
+        headline: "Squid Game 3 (Trò Chơi Con Mực 3)",
+        snippet: "Netflix xác nhận mùa 3 sẽ là mùa cuối khép lại cuộc chiến sinh tử, lịch phát sóng sẽ cập nhật sớm nhất.",
+        slug: "squid-game-season-3",
+        date: "Sắp chiếu"
+      },
+      {
+        tag: "Chiếu Rạp 2026",
+        headline: "Thanh Gươm Diệt Quỷ: Vô Hạn Thành (Trilogy)",
+        snippet: "Ufotable chuyển thể trận quyết chiến Vô Hạn Thành thành bộ ba phim điện ảnh chiếu rạp đỉnh cao.",
+        slug: "thanh-guom-diet-quy-vo-han-thanh",
+        date: "Mới"
+      }
+    ];
+
+    let bodyHTML = "";
+
+    if (activeTab === "today") {
+      if (todayItems.length > 0) {
+        bodyHTML = todayItems.slice(0, 10).map((m) => `
+          <div class="notif-movie-item" onclick="app.openMovieModal('${m.slug}', true); app.closeNotificationCenter();">
+            <img class="notif-movie-thumb" src="${m.poster || m.backdrop}" alt="${m.title}" loading="lazy"
+                 onerror="this.src='https://phimimg.com/upload/vod/20251229-1/d7f24b91fd95fb7cf353e1369e2318b7.jpg'" />
+            <div class="notif-movie-info">
+              <div class="notif-movie-title" title="${m.title}">${m.title}</div>
+              <div class="notif-movie-meta">
+                <span class="notif-badge-new"><i class="fas fa-tv"></i> ${m.currentEpisode || "Tập Mới"}</span>
+                <span class="notif-badge-time"><i class="far fa-clock"></i> ${m.airTime || "Hôm nay"}</span>
+                <span>• 1080p</span>
+              </div>
+            </div>
+            <div class="notif-play-btn" title="Xem ngay">
+              <i class="fas fa-play"></i>
+            </div>
+          </div>
+        `).join("");
+      } else {
+        bodyHTML = `
+          <div style="text-align: center; padding: 30px 16px; color: rgba(255,255,255,0.6);">
+            <i class="fas fa-calendar-check" style="font-size: 2rem; color: #00f0ff; margin-bottom: 10px;"></i>
+            <p>Hôm nay đã cập nhật các tập phim mới nhất trên hệ thống.</p>
+          </div>
+        `;
+      }
+    } else if (activeTab === "news") {
+      bodyHTML = cinemaNews.map((n) => `
+        <div class="notif-news-item" onclick="app.openMovieModal('${n.slug}', true); app.closeNotificationCenter();">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="notif-news-tag"><i class="fas fa-bolt"></i> ${n.tag}</span>
+            <span style="font-size: 0.72rem; color: rgba(255,255,255,0.5);">${n.date}</span>
+          </div>
+          <div class="notif-news-headline">${n.headline}</div>
+          <div class="notif-news-snippet">${n.snippet}</div>
+        </div>
+      `).join("");
+    } else if (activeTab === "upcoming") {
+      if (tomorrowItems.length > 0) {
+        bodyHTML = `
+          <div style="font-size: 0.76rem; font-weight: 700; color: #00f0ff; margin: 4px 0 8px; text-transform: uppercase;">
+            <i class="far fa-calendar-star"></i> Phát sóng ngày mai (${dayNames[tomorrowKey]})
+          </div>
+        ` + tomorrowItems.slice(0, 10).map((m) => `
+          <div class="notif-movie-item" onclick="app.openMovieModal('${m.slug}', true); app.closeNotificationCenter();">
+            <img class="notif-movie-thumb" src="${m.poster || m.backdrop}" alt="${m.title}" loading="lazy"
+                 onerror="this.src='https://phimimg.com/upload/vod/20251229-1/d7f24b91fd95fb7cf353e1369e2318b7.jpg'" />
+            <div class="notif-movie-info">
+              <div class="notif-movie-title" title="${m.title}">${m.title}</div>
+              <div class="notif-movie-meta">
+                <span class="notif-badge-new"><i class="fas fa-clock"></i> ${m.airTime || "Sắp chiếu"}</span>
+                <span>${(m.genres || []).slice(0, 2).join(", ")}</span>
+              </div>
+            </div>
+            <div class="notif-play-btn" title="Chi tiết">
+              <i class="fas fa-chevron-right"></i>
+            </div>
+          </div>
+        `).join("");
+      } else {
+        bodyHTML = `
+          <div style="text-align: center; padding: 30px 16px; color: rgba(255,255,255,0.6);">
+            <i class="fas fa-clock" style="font-size: 2rem; color: #00f0ff; margin-bottom: 10px;"></i>
+            <p>Đang cập nhật lịch phát sóng cho các ngày tiếp theo.</p>
+          </div>
+        `;
+      }
+    }
+
+    flyout.innerHTML = `
+      <div class="notif-flyout-header">
+        <div class="notif-flyout-title">
+          <i class="fas fa-bell"></i>
+          <span>Thông Báo Điện Ảnh</span>
+        </div>
+        <button class="notif-flyout-close" onclick="app.closeNotificationCenter()" title="Đóng">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="notif-tabs-bar">
+        <button class="notif-tab-btn ${activeTab === "today" ? "active" : ""}" onclick="app.switchNotifTab('today')">
+          <i class="fas fa-play-circle"></i> Hôm Nay (${todayItems.length})
+        </button>
+        <button class="notif-tab-btn ${activeTab === "news" ? "active" : ""}" onclick="app.switchNotifTab('news')">
+          <i class="fas fa-newspaper"></i> Tin Tức
+        </button>
+        <button class="notif-tab-btn ${activeTab === "upcoming" ? "active" : ""}" onclick="app.switchNotifTab('upcoming')">
+          <i class="fas fa-calendar-plus"></i> Sắp Chiếu
+        </button>
+      </div>
+
+      <div class="notif-flyout-content">
+        ${bodyHTML}
+      </div>
+
+      <div class="notif-flyout-footer">
+        <span class="notif-view-all-link" onclick="app.setNavigation('lich-chieu'); app.closeNotificationCenter();">
+          <i class="fas fa-calendar-days"></i> Xem toàn bộ lịch chiếu tuần này →
+        </span>
+      </div>
+    `;
   }
 
   openAuthModal() {
