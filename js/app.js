@@ -432,11 +432,8 @@ class AppleCinemaApp {
 
               <!-- Row 2: Độ mờ kính (Native visionOS Range Slider) -->
               <div class="vision-setting-row" style="flex-direction: column; align-items: stretch; gap: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                  <div>
-                    <strong style="font-size: 0.88rem; color: #ffffff;">Độ mờ kính</strong>
-                  </div>
-                  <span class="vision-badge" id="glassSliderValueLabel" style="font-size: 0.76rem; font-weight: 700; padding: 4px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.18); color: #ffffff;">${glassLabel} (${glassPercent}%)</span>
+                <div style="width: 100%;">
+                  <strong style="font-size: 0.88rem; color: #ffffff;">Độ mờ kính</strong>
                 </div>
                 <div class="ios-slider-wrapper">
                   <div class="ios-slider-control">
