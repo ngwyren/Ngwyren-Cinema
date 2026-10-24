@@ -1694,37 +1694,21 @@ class PhimmoiService {
       }
     }
 
-    // 4. Nguồn Hoạt Hình 3D Trung Quốc / Donghua (Chuẩn 8 Server: 1080P & 4K Vietsub + Thuyết Minh)
+    // 4. Nguồn Hoạt Hình 3D Trung Quốc / Donghua
     const isDonghua =
       (Array.isArray(movie.sectionTags) && movie.sectionTags.includes("hoat-hinh-3d")) ||
       movie.slug === "quang-am-chi-ngoai" ||
       (Array.isArray(movie.genres) && movie.genres.includes("Hoạt Hình 3D"));
 
     if (isDonghua && Array.isArray(movie.episodes) && movie.episodes.length > 0) {
-      movie.episodes.forEach((ep, idx) => {
+      movie.episodes.forEach((ep) => {
         const realSource = ep.source || movie.episodes[0]?.source || "";
         if (realSource && (realSource.includes(".m3u8") || realSource.includes("/hls/"))) {
-          const embedUrl = `https://player.phimapi.com/player/?url=${encodeURIComponent(realSource)}`;
-          ep.embed = embedUrl;
-          const hasRealDub =
-            Array.isArray(movie.dubEpisodes) &&
-            movie.dubEpisodes.length > idx &&
-            movie.dubEpisodes[idx]?.source &&
-            movie.dubEpisodes[idx]?.source !== realSource;
-
-          ep.altSources = [
-            { id: `vs-vip1-${idx}`, label: "Server VIP 1 (1080p)", is4k: false, source: realSource, embed: embedUrl },
-            { id: `vs-vip2-${idx}`, label: "Server Dự Phòng", is4k: false, source: realSource, embed: embedUrl }
-          ];
-          if (hasRealDub) {
-            ep.altSources.push({
-              id: `tm-vip1-${idx}`,
-              label: "Thuyết Minh VIP",
-              is4k: false,
-              source: movie.dubEpisodes[idx].source,
-              embed: embedUrl
-            });
-          }
+          ep.source = realSource;
+          ep.embed = `https://player.phimapi.com/player/?url=${encodeURIComponent(realSource)}`;
+        }
+        if (ep.altSources) {
+          delete ep.altSources;
         }
       });
     }

@@ -1788,7 +1788,7 @@ class AppleCinemaApp {
       </div>
 
       <!-- Server & Stream Switcher Toolbar (Multi-Source Server 1 / Server 2 & 4K/2K Quality Switcher) -->
-      <div class="player-toolbar ${(movie.episodes?.[this.currentEpisodeIndex]?.altSources?.length > 0 || movie.episodes?.[0]?.altSources?.length > 0) ? "has-server-rack" : ""}" id="playerToolbarContainer">
+      <div class="player-toolbar" id="playerToolbarContainer">
         <div class="player-toolbar-left" id="playerToolbarServers">
           ${this.buildServerButtonsHTML(movie, this.currentEpisodeIndex)}
         </div>
@@ -2066,62 +2066,24 @@ class AppleCinemaApp {
       el.innerHTML = this.buildServerButtonsHTML(movie, epIndex);
     }
     if (toolbar) {
-      const ep = movie?.episodes?.[epIndex] || movie?.episodes?.[0];
-      const hasRack = Boolean(ep?.altSources && ep.altSources.length > 0);
-      toolbar.classList.toggle("has-server-rack", hasRack);
+      toolbar.classList.remove("has-server-rack");
     }
   }
 
   buildServerButtonsHTML(movie, epIndex = 0) {
     if (!movie) return "";
     const ep = movie.episodes?.[epIndex] || movie.episodes?.[0];
-    const altSources = ep?.altSources || [];
+    const hasEmbed2 = Boolean(movie.nguoncEpisodes && movie.nguoncEpisodes.length > 0) || Boolean(ep?.embed);
+    const hasDub = Boolean(movie.dubEpisodes && movie.dubEpisodes.length > 0);
 
-    // 1. Nếu tập phim có danh sách Server chuyên dụng (như 4K Vietsub, 4K Thuyết Minh theo chuẩn HHPanda / YanHH3D)
-    if (altSources.length > 0) {
-      return `
-        <div class="server-selection-wrapper">
-          <div class="banner-4k-pill">
-            <i class="fas fa-shield-check" style="color: #38ef7d; margin-right: 4px;"></i>
-            Luồng phát 1080p Siêu Nét • Đã tự động lọc sạch quảng cáo API
-          </div>
-          <div class="server-buttons-rack">
-            ${altSources
-              .map((alt, idx) => {
-                const isActive = this.currentServerMode === `alt-${idx}` || ((!this.currentServerMode || this.currentServerMode === "hls-1") && idx === 0);
-                const is4kPill = alt.is4k || (alt.label && alt.label.toLowerCase().includes("4k"));
-                return `
-                  <button class="server-btn ${isActive ? "active" : ""} ${is4kPill ? "is-4k-server" : ""}"
-                          onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'alt-${idx}')"
-                          title="Chuyển sang ${alt.label}">
-                    ${alt.label}
-                  </button>
-                `;
-              })
-              .join("")}
-            ${
-              movie.trailerUrl
-                ? `<button class="server-btn ${this.currentServerMode === "trailer" ? "active" : ""}" id="srvBtnTrailer"
-                           onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'trailer')" title="Xem Trailer">
-                     <i class="fab fa-youtube"></i> Trailer
-                   </button>`
-                : ""
-            }
-          </div>
-        </div>
-      `;
-    }
-
-    // 2. Chế độ nguồn phát tiêu chuẩn (Server 1 / Server 2 / Thuyết Minh / Trailer)
-    const is4kMovie = (movie.quality && movie.quality.includes("4K")) || (movie.sectionTags && movie.sectionTags.includes("4k"));
     return `
       <span class="server-label"><i class="fas fa-server"></i> Nguồn phát:</span>
-      <button class="server-btn ${this.currentServerMode === "hls-1" || !this.currentServerMode ? "active" : ""}" id="srvBtnHls1"
+      <button class="server-btn ${this.currentServerMode === "hls-1" || !this.currentServerMode || this.currentServerMode.startsWith("alt-") ? "active" : ""}" id="srvBtnHls1"
               onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'hls-1')" title="Phát Server 1 chất lượng tốt nhất">
-        <i class="fas fa-server"></i> ${is4kMovie ? "Server 1 (4K VIP)" : "Server 1"}
+        <i class="fas fa-server"></i> Server 1
       </button>
       ${
-        movie.nguoncEpisodes && movie.nguoncEpisodes.length > 0
+        hasEmbed2
           ? `<button class="server-btn ${this.currentServerMode === "embed-1" ? "active" : ""}" id="srvBtnEmbed1"
                     onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'embed-1')" title="Phát Server 2">
               <i class="fas fa-server"></i> Server 2
@@ -2129,7 +2091,7 @@ class AppleCinemaApp {
           : ""
       }
       ${
-        movie.dubEpisodes && movie.dubEpisodes.length > 0
+        hasDub
           ? `<button class="server-btn ${this.currentServerMode === "dub-1" ? "active" : ""}" id="srvBtnDub1"
                     onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'dub-1')" title="Phát bản Thuyết Minh">
               <i class="fas fa-microphone"></i> Thuyết Minh
