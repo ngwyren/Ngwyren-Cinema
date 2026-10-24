@@ -632,7 +632,7 @@ class AppleCinemaApp {
               <article class="schedule-card-glass" onclick="app.openMovieModal('${m.slug}', true)">
                 <div class="schedule-card-media">
                   <img src="${m.poster || m.backdrop}" alt="${m.title}" loading="lazy" decoding="async"
-                       onerror="this.src='https://yanhh3d.ee/wp-content/uploads/2025/12/bach-luyen-thanh-than-3-00.jpg'" />
+                       onerror="this.src='https://phimimg.com/upload/vod/20251229-1/d7f24b91fd95fb7cf353e1369e2318b7.jpg'" />
                   <div class="schedule-card-top-badges">
                     <span class="sch-time-pill"><i class="far fa-clock"></i> ${m.airTime || "10:00 Sáng"}</span>
                     <span class="sch-quality-pill"><i class="fas fa-sparkles"></i> ${m.quality || "1080"}</span>
@@ -3339,9 +3339,12 @@ class AppleCinemaApp {
   }
 
   findMovie(idOrSlug) {
+    if (!idOrSlug) return null;
+    const cleanSlug = idOrSlug === "ly-hung-mieu" ? "ly-hung-mieu-gau-truc-ly" : idOrSlug;
     return (
+      this.service.slugMap.get(cleanSlug) ||
       this.service.slugMap.get(idOrSlug) ||
-      this.service.movies.find((m) => m.id === idOrSlug || m.slug === idOrSlug)
+      this.service.movies.find((m) => m.id === cleanSlug || m.slug === cleanSlug || m.id === idOrSlug || m.slug === idOrSlug)
     );
   }
 
