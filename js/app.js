@@ -466,43 +466,6 @@ class AppleCinemaApp {
               </div>
             </div>
 
-            <!-- Card 1: Chất Lượng & Nguồn Phát -->
-            <div class="vision-settings-card">
-              <div class="vision-settings-card-header">
-                <div>
-                  <h3>Chất Lượng & Nguồn Phát</h3>
-                </div>
-              </div>
-
-              <div class="vision-setting-row">
-                <div class="vision-setting-info">
-                  <strong>Độ phân giải</strong>
-                </div>
-                <div class="vision-setting-pills">
-                  <button class="filter-chip ${s.defaultQuality !== 'Auto' ? 'active' : ''}" onclick="app.updateSetting('defaultQuality', 'native-max')">
-                    1080p FHD
-                  </button>
-                  <button class="filter-chip ${s.defaultQuality === 'Auto' ? 'active' : ''}" onclick="app.updateSetting('defaultQuality', 'Auto')">
-                    Tự Động
-                  </button>
-                </div>
-              </div>
-
-              <div class="vision-setting-row">
-                <div class="vision-setting-info">
-                  <strong>Máy chủ ưu tiên</strong>
-                </div>
-                <div class="vision-setting-pills">
-                  <button class="filter-chip ${s.defaultServer !== 'embed-1' ? 'active' : ''}" onclick="app.updateSetting('defaultServer', 'hls-1')">
-                    Server 1
-                  </button>
-                  <button class="filter-chip ${s.defaultServer === 'embed-1' ? 'active' : ''}" onclick="app.updateSetting('defaultServer', 'embed-1')">
-                    Server 2
-                  </button>
-                </div>
-              </div>
-            </div>
-
             <!-- Card 2: Trải Nghiệm Rạp Chiếu -->
             <div class="vision-settings-card">
               <div class="vision-settings-card-header">
