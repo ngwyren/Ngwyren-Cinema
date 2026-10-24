@@ -1540,16 +1540,16 @@ class PhimmoiService {
    * Kết hợp đồng thời: PhimAPI (Netflix/KKPhim HLS + Embed) + NguonC (StreamC Vietsub Embed) + WP API
    * Tự động dò tìm theo tên phim nếu slug bị lệch để luôn lấy được nhiều luồng chất lượng thật nhất.
    */
-  async enrichMovieStreams(movie) {
+  async enrichMovieStreams(movie, force = false) {
     if (!movie) return movie;
-    if (movie._isEnriched && movie.episodes && movie.episodes.length > 0 && movie.episodes[0].source) {
+    if (!force && movie._isEnriched && movie.episodes && movie.episodes.length > 0 && movie.episodes[0].source) {
       return movie;
     }
     const slugToTry = movie.crawlSlug || movie.slug.replace(/-\d+$/, "");
 
     let [phimApiRes, nguoncRes, wpPosts] = await Promise.all([
-      this.smartFetchJson(`${PHIMMOI_CONFIG.phimApiBase}${encodeURIComponent(slugToTry)}`, 5000),
-      this.smartFetchJson(`${PHIMMOI_CONFIG.nguoncApiBase}${encodeURIComponent(slugToTry)}`, 5000),
+      this.smartFetchJson(`${PHIMMOI_CONFIG.phimApiBase}${encodeURIComponent(slugToTry)}`, 6000),
+      this.smartFetchJson(`${PHIMMOI_CONFIG.nguoncApiBase}${encodeURIComponent(slugToTry)}`, 6000),
       this.smartFetchJson(`${PHIMMOI_CONFIG.wpApiPosts}?slug=${encodeURIComponent(movie.slug)}&_embed=1`, 4500)
     ]);
 
@@ -1633,6 +1633,8 @@ class PhimmoiService {
         }
         if (phimApiRes.movie.quality) {
           movie.nativeQuality = phimApiRes.movie.quality;
+          const qStr = String(phimApiRes.movie.quality).toUpperCase();
+          movie.quality = (qStr.includes("4K") || qStr.includes("UHD") || qStr.includes("2160")) ? "4K" : "1080";
         }
         if (phimApiRes.movie.trailer_url && !movie.trailerUrl) {
           movie.trailerUrl = phimApiRes.movie.trailer_url;

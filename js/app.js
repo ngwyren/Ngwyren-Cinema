@@ -1439,12 +1439,12 @@ class AppleCinemaApp {
       this.setNowPlayingBar(movie, epIndex, false);
     }
 
-    // Làm giàu dữ liệu nguồn phát ngầm (Background Enrich) mà không chặn hiển thị tập phim 0ms
+    // Làm giàu dữ liệu nguồn phát ngầm (Background Enrich) từ API mà không chặn hiển thị tập phim 0ms
     const initialEp = movie.episodes?.[epIndex] || movie.episodes?.[0];
-    const isAlreadyFullyReady = movie._isEnriched || (initialEp && initialEp.source && !initialEp.needsEnrich);
+    const needsApiSync = !movie._isEnriched || !initialEp?.source || initialEp?.needsEnrich || (movie.type === "series" && movie.episodes?.length <= 1);
 
-    if (!isAlreadyFullyReady) {
-      this.service.enrichMovieStreams(movie).then((enriched) => {
+    if (needsApiSync) {
+      this.service.enrichMovieStreams(movie, false).then((enriched) => {
         if (this.selectedMovie && this.selectedMovie.slug === enriched.slug) {
           this.refreshEpisodesInModal(enriched);
           this.renderServerButtons(enriched, this.currentEpisodeIndex);
@@ -1626,10 +1626,11 @@ class AppleCinemaApp {
           <video id="hlsVideoElement" class="${this.getQualityVideoClass(this.currentQuality)}" playsinline poster="${backdropUrl}" tabindex="-1"></video>
           <iframe id="trailerIframeElement" style="display: none;" sandbox="allow-scripts allow-same-origin allow-presentation allow-forms" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen tabindex="-1"></iframe>
 
-          <!-- Apple Anti-Watermark / Logo Shield (Khử hoàn toàn Watermark HHPANDA.ME, YanHH3D.ME và logo góc) -->
+          <!-- Apple Anti-Watermark / Logo Shield (Khử hoàn toàn Watermark HHPANDA.TV, Dải banner Google + HHPANDA, logo DK8 và góc) -->
           <div class="apple-watermark-shield" id="appleWatermarkShield" aria-hidden="true">
-            <div class="shield-corner shield-top-right"></div>
-            <div class="shield-corner shield-top-left"></div>
+            <div class="shield-top-banner" aria-hidden="true"></div>
+            <div class="shield-corner shield-top-right" aria-hidden="true"></div>
+            <div class="shield-corner shield-top-left" aria-hidden="true"></div>
           </div>
 
           <!-- Apple Center HUD Pulse: Không vòng tròn, chỉ hiển thị icon -->
@@ -1711,11 +1712,6 @@ class AppleCinemaApp {
                   <!-- Tốc độ phát -->
                   <button class="apple-ctrl-btn apple-speed-btn" id="appleSpeedBtn" onclick="app.cyclePlaybackSpeed(event)" title="Tốc độ phát">
                     <span id="appleSpeedText">1.0x</span>
-                  </button>
-
-                  <!-- Khử Logo & Watermark -->
-                  <button class="apple-ctrl-btn apple-shield-btn active" id="appleShieldBtn" onclick="app.toggleWatermarkShield(event)" title="Khử Logo & Watermark (Đang Bật - Phím W)">
-                    <i class="fas fa-eye-slash" id="appleShieldIcon"></i>
                   </button>
 
                   <!-- Picture in Picture -->
@@ -2113,7 +2109,27 @@ class AppleCinemaApp {
             </button>`
           : ""
       }
+      <button class="server-btn" id="srvBtnRefreshApi"
+              onclick="app.refreshMovieApiSources()" title="Lấy lại nguồn API mới nhất từ máy chủ (Full HD 1080p chuẩn)">
+        <i class="fas fa-arrows-rotate"></i> Lấy Nguồn API
+      </button>
     `;
+  }
+
+  async refreshMovieApiSources() {
+    if (!this.selectedMovie) return;
+    this.showAppleVideoHud("forward", "Đang nạp API...");
+    try {
+      const enriched = await this.service.enrichMovieStreams(this.selectedMovie, true);
+      this.selectedMovie = enriched;
+      this.refreshEpisodesInModal(enriched);
+      this.renderServerButtons(enriched, this.currentEpisodeIndex);
+      this.renderDynamicQualityButtons();
+      this.startVideoPlayback(enriched, this.currentEpisodeIndex, this.currentServerMode || "hls-1");
+      this.showAppleVideoHud("forward", "Nạp API: 1080p");
+    } catch (err) {
+      console.warn("Lỗi nạp lại nguồn API:", err);
+    }
   }
 
   async startVideoPlayback(movie, epIndex = 0, serverMode = "hls-1") {
@@ -2214,8 +2230,7 @@ class AppleCinemaApp {
     // Nếu phim có định dạng 4K thì ưu tiên phát 4K sắc nét nhất, ngược lại phát 1080
     const has4k = Boolean(
       (movie.quality && movie.quality.toString().toUpperCase().includes("4K")) ||
-      (Array.isArray(movie.sectionTags) && movie.sectionTags.includes("4k")) ||
-      movie.slug === "quang-am-chi-ngoai"
+      (Array.isArray(movie.sectionTags) && movie.sectionTags.includes("4k"))
     );
     this.currentQuality = has4k ? "4K" : "1080";
 
@@ -2560,11 +2575,19 @@ class AppleCinemaApp {
 
     return `
       <button class="quality-pill-btn active" 
-              onclick="app.showToast('✨ Đang phát chất lượng thực tế: ${label} (${w}×${h} • ${mbps} Mbps)')" 
+              onclick="app.handleQualityPillClick('${label}', ${isReal4k})" 
               title="${titleText}">
         ${label}
       </button>
     `;
+  }
+
+  handleQualityPillClick(label, isReal4k) {
+    if (!isReal4k) {
+      this.showToast("✨ Đang phát chất lượng Full HD 1080p sắc nét nhất từ API. Bấm 'Lấy Nguồn API' để cập nhật lại nguồn nếu cần.");
+    } else {
+      this.showToast("✨ Đang phát chất lượng thực tế: 4K Ultra HD");
+    }
   }
 
   switchHlsLevel(lvlIndex) {
