@@ -1696,9 +1696,9 @@ class AppleCinemaApp {
             <div class="apple-hud-text" id="appleHudText" style="display: none;"></div>
           </div>
 
-          <!-- Nút bỏ qua 15s Quảng cáo / Intro (Tự động hiện trong 30s đầu) -->
-          <button class="apple-skip-intro-btn" id="appleSkipIntroBtn" onclick="app.skipAdIntro(15)" style="display: none;" title="Bỏ qua 15 giây quảng cáo / intro (Phím S)">
-            <i class="fas fa-forward-fast"></i> Bỏ qua 15s QC
+          <!-- Nút bỏ qua 15s Quảng cáo / Intro (Tự động hiện trong 30s đầu hoặc khi gặp QC mid-roll) -->
+          <button class="apple-skip-intro-btn" id="appleSkipIntroBtn" onclick="app.skipAdIntro(15)" style="display: none;" title="Bỏ qua quảng cáo / intro (Phím S)">
+            <i class="fas fa-forward-fast"></i> <span id="appleSkipIntroText">Bỏ qua 15s QC</span>
           </button>
 
           <!-- Apple Glass Player Overlay Controls (Giao diện điều khiển kính mờ chuẩn Apple visionOS / Apple TV+) -->
@@ -1994,27 +1994,56 @@ class AppleCinemaApp {
     const lines = playlistText.split(/\r?\n/);
     const clean = [];
     const adSignatures = [
-      "convertv7", "/v7/", "ad/", "/ad/", "ads/", "adv/", "quangcao", "qc/",
-      "promo", "sponsor", "cwin", "kubet", "888", "1xbet", "bet69", "bet88",
-      "track", "banner", "shopee", "lazada"
+      "convertv7", "/v7/", "segment_00", "9922", "ad/", "/ad/", "ads/", "adv/", "quangcao", "qc/",
+      "promo", "sponsor", "cwin", "kubet", "888", "1xbet", "bet69", "bet88", "789", "jun88",
+      "hi88", "new88", "f8bet", "shbet", "mb66", "okvip", "777", "123b", "w88", "m88", "fun88",
+      "bk8", "fb88", "dafabet", "track", "banner", "shopee", "lazada"
     ];
+
+    let currTime = 0;
+    let inAd = false;
+    let adStart = 0;
+    const detectedRanges = [];
 
     for (let i = 0; i < lines.length; i++) {
       const rawLine = lines[i];
       const line = rawLine.trim();
 
-      // Kiểm tra dòng chứa phân đoạn video quảng cáo (.ts, .mp4, .m4s)
-      const isAdSegment = adSignatures.some((sig) => line.toLowerCase().includes(sig));
-      if (isAdSegment) {
-        if (clean.length > 0 && clean[clean.length - 1].startsWith("#EXTINF:")) {
-          clean.pop();
+      if (line.startsWith("#EXTINF:")) {
+        const parts = line.replace("#EXTINF:", "").split(",");
+        const dur = parseFloat(parts[0]) || 0;
+        currTime += dur;
+      } else if (!line.startsWith("#") && line.length > 0) {
+        const isAdSegment = adSignatures.some((sig) => line.toLowerCase().includes(sig));
+        if (isAdSegment) {
+          if (!inAd) {
+            inAd = true;
+            adStart = Math.max(0, currTime - 5);
+          }
+          if (clean.length > 0 && clean[clean.length - 1].startsWith("#EXTINF:")) {
+            clean.pop();
+          }
+          if (clean.length > 0 && clean[clean.length - 1].startsWith("#EXT-X-KEY:")) {
+            clean.pop();
+          }
+          continue;
+        } else {
+          if (inAd) {
+            inAd = false;
+            detectedRanges.push({ start: adStart, end: currTime + 1 });
+          }
         }
-        if (clean.length > 0 && clean[clean.length - 1].startsWith("#EXT-X-KEY:")) {
-          clean.pop();
-        }
-        continue;
       }
       clean.push(rawLine);
+    }
+
+    if (inAd) {
+      detectedRanges.push({ start: adStart, end: currTime + 1 });
+    }
+
+    if (detectedRanges.length > 0) {
+      this.detectedAdRanges = detectedRanges;
+      console.log("[AdBlocker] Đã ghi nhận các mốc thời gian quảng cáo trong luồng:", detectedRanges);
     }
 
     // Tinh gọn các thẻ DISCONTINUITY bị thừa sau khi bóc tách quảng cáo
@@ -2046,6 +2075,29 @@ class AppleCinemaApp {
         super(config);
         const origLoad = this.load.bind(this);
         this.load = (context, cfg, callbacks) => {
+          const url = (context?.url || "").toLowerCase();
+          const adSignatures = [
+            "convertv7", "/v7/", "segment_00", "9922", "cwin", "kubet", "888", "1xbet",
+            "quangcao", "qc/", "promo", "sponsor", "track", "banner", "shopee", "lazada"
+          ];
+          // Nếu phát hiện request tải trực tiếp file phân đoạn video quảng cáo (.ts, .m4s) -> Vô hiệu hóa và nhảy qua
+          if (adSignatures.some((sig) => url.includes(sig))) {
+            console.warn("[AdBlocker] Đã vô hiệu hóa tải phân đoạn video quảng cáo:", context.url);
+            const videoEl = document.getElementById("hlsVideoElement");
+            if (videoEl && Array.isArray(self.detectedAdRanges) && self.detectedAdRanges.length > 0) {
+              for (const range of self.detectedAdRanges) {
+                if (videoEl.currentTime >= range.start - 1 && videoEl.currentTime <= range.end) {
+                  videoEl.currentTime = range.end + 0.5;
+                  break;
+                }
+              }
+            }
+            if (callbacks.onSuccess) {
+              callbacks.onSuccess({ data: new ArrayBuffer(0), url: context.url }, {}, context, null);
+            }
+            return;
+          }
+
           const origSuccess = callbacks.onSuccess;
           callbacks.onSuccess = (response, stats, ctx, networkDetails) => {
             if (response && typeof response.data === "string" && response.data.includes("#EXTM3U")) {
@@ -2265,12 +2317,15 @@ class AppleCinemaApp {
 
     this.destroyHls();
     this.detectedHlsLevels = [];
+    this.detectedAdRanges = [];
     this.actualVideoRes = { width: 0, height: 0, bitrateMbps: 0 };
 
     if (window.Hls && window.Hls.isSupported()) {
       const CustomPlaylistLoader = this.createAdFreePlaylistLoader();
       this.hlsInstance = new window.Hls({
+        loader: CustomPlaylistLoader,
         pLoader: CustomPlaylistLoader,
+        fLoader: CustomPlaylistLoader,
         enableWorker: true,
         lowLatencyMode: true,
         progressive: true,
@@ -2286,9 +2341,18 @@ class AppleCinemaApp {
       this.hlsInstance.attachMedia(videoEl);
       this.hlsInstance.on(window.Hls.Events.FRAG_LOADING, (_, data) => {
         const fragUrl = (data?.frag?.url || "").toLowerCase();
-        const adSignatures = ["convertv7", "/v7/", "cwin", "kubet", "888", "1xbet", "quangcao"];
+        const adSignatures = [
+          "convertv7", "/v7/", "segment_00", "9922", "cwin", "kubet", "888", "1xbet",
+          "quangcao", "qc/", "promo", "sponsor", "789", "jun88", "hi88", "new88", "f8bet"
+        ];
         if (adSignatures.some((s) => fragUrl.includes(s))) {
-          console.warn("[AdBlocker] Đã chặn tải phân đoạn quảng cáo:", fragUrl);
+          console.warn("[AdBlocker] Đang tải phân đoạn quảng cáo -> Tự động nhảy qua:", fragUrl);
+          const skipTo = (data.frag.start || 0) + (data.frag.duration || 15) + 0.5;
+          if (videoEl && videoEl.currentTime < skipTo) {
+            videoEl.currentTime = skipTo;
+            this.showToast("⚡ Đã tự động vượt qua quảng cáo nhà cái!");
+            this.showAppleVideoHud("forward", "Bỏ qua QC");
+          }
         }
       });
       this.hlsInstance.on(window.Hls.Events.MANIFEST_PARSED, (_, data) => {
@@ -2327,6 +2391,12 @@ class AppleCinemaApp {
       });
     } else if (videoEl.canPlayType("application/vnd.apple.mpegurl")) {
       videoEl.src = streamUrl;
+      // Trích xuất các mốc quảng cáo ngầm cho Safari iOS
+      fetch(streamUrl).then(r => r.text()).then(txt => {
+        if (txt && txt.includes("#EXTM3U")) {
+          this.cleanHlsAdSegments(txt);
+        }
+      }).catch(() => {});
       videoEl.addEventListener("loadedmetadata", () => {
         this.actualVideoRes.width = videoEl.videoWidth || 1920;
         this.actualVideoRes.height = videoEl.videoHeight || 1080;
@@ -2388,11 +2458,38 @@ class AppleCinemaApp {
         applePlayIcon.className = videoEl.paused ? "fas fa-play" : "fas fa-pause";
       }
 
-      // Quản lý hiển thị nút Bỏ qua quảng cáo / Intro trong 30s đầu
+      // Quản lý hiển thị nút Bỏ qua quảng cáo / Intro & Tự động vượt qua quảng cáo nhà cái
+      if (Array.isArray(this.detectedAdRanges) && this.detectedAdRanges.length > 0) {
+        for (const range of this.detectedAdRanges) {
+          if (videoEl.currentTime >= range.start - 0.2 && videoEl.currentTime < range.end) {
+            console.log(`[AdBlocker] Tự động nhảy qua mốc QC [${range.start} - ${range.end}]s`);
+            videoEl.currentTime = range.end + 0.5;
+            this.showToast("⚡ Đã tự động vượt qua quảng cáo nhà cái!");
+            this.showAppleVideoHud("forward", "Bỏ qua QC");
+            break;
+          }
+        }
+      }
+
+      // Quản lý hiển thị nút Bỏ qua quảng cáo / Intro (ở đầu video 0-35s hoặc sát các khoảng quảng cáo mid-roll)
       const skipBtn = document.getElementById("appleSkipIntroBtn");
       if (skipBtn) {
-        if (videoEl.currentTime > 0.5 && videoEl.currentTime < 30) {
+        const isNearDetectedAd = Array.isArray(this.detectedAdRanges) && this.detectedAdRanges.some(
+          (r) => videoEl.currentTime >= r.start - 10 && videoEl.currentTime <= r.end + 3
+        );
+        const isNearCommonAdSlot =
+          (videoEl.currentTime > 0.5 && videoEl.currentTime < 35) ||
+          (videoEl.currentTime >= 170 && videoEl.currentTime <= 210) ||
+          (videoEl.currentTime >= 890 && videoEl.currentTime <= 950);
+
+        if (isNearDetectedAd || isNearCommonAdSlot) {
           skipBtn.style.display = "inline-flex";
+          const isMidRoll = videoEl.currentTime > 60;
+          skipBtn.title = isMidRoll ? "Bỏ qua quảng cáo nhà cái (Phím S)" : "Bỏ qua giới thiệu (Phím S)";
+          const textEl = document.getElementById("appleSkipIntroText");
+          if (textEl) {
+            textEl.textContent = isMidRoll ? "Bỏ qua QC (S)" : "Bỏ qua 15s QC";
+          }
         } else {
           skipBtn.style.display = "none";
         }
@@ -2411,11 +2508,32 @@ class AppleCinemaApp {
   skipAdIntro(seconds = 15) {
     const videoEl = document.getElementById("hlsVideoElement");
     if (!videoEl) return;
-    videoEl.currentTime = Math.min((videoEl.duration || 9999) - 1, videoEl.currentTime + seconds);
+    let jumped = false;
+    if (Array.isArray(this.detectedAdRanges) && this.detectedAdRanges.length > 0) {
+      for (const range of this.detectedAdRanges) {
+        if (videoEl.currentTime >= range.start - 15 && videoEl.currentTime <= range.end + 3) {
+          videoEl.currentTime = Math.min((videoEl.duration || 9999) - 1, range.end + 0.5);
+          jumped = true;
+          break;
+        }
+      }
+    }
+    if (!jumped) {
+      if (videoEl.currentTime >= 880 && videoEl.currentTime <= 950) {
+        videoEl.currentTime = Math.min((videoEl.duration || 9999) - 1, 936);
+        jumped = true;
+      } else if (videoEl.currentTime >= 165 && videoEl.currentTime <= 215) {
+        videoEl.currentTime = Math.min((videoEl.duration || 9999) - 1, 206);
+        jumped = true;
+      }
+    }
+    if (!jumped) {
+      videoEl.currentTime = Math.min((videoEl.duration || 9999) - 1, videoEl.currentTime + seconds);
+    }
     const skipBtn = document.getElementById("appleSkipIntroBtn");
     if (skipBtn) skipBtn.style.display = "none";
-    this.showToast(`⚡ Đã bỏ qua ${seconds}s quảng cáo / giới thiệu!`);
-    this.showAppleVideoHud("forward", `+${seconds}s`);
+    this.showToast(jumped ? "⚡ Đã bỏ qua phân đoạn quảng cáo nhà cái!" : `⚡ Đã bỏ qua ${seconds}s quảng cáo / giới thiệu!`);
+    this.showAppleVideoHud("forward", "Bỏ qua QC");
   }
 
   inspectHlsLevels(rawLevels) {
