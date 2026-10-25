@@ -48,6 +48,7 @@ class AppleCinemaApp {
     }
     this.currentServerMode = this.settings.defaultServer || "hls-1";
     this.currentQuality = this.settings.defaultQuality || "native-max";
+    this.shieldEnabled = this.loadStorage("apple_shield_enabled", true);
 
     this.searchDebounce = null;
     this.tagCache = new Map();
@@ -1578,6 +1579,10 @@ class AppleCinemaApp {
     sheet.innerHTML = `
       <!-- Top Floating Modal Controls -->
       <div class="modal-top-controls">
+        <button class="modal-ctrl-btn ${this.shieldEnabled ? "active" : ""}" id="modalTopShieldBtn" onclick="app.toggleWatermarkShield(event)" title="Chặn/Khử banner quảng cáo viền trên">
+          <i class="fas fa-shield-halved"></i>
+          <span id="modalTopShieldLabel">${this.shieldEnabled ? "Đang Chặn QC" : "Chặn Banner QC"}</span>
+        </button>
         <button class="modal-ctrl-btn" onclick="app.toggleLightsOff()">
           <i class="fas fa-lightbulb"></i>
           <span id="lightsOffLabel">${this.lightsOff ? "Bật Đèn" : "Tắt Đèn Rạp"}</span>
@@ -1625,6 +1630,9 @@ class AppleCinemaApp {
           <!-- Video Element (đã bỏ controls mặc định của trình duyệt để triệt tiêu hoàn toàn viền xanh khi bấm phím cách) -->
           <video id="hlsVideoElement" class="${this.getQualityVideoClass(this.currentQuality)}" playsinline poster="${backdropUrl}" tabindex="-1"></video>
           <iframe id="trailerIframeElement" style="display: none;" sandbox="allow-scripts allow-same-origin allow-presentation allow-forms" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen tabindex="-1"></iframe>
+
+          <!-- Apple Anti-Ad Watermark Shield (Khử sạch 100% banner tài trợ nhà cái i999.ai viền trên, không làm mờ phim) -->
+          <div class="apple-watermark-shield ${this.shieldEnabled ? "active" : ""}" id="appleWatermarkShield" aria-hidden="true"></div>
 
           <!-- Apple Center HUD Pulse: Không vòng tròn, chỉ hiển thị icon -->
           <div class="apple-video-hud" id="appleVideoHud">
@@ -1697,6 +1705,11 @@ class AppleCinemaApp {
                 </div>
 
                 <div class="apple-ctrls-right">
+                  <!-- Chặn Watermark Banner QC -->
+                  <button class="apple-ctrl-btn apple-shield-btn ${this.shieldEnabled ? "active" : ""}" id="appleShieldToggleBtn" onclick="app.toggleWatermarkShield(event)" title="Chặn Banner Quảng Cáo Viền Trên (Bật / Tắt)">
+                    <i class="fas fa-shield-halved"></i>
+                  </button>
+
                   <!-- Tốc độ phát -->
                   <button class="apple-ctrl-btn apple-speed-btn" id="appleSpeedBtn" onclick="app.cyclePlaybackSpeed(event)" title="Tốc độ phát">
                     <span id="appleSpeedText">1.0x</span>
@@ -1908,13 +1921,27 @@ class AppleCinemaApp {
     window.open = function (url, target, features) {
       if (typeof url === "string") {
         const u = url.toLowerCase();
-        const isAllowed = u.includes("youtube.com") || u.includes("google.com") || u.includes("github.com");
+        const isAllowed = u.includes("youtube.com") || u.includes("google.com") || u.includes("github.com") || u.includes("accounts.google.com");
         if (!isAllowed) {
           console.warn("[AdBlocker] Đã chặn popup quảng cáo nhảy trang:", url);
           return null;
         }
       }
       return originalWindowOpen.call(window, url, target, features);
+    };
+
+    // Chặn triệt để các mã script quảng cáo, nhà cái cá cược chèn ngầm vào DOM
+    const adPatterns = ["i999", "cwin", "nohu", "kubet", "thabet", "baccarat", "popads", "propellerads", "adsterra", "exoclick", "adtrue"];
+    const originalAppendChild = Node.prototype.appendChild;
+    Node.prototype.appendChild = function (child) {
+      if (child && (child.tagName === "SCRIPT" || child.tagName === "IFRAME")) {
+        const src = (child.src || "").toLowerCase();
+        if (adPatterns.some((pattern) => src.includes(pattern))) {
+          console.warn("[AdBlocker] Đã chặn phần tử quảng cáo chèn ngầm:", src);
+          return child;
+        }
+      }
+      return originalAppendChild.apply(this, arguments);
     };
   }
 
@@ -2707,6 +2734,46 @@ class AppleCinemaApp {
     const videoEl = document.getElementById("hlsVideoElement");
     if (!container || !videoEl) return;
 
+    // Đồng bộ trạng thái lớp che banner quảng cáo/watermark
+    const shieldEl = document.getElementById("appleWatermarkShield");
+    if (shieldEl) {
+      shieldEl.classList.toggle("active", Boolean(this.shieldEnabled));
+    }
+
+    // Tự động rà soát & làm sạch phụ đề WebVTT/TextTrack nếu phát hiện chèn quảng cáo nhà cái
+    const sanitizeTrackCues = (track) => {
+      if (!track) return;
+      const cleanCues = () => {
+        if (!track.cues) return;
+        const badKeywords = [
+          "i999", "cwin", "nohu", "nổ hũ", "bắn cá", "sòng bài", "rút tiền",
+          "tài trợ", "nhà cái", "kubet", "thabet", "cá cược", "đặt cược"
+        ];
+        for (let i = track.cues.length - 1; i >= 0; i--) {
+          const cue = track.cues[i];
+          if (cue && cue.text) {
+            const lower = cue.text.toLowerCase();
+            if (badKeywords.some((kw) => lower.includes(kw))) {
+              try { track.removeCue(cue); } catch (e) {}
+            }
+          }
+        }
+      };
+      try {
+        track.addEventListener("cuechange", cleanCues);
+        cleanCues();
+      } catch (_) {}
+    };
+
+    if (videoEl.textTracks) {
+      for (let i = 0; i < videoEl.textTracks.length; i++) {
+        sanitizeTrackCues(videoEl.textTracks[i]);
+      }
+      videoEl.textTracks.onaddtrack = (e) => {
+        if (e && e.track) sanitizeTrackCues(e.track);
+      };
+    }
+
     // Hiển thị thanh điều khiển Apple khi phát luồng native
     const appleOverlay = document.getElementById("applePlayerOverlay");
     if (appleOverlay) appleOverlay.style.display = "flex";
@@ -3348,6 +3415,23 @@ class AppleCinemaApp {
     document.getElementById("movieDetailModal")?.classList.toggle("lights-off", this.lightsOff);
     const label = document.getElementById("lightsOffLabel");
     if (label) label.textContent = this.lightsOff ? "Bật Đèn" : "Tắt Đèn Rạp";
+  }
+
+  toggleWatermarkShield(e) {
+    if (e) e.stopPropagation();
+    this.shieldEnabled = !this.shieldEnabled;
+    this.saveStorage("apple_shield_enabled", this.shieldEnabled);
+    const shield = document.getElementById("appleWatermarkShield");
+    const topBtn = document.getElementById("modalTopShieldBtn");
+    const topLabel = document.getElementById("modalTopShieldLabel");
+    const playerBtn = document.getElementById("appleShieldToggleBtn");
+
+    if (shield) shield.classList.toggle("active", this.shieldEnabled);
+    if (topBtn) topBtn.classList.toggle("active", this.shieldEnabled);
+    if (topLabel) topLabel.textContent = this.shieldEnabled ? "Đang Chặn QC" : "Chặn Banner QC";
+    if (playerBtn) playerBtn.classList.toggle("active", this.shieldEnabled);
+
+    this.showToast(this.shieldEnabled ? "🛡️ Đã bật Chặn Banner Quảng Cáo (Khử watermark chữ tài trợ)" : "🛡️ Đã tắt Chặn Banner Quảng Cáo");
   }
 
   findMovie(idOrSlug) {

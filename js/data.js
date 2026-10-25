@@ -1178,12 +1178,12 @@ class PhimmoiService {
     const syn = (item.synopsis || item.description || item.content || "").toLowerCase();
 
     const adKeywords = [
-      "quảng cáo", "quang cao", "nhà cái", "cá cược", "cá độ", "đặt cược",
-      "tài xỉu", "bắn cá", "nổ hũ", "soi kèo", "kèo bóng", "casino",
-      "baccarat", "fb88", "jun88", "shbet", "789bet", "hi88", "new88",
-      "okvip", "kubet", "w88", "m88", "188bet", "bk8", "dafabat", "fun88",
+      "i999", "i999.ai", "cwin", "quảng cáo", "quang cao", "nhà cái", "cá cược", "cá độ", "đặt cược",
+      "tài xỉu", "bắn cá", "nổ hũ", "soi kèo", "kèo bóng", "casino", "sòng bài", "rút tiền 24/7",
+      "baccarat", "fb88", "jun88", "shbet", "789bet", "hi88", "new88", "i9bet", "8xbet", "k8cc",
+      "okvip", "kubet", "thabet", "w88", "m88", "188bet", "bk8", "dafabat", "fun88", "ae888", "sv388", "vn88",
       "sin88", "may88", "red88", "five88", "debet", "sv88", "zbet", "oxbet",
-      "lixi88", "t.me/", "telegram", "zalo.me", "link cược"
+      "lixi88", "t.me/", "telegram", "zalo.me", "link cược", "hhpanda"
     ];
 
     for (const kw of adKeywords) {
@@ -1200,12 +1200,18 @@ class PhimmoiService {
   cleanAdText(text) {
     if (!text) return "";
     return text
+      .replace(/bộ\s+phim\s+này\s+do[^\n.]*/gi, "")
+      .replace(/sản\s+phẩm:\s*(nổ\s*hũ|bắn\s*cá|sòng\s*bài|thể\s*thao)[^\n.]*/gi, "")
+      .replace(/rút\s+tiền\s+24\/7[^\n.]*/gi, "")
+      .replace(/nhận\s+tiền\s+trong\s+tích\s+tắc[^\n.]*/gi, "")
+      .replace(/tài\s+trợ\s+và\s+công\s+bố[^\n.]*/gi, "")
       .replace(/cùng\s+(phimmoi|phimmoiz|nguonc|ophim|kkphim)[^.]*\./gi, "")
       .replace(/xem\s+phim\s+tại\s+[^\s,.]+/gi, "")
       .replace(/chúc\s+bạn\s+xem\s+phim\s+vui\s+vẻ[^.]*\./gi, "")
       .replace(/liên\s+hệ\s+quảng\s+cáo[^\n.]*/gi, "")
-      .replace(/tham\s+gia\s+cược[^\n.]*/gi, "")
+      .replace(/tham\s+gia\s+(cược|nhà\s+cái)[^\n.]*/gi, "")
       .replace(/https?:\/\/[^\s]+/gi, "")
+      .replace(/\s{2,}/g, " ")
       .trim();
   }
 
@@ -1578,6 +1584,25 @@ class PhimmoiService {
         if (bestHit && bestHit.slug) {
           movie.crawlSlug = bestHit.slug;
           phimApiRes = await this.smartFetchJson(`${PHIMMOI_CONFIG.phimApiBase}${encodeURIComponent(bestHit.slug)}`, 5000);
+        }
+      }
+    }
+
+    // Nếu NguonC chưa khớp với slug chuẩn, tự động tìm kiếm trên NguonC để lấy thêm Server 2 sạch quảng cáo
+    if ((!nguoncRes || !nguoncRes.movie) && movie.title) {
+      const ncSearch = await this.smartFetchJson(
+        `${PHIMMOI_CONFIG.nguoncApiSearch}?keyword=${encodeURIComponent(movie.title)}`,
+        3500
+      );
+      const ncItems = ncSearch?.items || ncSearch?.data?.items;
+      if (Array.isArray(ncItems) && ncItems.length > 0) {
+        const cleanTarget = movie.title.toLowerCase().trim();
+        const bestNc =
+          ncItems.find((it) => (it.name || "").toLowerCase().trim() === cleanTarget) ||
+          ncItems.find((it) => (it.slug || "").includes(movie.slug)) ||
+          ncItems[0];
+        if (bestNc && bestNc.slug) {
+          nguoncRes = await this.smartFetchJson(`${PHIMMOI_CONFIG.nguoncApiBase}${encodeURIComponent(bestNc.slug)}`, 4500);
         }
       }
     }
