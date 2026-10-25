@@ -634,7 +634,7 @@ class AppleCinemaApp {
                        onerror="this.src='https://phimimg.com/upload/vod/20251229-1/d7f24b91fd95fb7cf353e1369e2318b7.jpg'" />
                   <div class="schedule-card-top-badges">
                     <span class="sch-time-pill"><i class="far fa-clock"></i> ${m.airTime || "10:00 Sáng"}</span>
-                    <span class="sch-quality-pill"><i class="fas fa-sparkles"></i> ${m.quality || "1080"}</span>
+                    <span class="sch-quality-pill"><i class="fas fa-sparkles"></i> ${m.quality === "4K" ? "4K" : "Full HD"}</span>
                   </div>
                   <div class="schedule-hover-play">
                     <div class="sch-play-icon"><i class="fas fa-play"></i></div>
@@ -1417,7 +1417,7 @@ class AppleCinemaApp {
     );
     const qualityBadge = is4k
       ? `<span class="ribbon-quality ribbon-4k"><i class="fas fa-sparkles"></i> 4K</span>`
-      : `<span class="ribbon-quality ribbon-1080">1080p</span>`;
+      : `<span class="ribbon-quality ribbon-1080">Full HD</span>`;
     const epText = movie.type === "series"
       ? (movie.episodeCurrent || "Tập mới")
       : (this.getMovieLanguageLabel(movie).split("+")[0].trim() || "Full");
@@ -2563,13 +2563,13 @@ class AppleCinemaApp {
 
     const is4k = this.currentQuality === "4K" || this.currentQuality === "4k";
 
-    // Phim không có định dạng 4K thực tế thì chỉ hiển thị nút 1080 (không hiện nút 4K ảo)
+    // Phim không có định dạng 4K thực tế thì chỉ hiển thị nút Full HD (không hiện nút 4K ảo)
     if (!hasReal4kStream) {
       return `
         <button class="quality-pill-btn active" 
-                onclick="app.handleQualityPillClick('1080', false)"
+                onclick="app.handleQualityPillClick('Full HD', false)"
                 title="Full HD 1080p • Nét Chuẩn Bản Quyền Từ Máy Chủ">
-          1080
+          Full HD
         </button>
       `;
     }
@@ -2578,7 +2578,7 @@ class AppleCinemaApp {
       <button class="quality-pill-btn ${!is4k ? "active" : ""}" 
               onclick="app.switchQualityTier('1080')" 
               title="Full HD 1080p • Nét Chuẩn Bản Quyền">
-        1080
+        Full HD
       </button>
       <button class="quality-pill-btn is-4k-quality ${is4k ? "active" : ""}" 
               onclick="app.switchQualityTier('4K')" 
@@ -3004,8 +3004,8 @@ class AppleCinemaApp {
 
     if (islandBackdrop) islandBackdrop.src = this.getMovieBackdrop(movie);
     if (islandTitle) islandTitle.textContent = movie.title;
-    if (islandDuration) islandDuration.textContent = movie.duration || "1080";
-    if (islandQuality) islandQuality.textContent = movie.quality || "1080";
+    if (islandDuration) islandDuration.textContent = movie.duration || "Full HD";
+    if (islandQuality) islandQuality.textContent = (movie.quality && movie.quality.includes("4K")) ? "4K" : "Full HD";
     if (islandLang) islandLang.textContent = this.getMovieLanguageLabel(movie);
     if (islandEp) islandEp.textContent = epLabel;
     if (islandPlayIcon) islandPlayIcon.className = playing ? "fas fa-pause" : "fas fa-play";
@@ -3509,7 +3509,7 @@ class AppleCinemaApp {
               <div class="search-suggestion-info">
                 <div class="search-suggestion-title">${m.title}</div>
                 <div class="search-suggestion-meta">
-                  <span class="badge-mini">${m.quality || "1080"}</span>
+                  <span class="badge-mini">${m.quality === "4K" ? "4K" : "Full HD"}</span>
                   <span class="badge-mini">${m.year || 2026}</span>
                   <span class="search-genre-tag">${(m.genres && m.genres[0]) || m.country || "Phim"}</span>
                 </div>
