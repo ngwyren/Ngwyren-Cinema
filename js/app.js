@@ -1409,7 +1409,7 @@ class AppleCinemaApp {
     `;
   }
 
-  renderMovieCardHTML(movie, rankNum = null) {
+  renderMovieCardHTML(movie, rankNum = null, reasonText = null) {
     const inMyList = this.isInMyList(movie);
     const is4k = Boolean(
       (movie.quality && movie.quality.toString().toUpperCase().includes("4K")) ||
@@ -1459,6 +1459,7 @@ class AppleCinemaApp {
         <div class="movie-card-info">
           <h3 class="movie-card-title" title="${movie.title}">${movie.title}</h3>
           <div class="movie-card-sub">${movie.originTitle} • ${movie.year}</div>
+          ${reasonText ? `<div class="movie-card-reason"><i class="fas fa-link" style="font-size:0.6rem; color:#38ef7d; margin-right:3px;"></i>${reasonText}</div>` : ""}
         </div>
       </article>
     `;
@@ -1701,7 +1702,7 @@ class AppleCinemaApp {
     if (!sheet) return;
 
     const inMyList = this.isInMyList(movie);
-    const relatedItems = this.service.getRelatedMovies(movie, 9);
+    const relatedItems = this.service.getRelatedMovies(movie, 12);
     const currentEp = movie.episodes[this.currentEpisodeIndex] || movie.episodes[0];
     const backdropUrl = this.getMovieBackdrop(movie);
 
@@ -1949,43 +1950,12 @@ class AppleCinemaApp {
             </button>
           </div>
 
-          <!-- Tab Panel 1: Netflix More Like This -->
+          <!-- Tab Panel 1: Related Movies Grid (Chỉ hiện ảnh bìa & ghi thông tin gọn lại) -->
           <div id="modalTabPanelRelated" style="padding-top: 20px;">
-            <div class="related-movies-grid">
+            <div class="movie-grid">
               ${relatedItems
-                .map(
-                  ({ movie: rel, matchPercent, reasons }) => `
-                <div class="netflix-related-card" onclick="app.openMovieModal('${rel.slug}', false)">
-                  <div class="netflix-related-thumb">
-                    <img src="${rel.backdrop || rel.poster}" alt="${rel.title}" loading="lazy" decoding="async" />
-                    <span class="netflix-related-duration">${rel.type === "series" ? rel.episodeCurrent : rel.duration}</span>
-                    <div class="hover-play-center" style="width: 44px; height: 44px;"
-                         onclick="event.stopPropagation(); app.openMovieModal('${rel.slug}', true)">
-                      <i class="fas fa-play"></i>
-                    </div>
-                  </div>
-                  <div class="netflix-related-body">
-                    <div class="netflix-related-top">
-                      <span class="hover-match-score" style="font-size: 0.8rem;">${matchPercent}% Phù hợp</span>
-                      <div style="display: flex; align-items: center; gap: 6px;">
-                        <span class="badge-mini">${rel.quality}</span>
-                        <span class="badge-mini" style="background: rgba(255,255,255,0.1); color: #fff;">${rel.year}</span>
-                        <button class="mini-circle-btn ${this.isInMyList(rel) ? "active" : ""}"
-                                onclick="app.toggleMyList('${rel.slug}', event)"
-                                title="${this.isInMyList(rel) ? "Xóa khỏi Yêu thích" : "Thêm vào Yêu thích"}">
-                          <i class="${this.isInMyList(rel) ? "fas fa-star" : "far fa-star"}"></i>
-                        </button>
-                      </div>
-                    </div>
-                    <div class="netflix-related-title">${rel.title}</div>
-                    <div style="font-size: 0.75rem; color: var(--text-tertiary);">${rel.originTitle}</div>
-                    <p class="netflix-related-desc">${rel.synopsis}</p>
-                    <div class="netflix-related-tags">
-                      ${reasons.map((r) => `<span class="reason-badge"><i class="fas fa-link" style="font-size:0.6rem; color: #ffffff;"></i> ${r}</span>`).join("")}
-                    </div>
-                  </div>
-                </div>
-              `
+                .map(({ movie: rel, reasons }) =>
+                  this.renderMovieCardHTML(rel, null, reasons?.[0] || "")
                 )
                 .join("")}
             </div>
