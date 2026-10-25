@@ -3897,21 +3897,6 @@ body {
   -webkit-backdrop-filter: blur(12px);
 }
 
-.vision-genre-tag.tag-4k {
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.25) 0%, rgba(255, 165, 0, 0.18) 100%), rgba(20, 20, 24, 0.9);
-  border-color: rgba(255, 215, 0, 0.65);
-  color: #ffd700;
-  font-weight: 800;
-  box-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
-}
-
-.vision-genre-tag.tag-1080 {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.35);
-  color: #ffffff;
-  font-weight: 700;
-}
-
 .vision-hero-title {
   font-size: clamp(1.65rem, 2.6vw, 2.45rem);
   font-weight: 800;

@@ -1137,8 +1137,7 @@ class AppleCinemaApp {
         <div class="vision-hero-bottom">
           <div class="vision-hero-info">
             <div class="vision-hero-genres">
-              ${movie.genres.slice(0, 3).map((g) => `<span class="vision-genre-tag">${g}</span>`).join("")}
-              <span class="vision-genre-tag ${movie.quality === "4K" ? "tag-4k" : "tag-1080"}">${movie.quality === "4K" ? "<i class='fas fa-sparkles' style='margin-right:4px;'></i>4K Ultra HD" : "Full HD 1080p"} • ${movie.language}</span>
+              ${movie.genres.slice(0, 4).map((g) => `<span class="vision-genre-tag">${g}</span>`).join("")}
             </div>
 
             <h1 class="vision-hero-title">${movie.title}</h1>
@@ -2521,11 +2520,9 @@ class AppleCinemaApp {
   buildQualityButtonsHTML(movie) {
     const mov = movie || this.selectedMovie || this.playingMovie;
     const has4k = Boolean(
-      (mov?.quality && mov.quality.toString().toUpperCase().includes("4K")) ||
-      (mov?.nativeQuality && mov.nativeQuality.toString().toUpperCase().includes("4K")) ||
-      (Array.isArray(mov?.sectionTags) && mov.sectionTags.includes("4k")) ||
       (this.detectedHlsLevels && this.detectedHlsLevels.some((l) => l.height >= 1440 || l.width >= 2560)) ||
-      (mov?.episodes?.some((ep) => ep.altSources?.some((a) => (a.label || "").toLowerCase().includes("4k") || (a.source || "").toLowerCase().includes("4k"))))
+      (mov?.episodes?.some((ep) => ep.altSources?.some((a) => (a.label || "").toLowerCase().includes("4k") || (a.source || "").toLowerCase().includes("4k")))) ||
+      ((mov?.quality === "4K" || mov?.nativeQuality === "4K") && (mov?.episodes?.some((ep) => (ep.source || "").toLowerCase().includes("4k") || (ep.name || "").toLowerCase().includes("4k"))))
     );
 
     const is4k = this.currentQuality === "4K" || this.currentQuality === "4k";

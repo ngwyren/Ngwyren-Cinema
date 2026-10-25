@@ -31,8 +31,8 @@ const PHIMMOI_SEED_MOVIES = [
     poster: "https://phimimg.com/upload/vod/20250722-1/66ee196318069c6ede9450a5f76a4648.jpg",
     backdrop: "https://phimimg.com/upload/vod/20250722-1/16ea0557ca40cd54a3d25c6750a65c0b.jpg",
     type: "single",
-    sectionTags: ["de-cu", "anime", "phim-le", "hot", "4k"],
-    quality: "4K",
+    sectionTags: ["de-cu", "anime", "phim-le", "hot"],
+    quality: "1080",
     language: "Vietsub + Thuyết Minh",
     duration: "155 phút",
     episodeCurrent: "Full",
@@ -136,8 +136,8 @@ const PHIMMOI_SEED_MOVIES = [
     poster: "https://phimimg.com/upload/vod/20250627-1/95df698d6732124181f47c85b5f1a475.jpg",
     backdrop: "https://phimimg.com/upload/vod/20250627-1/d5d6027b96a3145442ae28753db855d5.jpg",
     type: "series",
-    sectionTags: ["de-cu", "phim-bo", "han-quoc", "hot", "4k"],
-    quality: "4K",
+    sectionTags: ["de-cu", "phim-bo", "han-quoc", "hot"],
+    quality: "1080",
     language: "Vietsub + Lồng Tiếng",
     duration: "60 phút/tập",
     episodeCurrent: "Trọn Bộ 6 Tập",
@@ -172,8 +172,8 @@ const PHIMMOI_SEED_MOVIES = [
     poster: "https://phimimg.com/upload/vod/20251122-1/98a195e46ee8549833c3d8d15008c430.jpg",
     backdrop: "https://phimimg.com/upload/vod/20251122-1/dfe9d4568bdeee90b8889d716e359af8.jpg",
     type: "series",
-    sectionTags: ["de-cu", "phim-bo", "han-quoc", "hot", "4k"],
-    quality: "4K",
+    sectionTags: ["de-cu", "phim-bo", "han-quoc", "hot"],
+    quality: "1080",
     language: "Vietsub + Thuyết Minh",
     duration: "64 phút/tập",
     episodeCurrent: "Tập 12 / 16",
@@ -1090,8 +1090,10 @@ class PhimmoiService {
     if (Array.isArray(window.NGWYREN_FULL_CATALOG)) {
       window.NGWYREN_FULL_CATALOG.forEach((item) => {
         if (!item || !item.slug) return;
-        const is4k = (item.quality && item.quality.toString().toUpperCase().includes("4K")) ||
-                     (Array.isArray(item.sectionTags) && item.sectionTags.includes("4k"));
+        const is4k = Boolean(
+          (item.quality && item.quality.toString().toUpperCase() === "4K") &&
+          (Array.isArray(item.sectionTags) && item.sectionTags.includes("4k"))
+        );
         const normalizedItem = {
           ...item,
           quality: is4k ? "4K" : "1080",
