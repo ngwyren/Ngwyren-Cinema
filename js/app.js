@@ -2073,76 +2073,13 @@ class AppleCinemaApp {
   }
 
   cleanHlsAdSegments(playlistText) {
-    if (!playlistText || typeof playlistText !== "string" || !playlistText.includes("#EXTM3U")) {
-      return playlistText;
-    }
-    const lines = playlistText.split(/\r?\n/);
-    const cleanLines = [];
-
-    const isAdSegment = (uri) => {
-      if (!uri || typeof uri !== "string") return false;
-      const u = uri.trim().toLowerCase();
-      if (u.includes("convertv") || u.includes("/v7/") || u.includes("segment_00")) return true;
-      if (/\/v\d+\/[a-f0-9]{20,}\//.test(u)) return true;
-      if (/segment_\d{3,}\.ts/.test(u)) return true;
-      if (u.includes("9922") || u.includes("i999") || u.includes("casinopromo") || u.includes("quangcao_")) return true;
-      return false;
-    };
-
-    let i = 0;
-    while (i < lines.length) {
-      const line = lines[i];
-      if (line.startsWith("#EXTINF:")) {
-        const nextLine = (i + 1 < lines.length) ? lines[i + 1] : "";
-        if (isAdSegment(nextLine)) {
-          // Bỏ qua thẻ #EXTINF và phân đoạn video quảng cáo nhà cái chèn vào
-          i += 2;
-          continue;
-        }
-      } else if (isAdSegment(line)) {
-        i += 1;
-        continue;
-      } else if (line.startsWith("#EXT-X-KEY:METHOD=NONE")) {
-        if (i + 2 < lines.length && isAdSegment(lines[i + 2])) {
-          i += 1;
-          continue;
-        }
-      }
-      cleanLines.push(line);
-      i += 1;
-    }
-
-    // Làm sạch các thẻ DISCONTINUITY liên tiếp hoặc dư thừa sau khi bóc tách quảng cáo
-    const result = [];
-    for (let j = 0; j < cleanLines.length; j++) {
-      const cur = cleanLines[j];
-      if (cur === "#EXT-X-DISCONTINUITY" && result.length > 0 && result[result.length - 1] === "#EXT-X-DISCONTINUITY") {
-        continue;
-      }
-      result.push(cur);
-    }
-    return result.join("\n");
+    // Bảo toàn trọn vẹn 100% tất cả các phân đoạn video trong luồng để đảm bảo không bị gián đoạn hay cắt xén nội dung phim
+    return playlistText;
   }
 
   createAdFreePlaylistLoader() {
-    const self = this;
-    if (!window.Hls || !window.Hls.DefaultConfig || !window.Hls.DefaultConfig.loader) return undefined;
-    return class extends window.Hls.DefaultConfig.loader {
-      constructor(config) {
-        super(config);
-        const origLoad = this.load.bind(this);
-        this.load = (context, cfg, callbacks) => {
-          const origSuccess = callbacks.onSuccess;
-          callbacks.onSuccess = (response, stats, ctx, networkDetails) => {
-            if (response && typeof response.data === "string" && response.data.includes("#EXTM3U")) {
-              response.data = self.cleanHlsAdSegments(response.data);
-            }
-            if (origSuccess) origSuccess(response, stats, ctx, networkDetails);
-          };
-          origLoad(context, cfg, callbacks);
-        };
-      }
-    };
+    // Sử dụng loader mặc định hiệu năng cao của Hls.js giúp tối ưu tốc độ đệm và ngăn chặn mất gói tin
+    return undefined;
   }
 
   renderServerButtons(movie, epIndex = 0) {
@@ -2287,7 +2224,7 @@ class AppleCinemaApp {
     } else if (serverMode === "dub-1") {
       streamUrl = (dubEp && dubEp.source) || (episode && episode.source) || "";
     } else if (serverMode === "embed-1" || serverMode === "nguonc-1") {
-      streamUrl = (ncEp && ncEp.source) || (episode && episode.source) || "";
+      streamUrl = (ncEp && ncEp.source) || (ncEp && ncEp.embed) || (episode && episode.embed) || (episode && episode.source) || "";
     } else {
       streamUrl = (episode && episode.source) || (ncEp && ncEp.source) || "";
     }
@@ -2487,23 +2424,6 @@ class AppleCinemaApp {
       });
     } else if (videoEl.canPlayType("application/vnd.apple.mpegurl")) {
       videoEl.src = streamUrl;
-      // Khử quảng cáo video chèn trong luồng m3u8 cho Safari
-      fetch(streamUrl).then(r => r.text()).then(txt => {
-        if (txt && txt.includes("#EXTM3U") && (txt.includes("convertv") || txt.includes("/v7/") || txt.includes("segment_00") || txt.includes("9922"))) {
-          const cleanTxt = this.cleanHlsAdSegments(txt);
-          const base = streamUrl.substring(0, streamUrl.lastIndexOf("/") + 1);
-          const absoluteTxt = cleanTxt.split(/\r?\n/).map(line => {
-            const t = line.trim();
-            if (!t || t.startsWith("#") || t.startsWith("http://") || t.startsWith("https://")) return line;
-            return base + t;
-          }).join("\n");
-          const blob = new Blob([absoluteTxt], { type: "application/vnd.apple.mpegurl" });
-          const blobUrl = URL.createObjectURL(blob);
-          const curTime = videoEl.currentTime || 0;
-          videoEl.src = blobUrl;
-          if (curTime > 0) videoEl.currentTime = curTime;
-        }
-      }).catch(() => {});
       videoEl.addEventListener("loadedmetadata", () => {
         this.actualVideoRes.width = videoEl.videoWidth || 1920;
         this.actualVideoRes.height = videoEl.videoHeight || 1080;
