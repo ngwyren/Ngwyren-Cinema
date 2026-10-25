@@ -955,6 +955,23 @@ body::-webkit-scrollbar {
   font-weight: 700;
 }
 
+.meta-pill.badge-4k {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.22) 0%, rgba(255, 165, 0, 0.16) 100%), rgba(20, 20, 24, 0.9);
+  color: #ffd700;
+  border: 1px solid rgba(255, 215, 0, 0.6);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.35);
+  box-shadow: 0 2px 10px rgba(255, 215, 0, 0.18);
+}
+
+.meta-pill.badge-1080 {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  font-weight: 700;
+}
+
 .hero-desc {
   font-size: 0.94rem;
   color: var(--text-secondary);
@@ -1257,7 +1274,7 @@ body::-webkit-scrollbar {
   gap: 22px 18px;
 }
 
-/* Apple Music Movie Card (Zero-Lag Static Hover) */
+/* Apple Music Movie Card (Smooth 120fps Spatial Lift & Specular Sheen) */
 .movie-card {
   scroll-snap-align: start;
   display: flex;
@@ -1265,6 +1282,12 @@ body::-webkit-scrollbar {
   gap: 10px;
   cursor: pointer;
   position: relative;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.movie-card:hover {
+  transform: translateY(-6px);
 }
 
 .movie-poster-wrap {
@@ -1275,10 +1298,13 @@ body::-webkit-scrollbar {
   overflow: hidden;
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  transition: border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .movie-card:hover .movie-poster-wrap {
-  border-color: rgba(255, 255, 255, 0.45);
+  border-color: rgba(255, 255, 255, 0.48);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.16);
 }
 
 .movie-poster-wrap img {
@@ -1287,9 +1313,15 @@ body::-webkit-scrollbar {
   object-fit: cover;
   image-rendering: -webkit-optimize-contrast;
   image-rendering: high-quality;
+  transform: scale(1);
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Top Ribbons & Badges on Poster */
+.movie-card:hover .movie-poster-wrap img {
+  transform: scale(1.035);
+}
+
+/* Top Ribbons & Badges on Poster (Apple Reality Badges) */
 .poster-badges-top {
   position: absolute;
   top: 10px;
@@ -1305,12 +1337,33 @@ body::-webkit-scrollbar {
 
 .ribbon-quality {
   font-size: 0.68rem;
-  font-weight: 700;
+  font-weight: 750;
+  letter-spacing: 0.04em;
   padding: 3px 8px;
   border-radius: 6px;
-  background: rgba(12, 12, 16, 0.9);
+  background: rgba(14, 14, 18, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.ribbon-quality.ribbon-4k {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.22) 0%, rgba(255, 165, 0, 0.16) 100%), rgba(20, 20, 24, 0.9);
+  border-color: rgba(255, 215, 0, 0.55);
+  color: #ffd700;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+  box-shadow: 0 2px 12px rgba(255, 215, 0, 0.22);
+}
+
+.ribbon-quality.ribbon-1080 {
+  background: rgba(14, 14, 18, 0.88);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
 }
 
 .ribbon-ep {
@@ -1318,9 +1371,12 @@ body::-webkit-scrollbar {
   font-weight: 700;
   padding: 3px 8px;
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 /* Hover Overlay with Play & Quick Actions */
@@ -3837,6 +3893,23 @@ body {
   font-size: 0.72rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.vision-genre-tag.tag-4k {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.25) 0%, rgba(255, 165, 0, 0.18) 100%), rgba(20, 20, 24, 0.9);
+  border-color: rgba(255, 215, 0, 0.65);
+  color: #ffd700;
+  font-weight: 800;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
+}
+
+.vision-genre-tag.tag-1080 {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  font-weight: 700;
 }
 
 .vision-hero-title {

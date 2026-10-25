@@ -1138,7 +1138,7 @@ class AppleCinemaApp {
           <div class="vision-hero-info">
             <div class="vision-hero-genres">
               ${movie.genres.slice(0, 3).map((g) => `<span class="vision-genre-tag">${g}</span>`).join("")}
-              <span class="vision-genre-tag">${movie.quality} • ${movie.language}</span>
+              <span class="vision-genre-tag ${movie.quality === "4K" ? "tag-4k" : "tag-1080"}">${movie.quality === "4K" ? "<i class='fas fa-sparkles' style='margin-right:4px;'></i>4K Ultra HD" : "Full HD 1080p"} • ${movie.language}</span>
             </div>
 
             <h1 class="vision-hero-title">${movie.title}</h1>
@@ -1359,6 +1359,17 @@ class AppleCinemaApp {
 
   renderMovieCardHTML(movie, rankNum = null) {
     const inMyList = this.isInMyList(movie);
+    const is4k = Boolean(
+      (movie.quality && movie.quality.toString().toUpperCase().includes("4K")) ||
+      (Array.isArray(movie.sectionTags) && movie.sectionTags.includes("4k"))
+    );
+    const qualityBadge = is4k
+      ? `<span class="ribbon-quality ribbon-4k"><i class="fas fa-sparkles"></i> 4K</span>`
+      : `<span class="ribbon-quality ribbon-1080">1080p</span>`;
+    const epText = movie.type === "series"
+      ? (movie.episodeCurrent || "Tập mới")
+      : (movie.language ? movie.language.split("+")[0].trim() : "Full");
+
     return `
       <article class="movie-card ${rankNum ? "ranked-card" : ""}"
                onclick="app.openMovieModal('${movie.slug}', false)">
@@ -1366,8 +1377,8 @@ class AppleCinemaApp {
           <img src="${this.getMoviePoster(movie)}" alt="${movie.title}" loading="lazy" decoding="async"
                onerror="this.src='https://phimmoiz.one/wp-content/uploads/2026/10/matchbox-phim-dien-anh-poster.webp'" />
           <div class="poster-badges-top">
-            <span class="ribbon-quality">${movie.quality}</span>
-            <span class="ribbon-ep">${movie.type === "series" ? movie.episodeCurrent : movie.language.split("+")[0].trim()}</span>
+            ${qualityBadge}
+            <span class="ribbon-ep">${epText}</span>
           </div>
           ${rankNum ? `<span class="rank-number-badge">${rankNum}</span>` : ""}
 
@@ -1376,7 +1387,7 @@ class AppleCinemaApp {
               <i class="fas fa-play" style="margin-left: 2px;"></i>
             </div>
             <div class="hover-bottom-row">
-              <span class="hover-match-score">${movie.matchScore}% Phù hợp</span>
+              <span class="hover-match-score">${movie.matchScore || 96}% Phù hợp</span>
               <div class="hover-action-btns">
                 <button class="mini-circle-btn ${inMyList ? "active" : ""}"
                         onclick="app.toggleMyList('${movie.slug}', event)"
@@ -1776,9 +1787,11 @@ class AppleCinemaApp {
         <div class="modal-info-grid">
           <div>
             <div class="hero-meta-pills" style="margin-bottom: 10px;">
-              <span class="meta-pill match">${movie.matchScore}% Phù hợp với bạn</span>
+              <span class="meta-pill match">${movie.matchScore || 97}% Phù hợp với bạn</span>
               <span class="meta-pill">${movie.year}</span>
-              <span class="meta-pill"><i class="fas fa-star"></i> ${movie.rating}</span>
+              <span class="meta-pill"><i class="fas fa-star"></i> ${movie.rating || 9.2}</span>
+              <span class="meta-pill ${movie.quality === "4K" ? "badge-4k" : "badge-1080"}">${movie.quality === "4K" ? "<i class='fas fa-sparkles'></i> 4K Ultra HD" : "Full HD 1080p"}</span>
+              <span class="meta-pill"><i class="fas fa-volume-up"></i> ${movie.language || "Vietsub"}</span>
             </div>
             ${
               (() => {
