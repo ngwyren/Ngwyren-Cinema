@@ -49,7 +49,7 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/style.css?v=2.3.17" />
+  <link rel="stylesheet" href="css/style.css?v=2.3.18" />
 </head>
 <body>
 
@@ -225,7 +225,7 @@
         <!-- Các nút điều khiển Pro -->
         <div class="mini-ctrls-row">
           <div class="mini-btn-group">
-            <button class="mini-ctrl-btn" onclick="app.seekRelative(-10)" title="Lùi 10 giây">
+            <button class="mini-ctrl-btn" onclick="app.seekRelative(-5)" title="Lùi 5 giây">
               <i class="fas fa-rotate-left"></i>
             </button>
             <button class="mini-ctrl-btn" onclick="app.stepNowPlayingEpisode(-1)" title="Tập trước">
@@ -237,7 +237,7 @@
             <button class="mini-ctrl-btn" onclick="app.stepNowPlayingEpisode(1)" title="Tập tiếp theo">
               <i class="fas fa-forward-step"></i>
             </button>
-            <button class="mini-ctrl-btn" onclick="app.seekRelative(10)" title="Tiến 10 giây">
+            <button class="mini-ctrl-btn" onclick="app.seekRelative(5)" title="Tiến 5 giây">
               <i class="fas fa-rotate-right"></i>
             </button>
           </div>
@@ -299,11 +299,28 @@
     </div>
   </div>
 
+  <!-- Apple Vision & Apple TV 4K Ultra HD Reality Sharpening Engine -->
+  <svg id="apple4kFilters" style="position: absolute; width: 0; height: 0; pointer-events: none; overflow: hidden;" aria-hidden="true">
+    <defs>
+      <!-- 4K Ultra Sharp Kernel: Spatial convolution high-frequency edge enhancement with zero luminance drift -->
+      <filter id="apple4kSharpen" color-interpolation-filters="sRGB" x="-5%" y="-5%" width="110%" height="110%">
+        <feConvolveMatrix
+          order="3,3"
+          preserveAlpha="true"
+          kernelMatrix="
+             0   -0.45   0
+           -0.45  2.80 -0.45
+             0   -0.45   0"
+        />
+      </filter>
+    </defs>
+  </svg>
+
   <!-- High-Performance Deferred Scripts -->
-  <script src="js/movies-catalog.js?v=2.3.17" defer></script>
-  <script src="js/air-schedule.js?v=2.3.17" defer></script>
-  <script src="js/data.js?v=2.3.17" defer></script>
-  <script src="js/auth-config.js?v=2.3.17" defer></script>
-  <script src="js/app.js?v=2.3.17" defer></script>
+  <script src="js/movies-catalog.js?v=2.3.18" defer></script>
+  <script src="js/air-schedule.js?v=2.3.18" defer></script>
+  <script src="js/data.js?v=2.3.18" defer></script>
+  <script src="js/auth-config.js?v=2.3.18" defer></script>
+  <script src="js/app.js?v=2.3.18" defer></script>
 </body>
 </html>

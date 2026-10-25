@@ -1777,14 +1777,15 @@ body::-webkit-scrollbar {
 }
 
 .quality-pill-btn.is-4k-quality {
-  color: #00b4d8;
+  color: #38ef7d;
 }
 
 .quality-pill-btn.is-4k-quality.active {
-  background: rgba(0, 180, 216, 0.22);
-  border-color: #00b4d8;
-  color: #ffffff;
-  box-shadow: 0 0 10px rgba(0, 180, 216, 0.35);
+  background: linear-gradient(135deg, rgba(56, 239, 125, 0.28), rgba(17, 153, 142, 0.28)) !important;
+  border-color: #38ef7d !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(56, 239, 125, 0.45) !important;
+  text-shadow: 0 0 8px rgba(56, 239, 125, 0.6) !important;
 }
 
 /* Player Server & Mode Bar */
@@ -7570,9 +7571,13 @@ iframe:focus-within,
 
 #hlsVideoElement.quality-4k-enhanced,
 .active-video-container video.quality-4k-enhanced {
+  filter: url(#apple4kSharpen) contrast(1.06) saturate(1.08) brightness(1.01) !important;
   image-rendering: -webkit-optimize-contrast !important;
   image-rendering: crisp-edges !important;
-  filter: contrast(1.05) saturate(1.08) brightness(1.02) !important;
+  -webkit-font-smoothing: antialiased !important;
+  transform: translateZ(0) scale(1.0001) !important;
+  backface-visibility: hidden !important;
+  will-change: filter, transform !important;
 }
 
 /* Ẩn nút icon khử logo trên Apple Player Bar theo yêu cầu người dùng */

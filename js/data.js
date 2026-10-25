@@ -1103,6 +1103,15 @@ class PhimmoiService {
             : [item.episodes || { name: "Tập 1 (Vietsub)", slug: "tap-1", source: "", needsEnrich: true }]
         };
 
+        // Đánh dấu needsEnrich nếu phim có link cũ (opstream) hoặc chưa có source để nạp API 1080p/4K mới nhất
+        if (Array.isArray(normalizedItem.episodes)) {
+          normalizedItem.episodes.forEach((ep) => {
+            if (!ep.source || ep.source.includes("opstream") || ep.source.includes("vip.opstream")) {
+              ep.needsEnrich = true;
+            }
+          });
+        }
+
         // Pre-populate missing episode slots for series so the user sees all episodes INSTANTLY 0ms
         if (normalizedItem.type === "series" && Array.isArray(normalizedItem.episodes)) {
           const match = (normalizedItem.episodeCurrent || "").match(/(\d+)/);
@@ -1576,7 +1585,20 @@ class PhimmoiService {
     // 1. Nguồn PhimAPI (Netflix / KKPhim Vietsub #1 + Lồng Tiếng / Thuyết Minh + Các luồng Server phụ)
     if (phimApiRes && Array.isArray(phimApiRes.episodes) && phimApiRes.episodes.length > 0) {
       const allServers = phimApiRes.episodes;
-      const serverData1 = allServers[0].server_data || [];
+      // Sắp xếp các server để ưu tiên server VIP, 4K, FHD có tốc độ cao nhất
+      const sortedServers = [...allServers].sort((a, b) => {
+        const nameA = (a.server_name || "").toLowerCase();
+        const nameB = (b.server_name || "").toLowerCase();
+        const score = (name) => {
+          if (name.includes("4k") || name.includes("uhd")) return 100;
+          if (name.includes("vip") || name.includes("fhd") || name.includes("1080")) return 80;
+          if (name.includes("vietsub") && !name.includes("trailer")) return 60;
+          return 30;
+        };
+        return score(nameB) - score(nameA);
+      });
+      const primaryServer = sortedServers[0] || allServers[0];
+      const serverData1 = primaryServer.server_data || [];
       if (serverData1.length > 0) {
         const parsedEps = serverData1
           .filter((ep) => ep.link_m3u8 || ep.link_embed)
@@ -1584,7 +1606,7 @@ class PhimmoiService {
             const rawName = ep.name || `Tập ${idx + 1}`;
             // Gom tất cả các luồng .m3u8 khác nhau của cùng tập phim từ các server trong PhimAPI
             const altSources = [];
-            allServers.forEach((srv, sIdx) => {
+            sortedServers.forEach((srv, sIdx) => {
               const candidateEp = srv.server_data?.[idx];
               if (candidateEp && candidateEp.link_m3u8) {
                 altSources.push({
