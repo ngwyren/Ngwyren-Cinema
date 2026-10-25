@@ -1420,7 +1420,7 @@ class AppleCinemaApp {
       : `<span class="ribbon-quality ribbon-1080">1080p</span>`;
     const epText = movie.type === "series"
       ? (movie.episodeCurrent || "Tập mới")
-      : (movie.language ? movie.language.split("+")[0].trim() : "Full");
+      : (this.getMovieLanguageLabel(movie).split("+")[0].trim() || "Full");
 
     return `
       <article class="movie-card ${rankNum ? "ranked-card" : ""}"
@@ -1521,6 +1521,8 @@ class AppleCinemaApp {
     if (needsApiSync) {
       this.service.enrichMovieStreams(movie, false).then((enriched) => {
         if (this.selectedMovie && this.selectedMovie.slug === enriched.slug) {
+          const langText = document.getElementById("modalLanguageText");
+          if (langText) langText.textContent = this.getMovieLanguageLabel(enriched);
           this.refreshEpisodesInModal(enriched);
           this.renderServerButtons(enriched, this.currentEpisodeIndex);
           const newEpSource = enriched.episodes?.[this.currentEpisodeIndex]?.source || "";
@@ -1667,6 +1669,31 @@ class AppleCinemaApp {
     );
     if (match && match.poster) return match.poster;
     return p || movie.backdrop || "";
+  }
+
+  getMovieLanguageLabel(movie) {
+    if (!movie) return "Vietsub";
+    const hasRealDub = Boolean(
+      (movie.dubEpisodes && movie.dubEpisodes.length > 0) ||
+      (movie.episodes && movie.episodes.some((ep) =>
+        ep.altSources?.some((a) => {
+          const lbl = (a.label || "").toLowerCase();
+          return lbl.includes("thuyết minh") || lbl.includes("lồng tiếng") || lbl.includes("thuyet minh") || lbl.includes("long tieng") || lbl.includes("dub");
+        })
+      ))
+    );
+    if (hasRealDub) {
+      const raw = (movie.language || "").toLowerCase();
+      if (raw.includes("lồng tiếng")) {
+        return raw.includes("vietsub") ? "Vietsub + Lồng Tiếng" : "Lồng Tiếng";
+      }
+      return raw.includes("vietsub") ? "Vietsub + Thuyết Minh" : "Thuyết Minh";
+    }
+    const raw = (movie.language || "").toLowerCase();
+    if (raw === "lồng tiếng" && (!movie.episodes || movie.episodes.length === 0)) {
+      return "Lồng Tiếng";
+    }
+    return "Vietsub";
   }
 
   renderModalContent(movie, isPlayingNow = false) {
@@ -1846,7 +1873,7 @@ class AppleCinemaApp {
               <span class="meta-pill">${movie.year}</span>
               <span class="meta-pill"><i class="fas fa-star"></i> ${movie.rating || 9.2}</span>
               <span class="meta-pill ${movie.quality === "4K" ? "badge-4k" : "badge-1080"}">${movie.quality === "4K" ? "<i class='fas fa-sparkles'></i> 4K Ultra HD" : "Full HD 1080p"}</span>
-              <span class="meta-pill"><i class="fas fa-volume-up"></i> ${movie.language || "Vietsub"}</span>
+              <span class="meta-pill" id="modalLanguagePill"><i class="fas fa-volume-up"></i> <span id="modalLanguageText">${this.getMovieLanguageLabel(movie)}</span></span>
             </div>
             ${
               (() => {
@@ -2168,6 +2195,8 @@ class AppleCinemaApp {
     try {
       const enriched = await this.service.enrichMovieStreams(this.selectedMovie, true);
       this.selectedMovie = enriched;
+      const langText = document.getElementById("modalLanguageText");
+      if (langText) langText.textContent = this.getMovieLanguageLabel(enriched);
       this.refreshEpisodesInModal(enriched);
       this.renderServerButtons(enriched, this.currentEpisodeIndex);
       this.renderDynamicQualityButtons();
@@ -2196,6 +2225,8 @@ class AppleCinemaApp {
     const isBrokenOrOld = !initialEp?.source || initialEp?.needsEnrich || initialEp.source.includes("opstream");
     if (!movie._isEnriched || isBrokenOrOld || (!initialEp?.source && !initialEp?.embed)) {
       await this.service.enrichMovieStreams(movie, isBrokenOrOld);
+      const langText = document.getElementById("modalLanguageText");
+      if (langText) langText.textContent = this.getMovieLanguageLabel(movie);
       this.refreshEpisodesInModal(movie);
     }
 
@@ -2977,7 +3008,7 @@ class AppleCinemaApp {
     if (islandTitle) islandTitle.textContent = movie.title;
     if (islandDuration) islandDuration.textContent = movie.duration || "1080";
     if (islandQuality) islandQuality.textContent = movie.quality || "1080";
-    if (islandLang) islandLang.textContent = movie.language || "Vietsub";
+    if (islandLang) islandLang.textContent = this.getMovieLanguageLabel(movie);
     if (islandEp) islandEp.textContent = epLabel;
     if (islandPlayIcon) islandPlayIcon.className = playing ? "fas fa-pause" : "fas fa-play";
     const miniCenterPlay = document.getElementById("miniScreenCenterPlayIcon");

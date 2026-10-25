@@ -33,7 +33,7 @@ const PHIMMOI_SEED_MOVIES = [
     type: "single",
     sectionTags: ["de-cu", "anime", "phim-le", "hot"],
     quality: "1080",
-    language: "Vietsub + Thuyết Minh",
+    language: "Vietsub + Lồng Tiếng",
     duration: "155 phút",
     episodeCurrent: "Full",
     episodeTotal: "1",
@@ -460,7 +460,7 @@ const PHIMMOI_SEED_MOVIES = [
     type: "series",
     sectionTags: ["de-cu", "han-quoc", "phim-bo"],
     quality: "1080",
-    language: "Vietsub + Thuyết Minh",
+    language: "Vietsub",
     duration: "65 phút/tập",
     episodeCurrent: "Tập 16 / 16",
     episodeTotal: "16",
@@ -1722,9 +1722,13 @@ class PhimmoiService {
             movie.episodes = parsedEps;
           }
         }
-        // Server 2: Lồng Tiếng / Thuyết Minh (nếu có)
-        if (allServers.length > 1 && allServers[1].server_data) {
-          movie.dubEpisodes = allServers[1].server_data
+        // Server 2: Lồng Tiếng / Thuyết Minh (Chỉ nhận server nếu thực sự có từ khóa thuyết minh/lồng tiếng)
+        const dubServer = allServers.find((srv) => {
+          const sn = (srv.server_name || "").toLowerCase();
+          return sn.includes("thuyết minh") || sn.includes("lồng tiếng") || sn.includes("thuyet minh") || sn.includes("long tieng") || sn.includes("dub");
+        });
+        if (dubServer && dubServer.server_data && dubServer.server_data.length > 0) {
+          movie.dubEpisodes = dubServer.server_data
             .filter((ep) => ep.link_m3u8 || ep.link_embed)
             .map((ep, idx) => ({
               name: ep.name || `Tập ${idx + 1}`,
@@ -1732,6 +1736,8 @@ class PhimmoiService {
               source: ep.link_m3u8 || "",
               embed: ep.link_embed || ""
             }));
+        } else {
+          movie.dubEpisodes = [];
         }
         if (phimApiRes.movie) {
           if (phimApiRes.movie.thumb_url) {
@@ -1799,8 +1805,12 @@ class PhimmoiService {
             }));
           }
         }
-        if (ncServers[1] && Array.isArray(ncServers[1].items) && (!movie.dubEpisodes || movie.dubEpisodes.length === 0)) {
-          movie.dubEpisodes = ncServers[1].items.map((item, idx) => ({
+        const ncDubServer = ncServers.find((srv) => {
+          const sn = (srv.server_name || srv.name || "").toLowerCase();
+          return sn.includes("thuyết minh") || sn.includes("lồng tiếng") || sn.includes("thuyet minh") || sn.includes("long tieng") || sn.includes("dub");
+        });
+        if (ncDubServer && Array.isArray(ncDubServer.items) && (!movie.dubEpisodes || movie.dubEpisodes.length === 0)) {
+          movie.dubEpisodes = ncDubServer.items.map((item, idx) => ({
             name: `Tập ${item.name || idx + 1}`,
             slug: item.slug || `tap-${idx + 1}`,
             source: item.m3u8 || "",
@@ -1835,6 +1845,23 @@ class PhimmoiService {
           delete ep.altSources;
         }
       });
+    }
+
+    // 5. Chuẩn hóa nhãn ngôn ngữ (Language) chuẩn xác theo thực tế nguồn phát
+    const hasRealDub = Boolean(
+      (movie.dubEpisodes && movie.dubEpisodes.length > 0) ||
+      (movie.episodes && movie.episodes.some((ep) =>
+        ep.altSources?.some((a) =>
+          (a.label || "").toLowerCase().includes("thuyết minh") ||
+          (a.label || "").toLowerCase().includes("lồng tiếng")
+        )
+      ))
+    );
+    if (hasRealDub) {
+      const isLongTieng = (movie.language || "").toLowerCase().includes("lồng tiếng");
+      movie.language = isLongTieng ? "Vietsub + Lồng Tiếng" : "Vietsub + Thuyết Minh";
+    } else {
+      movie.language = "Vietsub";
     }
 
     movie._isEnriched = true;
