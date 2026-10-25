@@ -1857,6 +1857,41 @@ body::-webkit-scrollbar {
   text-shadow: 0 0 8px rgba(56, 239, 125, 0.6) !important;
 }
 
+/* Nút icon Tập tiếp theo bên cạnh nút 1080/4K trên thanh toolbar */
+.toolbar-next-ep-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  height: 28px;
+  width: 32px;
+  border-radius: var(--radius-xs);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  font-size: 0.8rem;
+  user-select: none;
+}
+
+.toolbar-next-ep-btn:hover:not(.disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  transform: scale(1.06);
+}
+
+.toolbar-next-ep-btn:active:not(.disabled) {
+  transform: scale(0.94);
+}
+
+.toolbar-next-ep-btn.disabled,
+.apple-next-ep-btn.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* ==========================================================================
    RESUME PLAYBACK TOOLBAR CONTROLS (XEM TIẾP TRÊN THANH CÔNG CỤ & PLAYER)
    ========================================================================== */

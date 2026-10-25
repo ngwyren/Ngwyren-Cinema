@@ -1806,6 +1806,11 @@ class AppleCinemaApp {
                     <i class="fas fa-rotate-right"></i>
                   </button>
 
+                  <!-- Tập tiếp theo -->
+                  <button class="apple-ctrl-btn apple-next-ep-btn" id="appleNextEpBtn" onclick="app.playNextEpisode(event)" title="Tập tiếp theo (Shift + N)">
+                    <i class="fas fa-forward-step"></i>
+                  </button>
+
                   <!-- Điều chỉnh âm lượng dạng trượt Apple -->
                   <div class="apple-volume-cluster" id="appleVolumeCluster">
                     <button class="apple-ctrl-btn" id="appleVolBtn" onclick="app.toggleVideoMute(event)" title="Bật / Tắt âm thanh (M)">
@@ -1854,13 +1859,12 @@ class AppleCinemaApp {
         </div>
 
         <div class="player-toolbar-right">
-          <div class="resume-toolbar-wrapper" id="resumeToolbarContainer">
-            ${this.buildResumeButtonsHTML(movie, this.currentEpisodeIndex)}
-          </div>
-          <span class="server-label"><i class="fas fa-sliders"></i> Chất lượng luồng:</span>
           <div class="quality-selector-group" id="qualitySelectorGroup" role="group" aria-label="Chọn độ phân giải thực tế">
             ${this.buildQualityButtonsHTML(movie)}
           </div>
+          <button class="toolbar-next-ep-btn" id="toolbarNextEpBtn" onclick="app.playNextEpisode(event)" title="Tập tiếp theo (Shift + N)">
+            <i class="fas fa-forward-step"></i>
+          </button>
         </div>
       </div>
 
@@ -2000,6 +2004,7 @@ class AppleCinemaApp {
         </div>
       </div>
     `;
+    this.updateNextEpisodeButton(movie, this.currentEpisodeIndex);
   }
 
   renderEpisodesPillsHTML(movie) {
@@ -2021,6 +2026,7 @@ class AppleCinemaApp {
     if (grid) {
       grid.innerHTML = this.renderEpisodesPillsHTML(movie);
     }
+    this.updateNextEpisodeButton(movie, this.currentEpisodeIndex);
   }
 
   switchModalTab(tabName) {
@@ -2233,6 +2239,7 @@ class AppleCinemaApp {
     // Lưu vào Lịch sử xem tiếp
     this.recordWatchHistory(movie.slug, epIndex);
     this.setNowPlayingBar(movie, epIndex, true);
+    this.updateNextEpisodeButton(movie, epIndex);
 
     const coverPreview = document.getElementById("modalCoverPreview");
     const videoContainer = document.getElementById("activeVideoContainer");
@@ -2572,6 +2579,12 @@ class AppleCinemaApp {
         }
       }
     };
+
+    videoEl.onended = () => {
+      if (this.settings?.autoNextEpisode !== false) {
+        this.playNextEpisode();
+      }
+    };
   }
 
   skipAdIntro(seconds = 5) {
@@ -2743,6 +2756,72 @@ class AppleCinemaApp {
       existing.style.animation = "appleResumeFadeOut 0.25s ease forwards";
       setTimeout(() => existing.remove(), 250);
     }
+  }
+
+  playNextEpisode(event) {
+    if (event) {
+      if (typeof event.stopPropagation === "function") event.stopPropagation();
+      if (typeof event.preventDefault === "function") event.preventDefault();
+    }
+    const movie = this.selectedMovie || this.playingMovie;
+    if (!movie) return;
+
+    const eps = movie.episodes || [];
+    if (eps.length > 1) {
+      if (this.currentEpisodeIndex + 1 < eps.length) {
+        const nextIdx = this.currentEpisodeIndex + 1;
+        const nextEp = eps[nextIdx];
+        const nextEpName = this.formatEpisodeLabel(nextEp.name, `Tập ${nextIdx + 1}`);
+        this.showToast(`⏭ Đang chuyển sang ${nextEpName}`);
+        this.startVideoPlayback(movie, nextIdx, this.currentServerMode || "hls-1");
+      } else {
+        this.showToast(`ℹ️ Đang ở tập cuối cùng (${eps.length}/${eps.length})`);
+      }
+    } else {
+      // Phim lẻ hoặc chỉ có 1 tập: chuyển sang phim liên quan tiếp theo
+      const related = this.service.getRelatedMovies(movie, 3);
+      if (related && related.length > 0) {
+        const nextMovie = related[0].movie;
+        this.showToast(`⏭ Chuyển sang phim: ${nextMovie.title}`);
+        this.openMovieModal(nextMovie.slug, true, 0);
+      } else {
+        this.showToast(`ℹ️ Đã xem hết phim`);
+      }
+    }
+  }
+
+  updateNextEpisodeButton(movie, epIndex = 0) {
+    const mov = movie || this.selectedMovie || this.playingMovie;
+    if (!mov) return;
+    const btn = document.getElementById("toolbarNextEpBtn");
+    const appleBtn = document.getElementById("appleNextEpBtn");
+    const eps = mov.episodes || [];
+    const isSeries = mov.type === "series" && eps.length > 1;
+    const hasNextEp = isSeries && (epIndex + 1 < eps.length);
+
+    let titleText = "Tập tiếp theo (Shift + N)";
+    if (hasNextEp) {
+      const nextEp = eps[epIndex + 1];
+      const epLabel = this.formatEpisodeLabel(nextEp.name, `Tập ${epIndex + 2}`);
+      titleText = `Chuyển sang ${epLabel} (Shift + N)`;
+    } else if (isSeries) {
+      titleText = "Đang ở tập cuối cùng";
+    } else {
+      const related = this.service?.getRelatedMovies(mov, 1);
+      titleText = related?.[0] ? `Phim tiếp theo: ${related[0].movie.title}` : "Tập tiếp theo (Shift + N)";
+    }
+
+    [btn, appleBtn].forEach((b) => {
+      if (b) {
+        b.title = titleText;
+        b.setAttribute("aria-label", titleText);
+        if (isSeries && !hasNextEp) {
+          b.classList.add("disabled");
+        } else {
+          b.classList.remove("disabled");
+        }
+      }
+    });
   }
 
   handleQualityPillClick(label, isReal4k) {
@@ -3928,6 +4007,12 @@ class AppleCinemaApp {
         if (modal?.classList.contains("open") && videoEl && videoEl.style.display !== "none") {
           e.preventDefault();
           this.toggleWatermarkShield();
+        }
+      } else if ((e.key === "n" || e.key === "N") && !isInput) {
+        const modal = document.getElementById("movieDetailModal");
+        if (modal?.classList.contains("open")) {
+          e.preventDefault();
+          this.playNextEpisode();
         }
       }
     });
