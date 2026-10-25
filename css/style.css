@@ -7554,37 +7554,14 @@ iframe:focus-within,
 }
 
 /* ==========================================================================
-   APPLE CINEMA ANTI-WATERMARK / BANNER SHIELD
-   Che phủ tinh tế banner quảng cáo/nhà cái cạnh trên (i999.ai, cwin, kubet)
-   Bảo vệ 100% phim nguyên vẹn, không cắt cảnh, không làm mờ nhân vật hay phụ đề
+   APPLE CINEMA ANTI-WATERMARK / LOGO SHIELD
+   Đảm bảo toàn bộ khung hình trong suốt, nét tuyệt đối 100%, không bị vệt đen hay ám mờ
    ========================================================================== */
 .apple-watermark-shield {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 52px;
-  pointer-events: none;
-  z-index: 3;
-  display: none;
-  opacity: 0;
-  visibility: hidden;
-  background: linear-gradient(180deg, rgba(6, 7, 12, 0.98) 0%, rgba(6, 7, 12, 0.88) 55%, rgba(6, 7, 12, 0) 100%);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), height 0.3s ease;
-}
-
-.apple-watermark-shield.active {
-  display: block !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-@media (max-width: 768px) {
-  .apple-watermark-shield {
-    height: 44px;
-  }
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
 }
 
 /* ==========================================================================
@@ -7610,28 +7587,10 @@ iframe:focus-within,
   will-change: filter, transform !important;
 }
 
-/* Nút icon Chặn Banner Quảng Cáo trên Apple Player Bar */
-.apple-shield-btn {
-  display: inline-flex !important;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.65);
-  transition: all 0.2s ease;
-}
-
-.apple-shield-btn:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.apple-shield-btn.active {
-  color: #30d158 !important;
-}
-
-/* Nút Chặn Banner QC trên Modal Top Controls */
-.modal-ctrl-btn.active#modalTopShieldBtn {
-  background: rgba(48, 209, 88, 0.2);
-  border-color: rgba(48, 209, 88, 0.45);
-  color: #30d158;
+/* Ẩn hoàn toàn các nút khử logo/banner theo yêu cầu người dùng */
+.apple-shield-btn,
+#modalTopShieldBtn {
+  display: none !important;
 }
 
 

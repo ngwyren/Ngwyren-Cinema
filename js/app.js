@@ -48,7 +48,6 @@ class AppleCinemaApp {
     }
     this.currentServerMode = this.settings.defaultServer || "hls-1";
     this.currentQuality = this.settings.defaultQuality || "native-max";
-    this.shieldEnabled = this.loadStorage("apple_shield_enabled", true);
 
     this.searchDebounce = null;
     this.tagCache = new Map();
@@ -1579,10 +1578,6 @@ class AppleCinemaApp {
     sheet.innerHTML = `
       <!-- Top Floating Modal Controls -->
       <div class="modal-top-controls">
-        <button class="modal-ctrl-btn ${this.shieldEnabled ? "active" : ""}" id="modalTopShieldBtn" onclick="app.toggleWatermarkShield(event)" title="Chặn/Khử banner quảng cáo viền trên">
-          <i class="fas fa-shield-halved"></i>
-          <span id="modalTopShieldLabel">${this.shieldEnabled ? "Đang Chặn QC" : "Chặn Banner QC"}</span>
-        </button>
         <button class="modal-ctrl-btn" onclick="app.toggleLightsOff()">
           <i class="fas fa-lightbulb"></i>
           <span id="lightsOffLabel">${this.lightsOff ? "Bật Đèn" : "Tắt Đèn Rạp"}</span>
@@ -1630,9 +1625,6 @@ class AppleCinemaApp {
           <!-- Video Element (đã bỏ controls mặc định của trình duyệt để triệt tiêu hoàn toàn viền xanh khi bấm phím cách) -->
           <video id="hlsVideoElement" class="${this.getQualityVideoClass(this.currentQuality)}" playsinline poster="${backdropUrl}" tabindex="-1"></video>
           <iframe id="trailerIframeElement" style="display: none;" sandbox="allow-scripts allow-same-origin allow-presentation allow-forms" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen tabindex="-1"></iframe>
-
-          <!-- Apple Anti-Ad Watermark Shield (Khử sạch 100% banner tài trợ nhà cái i999.ai viền trên, không làm mờ phim) -->
-          <div class="apple-watermark-shield ${this.shieldEnabled ? "active" : ""}" id="appleWatermarkShield" aria-hidden="true"></div>
 
           <!-- Apple Center HUD Pulse: Không vòng tròn, chỉ hiển thị icon -->
           <div class="apple-video-hud" id="appleVideoHud">
@@ -1705,11 +1697,6 @@ class AppleCinemaApp {
                 </div>
 
                 <div class="apple-ctrls-right">
-                  <!-- Chặn Watermark Banner QC -->
-                  <button class="apple-ctrl-btn apple-shield-btn ${this.shieldEnabled ? "active" : ""}" id="appleShieldToggleBtn" onclick="app.toggleWatermarkShield(event)" title="Chặn Banner Quảng Cáo Viền Trên (Bật / Tắt)">
-                    <i class="fas fa-shield-halved"></i>
-                  </button>
-
                   <!-- Tốc độ phát -->
                   <button class="apple-ctrl-btn apple-speed-btn" id="appleSpeedBtn" onclick="app.cyclePlaybackSpeed(event)" title="Tốc độ phát">
                     <span id="appleSpeedText">1.0x</span>
@@ -2735,11 +2722,6 @@ class AppleCinemaApp {
     if (!container || !videoEl) return;
 
     // Đồng bộ trạng thái lớp che banner quảng cáo/watermark
-    const shieldEl = document.getElementById("appleWatermarkShield");
-    if (shieldEl) {
-      shieldEl.classList.toggle("active", Boolean(this.shieldEnabled));
-    }
-
     // Tự động rà soát & làm sạch phụ đề WebVTT/TextTrack nếu phát hiện chèn quảng cáo nhà cái
     const sanitizeTrackCues = (track) => {
       if (!track) return;
@@ -3417,22 +3399,6 @@ class AppleCinemaApp {
     if (label) label.textContent = this.lightsOff ? "Bật Đèn" : "Tắt Đèn Rạp";
   }
 
-  toggleWatermarkShield(e) {
-    if (e) e.stopPropagation();
-    this.shieldEnabled = !this.shieldEnabled;
-    this.saveStorage("apple_shield_enabled", this.shieldEnabled);
-    const shield = document.getElementById("appleWatermarkShield");
-    const topBtn = document.getElementById("modalTopShieldBtn");
-    const topLabel = document.getElementById("modalTopShieldLabel");
-    const playerBtn = document.getElementById("appleShieldToggleBtn");
-
-    if (shield) shield.classList.toggle("active", this.shieldEnabled);
-    if (topBtn) topBtn.classList.toggle("active", this.shieldEnabled);
-    if (topLabel) topLabel.textContent = this.shieldEnabled ? "Đang Chặn QC" : "Chặn Banner QC";
-    if (playerBtn) playerBtn.classList.toggle("active", this.shieldEnabled);
-
-    this.showToast(this.shieldEnabled ? "🛡️ Đã bật Chặn Banner Quảng Cáo (Khử watermark chữ tài trợ)" : "🛡️ Đã tắt Chặn Banner Quảng Cáo");
-  }
 
   findMovie(idOrSlug) {
     if (!idOrSlug) return null;
