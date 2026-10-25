@@ -1857,6 +1857,300 @@ body::-webkit-scrollbar {
   text-shadow: 0 0 8px rgba(56, 239, 125, 0.6) !important;
 }
 
+/* ==========================================================================
+   RESUME PLAYBACK TOOLBAR CONTROLS (XEM TIẾP TRÊN THANH CÔNG CỤ & PLAYER)
+   ========================================================================== */
+.resume-toolbar-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resume-selector-group {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  padding: 2px;
+  gap: 2px;
+}
+
+.resume-pill-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.22s var(--ease-in-out-smooth);
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+}
+
+.resume-pill-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.resume-pill-btn.active {
+  background: rgba(56, 239, 125, 0.18);
+  border-color: #38ef7d;
+  color: #38ef7d;
+  box-shadow: 0 0 10px rgba(56, 239, 125, 0.28);
+}
+
+.resume-pill-btn.restart-btn {
+  color: var(--text-tertiary);
+}
+
+.resume-pill-btn.restart-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Apple Floating VisionOS Resume Banner on Player */
+.apple-resume-banner {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 55;
+  background: rgba(14, 15, 20, 0.88);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 36px;
+  padding: 8px 16px 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  animation: appleResumeFadeIn 0.32s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+  pointer-events: auto;
+}
+
+@keyframes appleResumeFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -12px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+@keyframes appleResumeFadeOut {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -8px) scale(0.96);
+  }
+}
+
+.apple-resume-text {
+  font-size: 0.82rem;
+  color: #eaeaea;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.apple-resume-text strong {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.apple-resume-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.apple-resume-btn {
+  border: none;
+  padding: 5px 12px;
+  border-radius: 18px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+}
+
+.apple-resume-btn.resume-now {
+  background: #ffffff;
+  color: #000000;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+}
+
+.apple-resume-btn.resume-now:hover {
+  background: #f2f2f2;
+  transform: scale(1.04);
+}
+
+.apple-resume-btn.resume-restart {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.apple-resume-btn.resume-restart:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.04);
+}
+
+.apple-resume-close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 0.78rem;
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.apple-resume-close:hover {
+  color: #ffffff;
+}
+
+/* Home Page Continue Watching Shelf Grid */
+.vision-continue-shelf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.continue-shelf-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.continue-shelf-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+.continue-shelf-thumb {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  overflow: hidden;
+  background: #111;
+}
+
+.continue-shelf-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+
+.continue-shelf-card:hover .continue-shelf-thumb img {
+  transform: scale(1.05);
+}
+
+.continue-shelf-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  opacity: 0.85;
+  transition: all 0.22s ease;
+}
+
+.continue-shelf-card:hover .continue-shelf-play {
+  transform: translate(-50%, -50%) scale(1.08);
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.95);
+  color: #000;
+}
+
+.continue-shelf-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.continue-shelf-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.continue-shelf-fill {
+  height: 100%;
+  background: #38ef7d;
+  box-shadow: 0 0 8px rgba(56, 239, 125, 0.7);
+}
+
+.continue-shelf-info {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.continue-shelf-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.continue-shelf-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.74rem;
+  color: var(--text-tertiary);
+}
+
 /* Player Server & Mode Bar */
 .player-toolbar {
   display: flex;

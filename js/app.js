@@ -375,6 +375,57 @@ class AppleCinemaApp {
     `;
   }
 
+  /* ==========================================================================
+     CONTINUE WATCHING HOME SHELF (HÀNG "TIẾP TỤC XEM" CHUẨN APPLE TV & NETFLIX)
+     ========================================================================== */
+  renderContinueWatchingShelfHTML() {
+    const continueItems = this.watchHistory
+      .map((h) => ({
+        movie: this.findMovie(h.slug),
+        epIndex: h.epIndex || 0,
+        progress: h.progress || 0,
+        currentTime: h.currentTime || 0
+      }))
+      .filter((x) => x.movie && x.progress > 0 && x.progress < 95);
+
+    if (continueItems.length === 0) return "";
+
+    return `
+      <section class="vision-shelf-section vision-continue-watching-shelf">
+        <div class="vision-shelf-header">
+          <h2 class="vision-shelf-title"><i class="fas fa-clock-rotate-left" style="margin-right: 8px;"></i>Tiếp Tục Xem</h2>
+          <button class="vision-see-all-pill" onclick="app.setNavigation('lich-su')">Xem Tất Cả (${continueItems.length})</button>
+        </div>
+        <div class="vision-continue-shelf-grid">
+          ${continueItems.slice(0, 4).map(({ movie, epIndex, progress, currentTime }) => {
+            const ep = movie.episodes?.[epIndex] || movie.episodes?.[0];
+            const epLabel = ep?.name ? this.formatEpisodeLabel(ep.name, `Tập ${epIndex + 1}`) : (movie.type === "series" ? `Tập ${epIndex + 1}` : "Bản Full");
+            const timeStr = currentTime > 0 ? this.formatSeconds(currentTime) : "";
+            return `
+              <div class="continue-shelf-card" onclick="app.openMovieModal('${movie.slug}', true, ${epIndex})">
+                <div class="continue-shelf-thumb">
+                  <img src="${movie.backdrop || movie.poster}" alt="${movie.title}" loading="lazy" decoding="async" />
+                  <div class="continue-shelf-play"><i class="fas fa-play"></i></div>
+                  <div class="continue-shelf-badge">${epLabel}</div>
+                  <div class="continue-shelf-bar">
+                    <div class="continue-shelf-fill" style="width: ${progress}%;"></div>
+                  </div>
+                </div>
+                <div class="continue-shelf-info">
+                  <div class="continue-shelf-title">${movie.title}</div>
+                  <div class="continue-shelf-meta">
+                    <span>${timeStr ? `Đã xem ${timeStr}` : epLabel}</span>
+                    <span>${progress}%</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </section>
+    `;
+  }
+
   pickDistinctCategoryHero(list, navKey) {
     if (!list || list.length === 0) return this.heroMovies[0] || this.service.movies[0];
     const pool = list.filter((m) => m && m.backdrop && !m.backdrop.includes("nguonc.com"));
@@ -853,6 +904,8 @@ class AppleCinemaApp {
           <!-- RIGHT MAIN COLUMN: HERO BANNER + GỢI Ý CHO BẠN + CURATED ROWS -->
           <div class="vision-main-col vision-col-transition">
             ${this.renderHeroHTML()}
+
+            ${this.renderContinueWatchingShelfHTML()}
 
             <!-- Gợi Ý Cho Bạn (4-column visionOS cards) -->
             <section class="vision-shelf-section">
@@ -1774,6 +1827,9 @@ class AppleCinemaApp {
         </div>
 
         <div class="player-toolbar-right">
+          <div class="resume-toolbar-wrapper" id="resumeToolbarContainer">
+            ${this.buildResumeButtonsHTML(movie, this.currentEpisodeIndex)}
+          </div>
           <span class="server-label"><i class="fas fa-sliders"></i> Chất lượng luồng:</span>
           <div class="quality-selector-group" id="qualitySelectorGroup" role="group" aria-label="Chọn độ phân giải thực tế">
             ${this.buildQualityButtonsHTML(movie)}
@@ -2322,12 +2378,23 @@ class AppleCinemaApp {
         this.inspectHlsLevels(levels);
         this.applyHlsQualityLevel();
         this.renderDynamicQualityButtons();
+        this.renderDynamicResumeButtons();
         this.applyVideoQualityVisuals();
         videoEl.play().catch(() => {});
-        // Tự động tua tiếp đến đoạn đã xem dở
+        // Tự động tua tiếp đến đoạn đã xem dở và hiển thị banner kính mờ Apple visionOS
         const savedProg = this.getPlaybackProgress(movie.slug, epIndex);
         if (savedProg && savedProg.currentTime > 5 && savedProg.percentage < 95) {
-          videoEl.currentTime = savedProg.currentTime;
+          const applySavedTime = () => {
+            if (savedProg && savedProg.currentTime > 5 && savedProg.percentage < 95) {
+              if (Math.abs(videoEl.currentTime - savedProg.currentTime) > 2) {
+                videoEl.currentTime = savedProg.currentTime;
+              }
+            }
+          };
+          videoEl.addEventListener("loadedmetadata", applySavedTime, { once: true });
+          videoEl.addEventListener("canplay", applySavedTime, { once: true });
+          applySavedTime();
+          this.showResumeFloatingBanner(savedProg);
           this.showToast(`▶ Đang tiếp tục xem từ ${this.formatSeconds(savedProg.currentTime)} (${savedProg.percentage}%)`);
         }
       });
@@ -2404,11 +2471,13 @@ class AppleCinemaApp {
         this.actualVideoRes.width = videoEl.videoWidth || 1920;
         this.actualVideoRes.height = videoEl.videoHeight || 1080;
         this.renderDynamicQualityButtons();
+        this.renderDynamicResumeButtons();
         this.applyVideoQualityVisuals();
         videoEl.play().catch(() => {});
         const savedProg = this.getPlaybackProgress(movie.slug, epIndex);
         if (savedProg && savedProg.currentTime > 5 && savedProg.percentage < 95) {
           videoEl.currentTime = savedProg.currentTime;
+          this.showResumeFloatingBanner(savedProg);
           this.showToast(`▶ Đang tiếp tục xem từ ${this.formatSeconds(savedProg.currentTime)} (${savedProg.percentage}%)`);
         }
       });
@@ -2419,11 +2488,13 @@ class AppleCinemaApp {
         this.actualVideoRes.width = videoEl.videoWidth;
         this.actualVideoRes.height = videoEl.videoHeight;
         this.renderDynamicQualityButtons();
+        this.renderDynamicResumeButtons();
         this.applyVideoQualityVisuals();
       }
     };
 
     this.renderDynamicQualityButtons();
+    this.renderDynamicResumeButtons();
     this.applyVideoQualityVisuals();
 
     // Đồng bộ thanh thời gian với Apple Music Now Playing Bar, Apple Video Player & lưu xem tiếp tục
@@ -2466,6 +2537,7 @@ class AppleCinemaApp {
         videoEl._lastSavedPos = videoEl.currentTime;
         if (this.selectedMovie) {
           this.savePlaybackProgress(this.selectedMovie.slug, this.currentEpisodeIndex, videoEl.currentTime, videoEl.duration);
+          this.renderDynamicResumeButtons();
         }
       }
     };
@@ -2519,19 +2591,21 @@ class AppleCinemaApp {
 
   buildQualityButtonsHTML(movie) {
     const mov = movie || this.selectedMovie || this.playingMovie;
-    const has4k = Boolean(
-      (this.detectedHlsLevels && this.detectedHlsLevels.some((l) => l.height >= 1440 || l.width >= 2560)) ||
+    // Chỉ kích hoạt 4K khi thực sự có luồng 4K UHD thật (chiều rộng >= 3840 hoặc chiều cao >= 2160, hoặc altSources có server 4K)
+    const hasReal4kStream = Boolean(
+      (this.detectedHlsLevels && this.detectedHlsLevels.length > 1 && this.detectedHlsLevels.some((l) => l.height >= 2160 || l.width >= 3840)) ||
       (mov?.episodes?.some((ep) => ep.altSources?.some((a) => (a.label || "").toLowerCase().includes("4k") || (a.source || "").toLowerCase().includes("4k")))) ||
       ((mov?.quality === "4K" || mov?.nativeQuality === "4K") && (mov?.episodes?.some((ep) => (ep.source || "").toLowerCase().includes("4k") || (ep.name || "").toLowerCase().includes("4k"))))
     );
 
     const is4k = this.currentQuality === "4K" || this.currentQuality === "4k";
 
-    // Phim không có định dạng 4K thì chỉ hiển thị nút 1080
-    if (!has4k) {
+    // Phim không có định dạng 4K thực tế thì chỉ hiển thị nút 1080 (không hiện nút 4K ảo)
+    if (!hasReal4kStream) {
       return `
         <button class="quality-pill-btn active" 
-                title="Full HD 1080p • Nét Chuẩn Bản Quyền">
+                onclick="app.handleQualityPillClick('1080', false)"
+                title="Full HD 1080p • Nét Chuẩn Bản Quyền Từ Máy Chủ">
           1080
         </button>
       `;
@@ -2549,6 +2623,95 @@ class AppleCinemaApp {
         <i class="fas fa-sparkles" style="font-size:0.7em; margin-right:3px;"></i>4K
       </button>
     `;
+  }
+
+  /* ==========================================================================
+     RESUME PLAYBACK TOOLBAR CONTROLS & APPLE FLOATING BANNER
+     ========================================================================== */
+  buildResumeButtonsHTML(movie, epIndex = 0) {
+    if (!movie) return "";
+    const savedProg = this.getPlaybackProgress(movie.slug, epIndex);
+    const hasProgress = Boolean(savedProg && savedProg.currentTime > 5 && savedProg.percentage < 95);
+
+    if (hasProgress) {
+      return `
+        <span class="server-label"><i class="fas fa-clock-rotate-left"></i> Xem tiếp:</span>
+        <div class="resume-selector-group">
+          <button class="resume-pill-btn active" onclick="app.resumePlaybackAt(${savedProg.currentTime})" title="Tiếp tục xem từ ${this.formatSeconds(savedProg.currentTime)} (${savedProg.percentage}%)">
+            <i class="fas fa-play" style="font-size:0.68em; margin-right:4px;"></i>${this.formatSeconds(savedProg.currentTime)} (${savedProg.percentage}%)
+          </button>
+          <button class="resume-pill-btn restart-btn" onclick="app.restartPlayback()" title="Phát lại từ đầu (00:00)">
+            <i class="fas fa-rotate-left" style="font-size:0.68em; margin-right:3px;"></i>Từ đầu
+          </button>
+        </div>
+      `;
+    }
+
+    return `
+      <span class="server-label"><i class="fas fa-clock-rotate-left"></i> Xem tiếp:</span>
+      <div class="resume-selector-group">
+        <button class="resume-pill-btn active" onclick="app.restartPlayback()" title="Đang phát từ đầu (00:00)">
+          <i class="fas fa-play" style="font-size:0.68em; margin-right:4px;"></i>Phát từ đầu
+        </button>
+      </div>
+    `;
+  }
+
+  renderDynamicResumeButtons() {
+    const group = document.getElementById("resumeToolbarContainer");
+    if (group && this.selectedMovie) {
+      group.innerHTML = this.buildResumeButtonsHTML(this.selectedMovie, this.currentEpisodeIndex);
+    }
+  }
+
+  resumePlaybackAt(time) {
+    const videoEl = document.getElementById("hlsVideoElement");
+    if (videoEl && !isNaN(time)) {
+      videoEl.currentTime = time;
+      videoEl.play().catch(() => {});
+      this.showToast(`▶ Đã tiếp tục xem từ ${this.formatSeconds(time)}`);
+      this.dismissResumeBanner();
+    }
+  }
+
+  showResumeFloatingBanner(savedProg) {
+    this.dismissResumeBanner();
+    const container = document.getElementById("activeVideoContainer");
+    if (!container) return;
+
+    const banner = document.createElement("div");
+    banner.className = "apple-resume-banner";
+    banner.id = "appleResumeBanner";
+    banner.innerHTML = `
+      <div class="apple-resume-text">
+        <i class="fas fa-clock-rotate-left" style="color: #38ef7d;"></i>
+        Tiếp tục xem từ <strong>${this.formatSeconds(savedProg.currentTime)}</strong> (${savedProg.percentage}%)
+      </div>
+      <div class="apple-resume-actions">
+        <button class="apple-resume-btn resume-now" onclick="app.resumePlaybackAt(${savedProg.currentTime})">
+          <i class="fas fa-play" style="font-size:0.75em; margin-right:4px;"></i>Xem tiếp
+        </button>
+        <button class="apple-resume-btn resume-restart" onclick="app.restartPlayback()">
+          <i class="fas fa-rotate-left" style="font-size:0.75em; margin-right:4px;"></i>Từ đầu
+        </button>
+        <button class="apple-resume-close" onclick="app.dismissResumeBanner()" aria-label="Đóng"><i class="fas fa-times"></i></button>
+      </div>
+    `;
+    container.appendChild(banner);
+
+    clearTimeout(this._resumeBannerTimeout);
+    this._resumeBannerTimeout = setTimeout(() => {
+      this.dismissResumeBanner();
+    }, 7000);
+  }
+
+  dismissResumeBanner() {
+    clearTimeout(this._resumeBannerTimeout);
+    const existing = document.getElementById("appleResumeBanner");
+    if (existing) {
+      existing.style.animation = "appleResumeFadeOut 0.25s ease forwards";
+      setTimeout(() => existing.remove(), 250);
+    }
   }
 
   handleQualityPillClick(label, isReal4k) {
