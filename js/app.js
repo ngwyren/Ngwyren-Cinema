@@ -1576,16 +1576,15 @@ class AppleCinemaApp {
     const backdropUrl = this.getMovieBackdrop(movie);
 
     sheet.innerHTML = `
-      <!-- Top Floating Modal Controls -->
+      <!-- Top Floating Modal Controls (Chỉ hiện icon chuẩn Apple Vision Pro) -->
       <div class="modal-top-controls">
-        <button class="modal-ctrl-btn" onclick="app.toggleLightsOff()">
-          <i class="fas fa-lightbulb"></i>
-          <span id="lightsOffLabel">${this.lightsOff ? "Bật Đèn" : "Tắt Đèn Rạp"}</span>
+        <button class="modal-ctrl-btn icon-only ${this.lightsOff ? "active" : ""}" id="lightsOffBtn" onclick="app.toggleLightsOff()" title="${this.lightsOff ? "Bật Đèn" : "Tắt Đèn Rạp"}" aria-label="Tắt Đèn Rạp">
+          <i class="fas fa-lightbulb" id="lightsOffIcon"></i>
         </button>
-        <button class="modal-ctrl-btn" onclick="app.minimizeToMiniPlayer()" title="Thu nhỏ xuống thanh Now Playing">
-          <i class="fas fa-compress-alt"></i> Thu Nhỏ
+        <button class="modal-ctrl-btn icon-only" onclick="app.minimizeToMiniPlayer()" title="Thu nhỏ xuống thanh Now Playing" aria-label="Thu Nhỏ">
+          <i class="fas fa-compress-alt"></i>
         </button>
-        <button class="modal-ctrl-btn icon-only" onclick="app.closeMovieModal()" aria-label="Đóng">
+        <button class="modal-ctrl-btn icon-only" onclick="app.closeMovieModal()" title="Đóng" aria-label="Đóng">
           <i class="fas fa-times"></i>
         </button>
       </div>
@@ -3471,8 +3470,11 @@ class AppleCinemaApp {
   toggleLightsOff() {
     this.lightsOff = !this.lightsOff;
     document.getElementById("movieDetailModal")?.classList.toggle("lights-off", this.lightsOff);
-    const label = document.getElementById("lightsOffLabel");
-    if (label) label.textContent = this.lightsOff ? "Bật Đèn" : "Tắt Đèn Rạp";
+    const btn = document.getElementById("lightsOffBtn");
+    if (btn) {
+      btn.title = this.lightsOff ? "Bật Đèn" : "Tắt Đèn Rạp";
+      btn.classList.toggle("active", this.lightsOff);
+    }
   }
 
 
