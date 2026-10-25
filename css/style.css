@@ -1959,25 +1959,9 @@ body::-webkit-scrollbar {
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* Apple Floating VisionOS Resume Banner on Player */
+/* Apple Floating VisionOS Resume Banner on Player (Đã ẩn theo yêu cầu) */
 .apple-resume-banner {
-  position: absolute;
-  top: 18px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 55;
-  background: rgba(14, 15, 20, 0.88);
-  backdrop-filter: blur(24px) saturate(190%);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 36px;
-  padding: 8px 16px 8px 20px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.22);
-  animation: appleResumeFadeIn 0.32s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
-  pointer-events: auto;
+  display: none !important;
 }
 
 @keyframes appleResumeFadeIn {

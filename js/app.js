@@ -2338,7 +2338,6 @@ class AppleCinemaApp {
           videoEl.addEventListener("loadedmetadata", applySavedTime, { once: true });
           videoEl.addEventListener("canplay", applySavedTime, { once: true });
           applySavedTime();
-          this.showResumeFloatingBanner(savedProg);
           this.showToast(`▶ Đang tiếp tục xem từ ${this.formatSeconds(savedProg.currentTime)} (${savedProg.percentage}%)`);
         }
       });
@@ -2404,7 +2403,6 @@ class AppleCinemaApp {
         const savedProg = this.getPlaybackProgress(movie.slug, epIndex);
         if (savedProg && savedProg.currentTime > 5 && savedProg.percentage < 95) {
           videoEl.currentTime = savedProg.currentTime;
-          this.showResumeFloatingBanner(savedProg);
           this.showToast(`▶ Đang tiếp tục xem từ ${this.formatSeconds(savedProg.currentTime)} (${savedProg.percentage}%)`);
         }
       });
@@ -2608,34 +2606,8 @@ class AppleCinemaApp {
   }
 
   showResumeFloatingBanner(savedProg) {
+    // Đã loại bỏ banner nổi "Tiếp tục xem" theo yêu cầu người dùng
     this.dismissResumeBanner();
-    const container = document.getElementById("activeVideoContainer");
-    if (!container) return;
-
-    const banner = document.createElement("div");
-    banner.className = "apple-resume-banner";
-    banner.id = "appleResumeBanner";
-    banner.innerHTML = `
-      <div class="apple-resume-text">
-        <i class="fas fa-clock-rotate-left" style="color: #38ef7d;"></i>
-        Tiếp tục xem từ <strong>${this.formatSeconds(savedProg.currentTime)}</strong> (${savedProg.percentage}%)
-      </div>
-      <div class="apple-resume-actions">
-        <button class="apple-resume-btn resume-now" onclick="app.resumePlaybackAt(${savedProg.currentTime})">
-          <i class="fas fa-play" style="font-size:0.75em; margin-right:4px;"></i>Xem tiếp
-        </button>
-        <button class="apple-resume-btn resume-restart" onclick="app.restartPlayback()">
-          <i class="fas fa-rotate-left" style="font-size:0.75em; margin-right:4px;"></i>Từ đầu
-        </button>
-        <button class="apple-resume-close" onclick="app.dismissResumeBanner()" aria-label="Đóng"><i class="fas fa-times"></i></button>
-      </div>
-    `;
-    container.appendChild(banner);
-
-    clearTimeout(this._resumeBannerTimeout);
-    this._resumeBannerTimeout = setTimeout(() => {
-      this.dismissResumeBanner();
-    }, 7000);
   }
 
   dismissResumeBanner() {
