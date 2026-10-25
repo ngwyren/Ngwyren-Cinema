@@ -2377,7 +2377,27 @@ class AppleCinemaApp {
   }
 
   buildQualityButtonsHTML(movie) {
+    const mov = movie || this.selectedMovie || this.playingMovie;
+    const has4k = Boolean(
+      (mov?.quality && mov.quality.toString().toUpperCase().includes("4K")) ||
+      (mov?.nativeQuality && mov.nativeQuality.toString().toUpperCase().includes("4K")) ||
+      (Array.isArray(mov?.sectionTags) && mov.sectionTags.includes("4k")) ||
+      (this.detectedHlsLevels && this.detectedHlsLevels.some((l) => l.height >= 1440 || l.width >= 2560)) ||
+      (mov?.episodes?.some((ep) => ep.altSources?.some((a) => (a.label || "").toLowerCase().includes("4k") || (a.source || "").toLowerCase().includes("4k"))))
+    );
+
     const is4k = this.currentQuality === "4K" || this.currentQuality === "4k";
+
+    // Phim không có định dạng 4K thì chỉ hiển thị nút 1080
+    if (!has4k) {
+      return `
+        <button class="quality-pill-btn active" 
+                title="Full HD 1080p • Nét Chuẩn Bản Quyền">
+          1080
+        </button>
+      `;
+    }
+
     return `
       <button class="quality-pill-btn ${!is4k ? "active" : ""}" 
               onclick="app.switchQualityTier('1080')" 
@@ -2411,9 +2431,7 @@ class AppleCinemaApp {
       this.actualVideoRes.bitrateMbps = lvl.bitrateMbps;
       this.renderDynamicQualityButtons();
       this.applyVideoQualityVisuals();
-      const is4k = lvl.height >= 2100 || lvl.width >= 3800;
       this.showToast(`✨ Đã chuyển sang chất lượng thực: ${lvl.tier} (${lvl.width}×${lvl.height} • ${lvl.bitrateMbps} Mbps)`);
-      this.showAppleVideoHud("forward", is4k ? "4K" : "1080");
     }
   }
 
@@ -2421,8 +2439,21 @@ class AppleCinemaApp {
     const is4k = tier === "4k" || tier === "4K";
     this.currentQuality = is4k ? "4K" : "1080";
 
-    if (this.detectedHlsLevels && this.detectedHlsLevels.length > 1) {
-      if (is4k) {
+    const videoEl = document.getElementById("hlsVideoElement");
+    const resumeTime = videoEl ? videoEl.currentTime : 0;
+    const wasPlaying = videoEl ? !videoEl.paused : true;
+
+    // Khi chuyển sang 4K: nạp lại/chuyển sang luồng 4K chất lượng cao nhất
+    if (is4k) {
+      const ep = this.selectedMovie?.episodes?.[this.currentEpisodeIndex] || this.selectedMovie?.episodes?.[0];
+      const alt4k = ep?.altSources?.find((a) => (a.label || "").toLowerCase().includes("4k") || (a.source || "").toLowerCase().includes("4k"));
+      if (alt4k && alt4k.source && this.hlsInstance && this.hlsInstance.url !== alt4k.source) {
+        this.hlsInstance.loadSource(alt4k.source);
+        this.hlsInstance.once(window.Hls.Events.MANIFEST_PARSED, () => {
+          if (videoEl && resumeTime > 1) videoEl.currentTime = resumeTime;
+          if (wasPlaying) videoEl?.play().catch(() => {});
+        });
+      } else if (this.detectedHlsLevels && this.detectedHlsLevels.length > 1) {
         let highestIdx = this.detectedHlsLevels.length - 1;
         let maxMetric = 0;
         this.detectedHlsLevels.forEach((lvl, idx) => {
@@ -2432,21 +2463,33 @@ class AppleCinemaApp {
             highestIdx = idx;
           }
         });
-        this.switchHlsLevel(highestIdx);
-      } else {
+        if (this.hlsInstance) {
+          this.hlsInstance.currentLevel = highestIdx;
+          this.hlsInstance.loadLevel = highestIdx;
+          this.hlsInstance.nextLevel = highestIdx;
+        }
+      }
+    } else {
+      // Chuyển về 1080: Nếu có mức 1080p, khóa ở mức 1080
+      if (this.detectedHlsLevels && this.detectedHlsLevels.length > 1) {
         const fhdIdx = this.detectedHlsLevels.findIndex((lvl) => (lvl.height >= 800 && lvl.height <= 1080) || (lvl.width >= 1800 && lvl.width <= 1920));
-        this.switchHlsLevel(fhdIdx !== -1 ? fhdIdx : 0);
+        const targetIdx = fhdIdx !== -1 ? fhdIdx : 0;
+        if (this.hlsInstance) {
+          this.hlsInstance.currentLevel = targetIdx;
+          this.hlsInstance.loadLevel = targetIdx;
+          this.hlsInstance.nextLevel = targetIdx;
+        }
       }
     }
 
     this.renderDynamicQualityButtons();
     this.applyVideoQualityVisuals();
+
+    // Thông báo toast tinh tế, không hiện icon HUD tròn đè giữa khung hình
     if (is4k) {
-      this.showToast("✨ Đã kích hoạt 4K Ultra HD (Độ nét cực đại • Apple Reality Engine)");
-      this.showAppleVideoHud("forward", "4K Ultra HD");
+      this.showToast("✨ Đã kích hoạt 4K Ultra HD sắc nét");
     } else {
-      this.showToast("✨ Đang phát chuẩn Full HD 1080p sắc nét");
-      this.showAppleVideoHud("forward", "Full HD 1080");
+      this.showToast("✨ Đang phát chuẩn Full HD 1080p");
     }
   }
 
