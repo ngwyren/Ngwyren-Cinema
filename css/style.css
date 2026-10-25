@@ -7574,84 +7574,33 @@ iframe:focus-within,
 }
 
 /* ==========================================================================
-   APPLE CINEMA ANTI-WATERMARK / LOGO SHIELD (Khử triệt để Logo & Watermark)
-   Khử sạch HHPANDA.TV, Dải banner Google + HHPANDA [DK8 dk8.com], YanHH3D, logo góc
+   APPLE CINEMA ANTI-WATERMARK / LOGO SHIELD
+   Đảm bảo toàn bộ khung hình trong suốt, nét tuyệt đối 100%, không bị vệt đen hay ám mờ
    ========================================================================== */
 .apple-watermark-shield {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 4;
-  overflow: hidden;
-  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.apple-watermark-shield.disabled {
+  display: none !important;
   opacity: 0 !important;
   pointer-events: none !important;
   visibility: hidden !important;
 }
 
-/* Lớp viền điện ảnh mờ tinh tế ở mép trên */
-.apple-watermark-shield::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: clamp(24px, 4.5vh, 48px);
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, transparent 100%);
-  pointer-events: none;
+/* ==========================================================================
+   APPLE CINEMA 4K ULTRA HD SUPER-RESOLUTION ENGINE & SHARPNESS
+   Tối ưu độ sắc nét cực đại chuẩn Apple TV+, loại bỏ hoàn toàn hiện tượng mờ nhòe
+   ========================================================================== */
+#hlsVideoElement,
+.active-video-container video {
+  image-rendering: -webkit-optimize-contrast !important;
+  image-rendering: high-quality !important;
+  transform: translateZ(0) !important;
+  backface-visibility: hidden !important;
 }
 
-/* Dải băng lọc Banner trên đỉnh: Khử sạch "Cú pháp tìm kiếm phim nhanh nhất trên Google: Tên phim + HHPANDA" và logo [DK8 dk8.com] */
-.shield-top-banner {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: clamp(42px, 7.5vh, 72px);
-  pointer-events: none;
-  backdrop-filter: blur(48px) brightness(0.25) contrast(1.4);
-  -webkit-backdrop-filter: blur(48px) brightness(0.25) contrast(1.4);
-  background: linear-gradient(180deg, rgba(2, 2, 5, 0.98) 0%, rgba(3, 3, 7, 0.92) 58%, rgba(3, 3, 7, 0.35) 85%, transparent 100%);
-  mask-image: linear-gradient(180deg, black 65%, transparent 100%);
-  -webkit-mask-image: linear-gradient(180deg, black 65%, transparent 100%);
-}
-
-/* Khu vực lọc góc mờ tự nhiên khử watermark chữ trắng */
-.shield-corner {
-  position: absolute;
-  pointer-events: none;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
-/* Góc trên bên phải: Vị trí xuất hiện HHPANDA.TV, YanHH3D.ME, DK8 */
-.shield-top-right {
-  top: 0;
-  right: 0;
-  width: clamp(240px, 32vw, 440px);
-  height: clamp(58px, 9.8vh, 100px);
-  border-bottom-left-radius: 32px;
-  backdrop-filter: blur(48px) brightness(0.22) contrast(1.4);
-  -webkit-backdrop-filter: blur(48px) brightness(0.22) contrast(1.4);
-  background: radial-gradient(ellipse at top right, rgba(2, 2, 5, 0.98) 0%, rgba(3, 3, 7, 0.92) 55%, rgba(3, 3, 7, 0.45) 80%, transparent 100%);
-  mask-image: radial-gradient(ellipse at top right, black 60%, rgba(0, 0, 0, 0.8) 80%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse at top right, black 60%, rgba(0, 0, 0, 0.8) 80%, transparent 100%);
-}
-
-/* Góc trên bên trái: Vị trí xuất hiện logo nhà đài/subteam */
-.shield-top-left {
-  top: 0;
-  left: 0;
-  width: clamp(200px, 26vw, 360px);
-  height: clamp(54px, 9vh, 92px);
-  border-bottom-right-radius: 32px;
-  backdrop-filter: blur(48px) brightness(0.22) contrast(1.4);
-  -webkit-backdrop-filter: blur(48px) brightness(0.22) contrast(1.4);
-  background: radial-gradient(ellipse at top left, rgba(2, 2, 5, 0.98) 0%, rgba(3, 3, 7, 0.92) 55%, rgba(3, 3, 7, 0.45) 80%, transparent 100%);
-  mask-image: radial-gradient(ellipse at top left, black 60%, rgba(0, 0, 0, 0.8) 80%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse at top left, black 60%, rgba(0, 0, 0, 0.8) 80%, transparent 100%);
+#hlsVideoElement.quality-4k-enhanced,
+.active-video-container video.quality-4k-enhanced {
+  image-rendering: -webkit-optimize-contrast !important;
+  image-rendering: crisp-edges !important;
+  filter: contrast(1.05) saturate(1.08) brightness(1.02) !important;
 }
 
 /* Ẩn nút icon khử logo trên Apple Player Bar theo yêu cầu người dùng */

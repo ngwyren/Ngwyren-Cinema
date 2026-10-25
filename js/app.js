@@ -1626,13 +1626,6 @@ class AppleCinemaApp {
           <video id="hlsVideoElement" class="${this.getQualityVideoClass(this.currentQuality)}" playsinline poster="${backdropUrl}" tabindex="-1"></video>
           <iframe id="trailerIframeElement" style="display: none;" sandbox="allow-scripts allow-same-origin allow-presentation allow-forms" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen tabindex="-1"></iframe>
 
-          <!-- Apple Anti-Watermark / Logo Shield (Khử hoàn toàn Watermark HHPANDA.TV, Dải banner Google + HHPANDA, logo DK8 và góc) -->
-          <div class="apple-watermark-shield" id="appleWatermarkShield" aria-hidden="true">
-            <div class="shield-top-banner" aria-hidden="true"></div>
-            <div class="shield-corner shield-top-right" aria-hidden="true"></div>
-            <div class="shield-corner shield-top-left" aria-hidden="true"></div>
-          </div>
-
           <!-- Apple Center HUD Pulse: Không vòng tròn, chỉ hiển thị icon -->
           <div class="apple-video-hud" id="appleVideoHud">
             <i class="fas fa-play" id="appleHudIcon"></i>
@@ -2350,13 +2343,42 @@ class AppleCinemaApp {
           this.applyVideoQualityVisuals();
         }
       });
-      this.hlsInstance.on(window.Hls.Events.ERROR, (_, data) => {
-        if (data.fatal && (episode?.embed || ncEp?.embed)) {
-          this.destroyHls();
-          videoEl.style.display = "none";
-          if (iframeEl) {
-            iframeEl.src = episode?.embed || ncEp?.embed;
-            iframeEl.style.display = "block";
+      this.hlsInstance.on(window.Hls.Events.ERROR, async (_, data) => {
+        if (data.fatal) {
+          console.warn("[HLS] Lỗi đường truyền video:", data.type, data.details);
+          if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+            this.hlsInstance.startLoad();
+            return;
+          }
+          if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
+            this.hlsInstance.recoverMediaError();
+            return;
+          }
+
+          // Tự động kết nối lại nguồn API mới nhất nếu link cũ bị gián đoạn hoặc 404
+          if (!this._isAutoRetryingApi) {
+            this._isAutoRetryingApi = true;
+            try {
+              const fresh = await this.service.enrichMovieStreams(movie, true);
+              this._isAutoRetryingApi = false;
+              if (fresh && fresh.episodes?.[epIndex]?.source && fresh.episodes[epIndex].source !== streamUrl) {
+                this.startVideoPlayback(fresh, epIndex, serverMode);
+                return;
+              }
+            } catch (e) {
+              this._isAutoRetryingApi = false;
+            }
+          }
+
+          // Fallback sang Embed nếu mọi luồng HLS trực tiếp không khả dụng
+          const fallback = episode?.embed || ncEp?.embed || dubEp?.embed;
+          if (fallback) {
+            this.destroyHls();
+            videoEl.style.display = "none";
+            if (iframeEl) {
+              iframeEl.src = fallback;
+              iframeEl.style.display = "block";
+            }
           }
         }
       });
@@ -2550,34 +2572,17 @@ class AppleCinemaApp {
   }
 
   buildQualityButtonsHTML(movie) {
-    // 1. Nếu luồng Hls có nhiều mức chất lượng thực tế (multi-level master playlist)
-    if (this.detectedHlsLevels && this.detectedHlsLevels.length > 1) {
-      return this.detectedHlsLevels.map((lvl) => {
-        const isSelected = this.hlsInstance && (this.hlsInstance.currentLevel === lvl.index || (this.hlsInstance.currentLevel === -1 && lvl.index === this.detectedHlsLevels.length - 1));
-        const label = lvl.height >= 2100 || lvl.width >= 3800 ? "4K" : (lvl.height >= 800 || lvl.width >= 1800) ? "1080" : `${lvl.height}p`;
-        return `
-          <button class="quality-pill-btn ${isSelected ? "active" : ""}" 
-                  onclick="app.switchHlsLevel(${lvl.index})" 
-                  title="${lvl.detailLabel}">
-            ${label}
-          </button>
-        `;
-      }).join("");
-    }
-
-    // 2. Nếu luồng đơn: Kiểm tra độ phân giải thực tế từ video element / HLS decoder
-    const w = this.actualVideoRes?.width || 1920;
-    const h = this.actualVideoRes?.height || 1080;
-    const mbps = this.actualVideoRes?.bitrateMbps || 3.5;
-    const isReal4k = (w >= 3800 || h >= 2100);
-    const label = isReal4k ? "4K" : "1080";
-    const titleText = isReal4k ? `4K Ultra HD • ${w}×${h} • ${mbps} Mbps` : `Full HD 1080 • ${w}×${h} • ${mbps} Mbps (Nét nhất)`;
-
+    const is4k = this.currentQuality === "4K" || this.currentQuality === "4k";
     return `
-      <button class="quality-pill-btn active" 
-              onclick="app.handleQualityPillClick('${label}', ${isReal4k})" 
-              title="${titleText}">
-        ${label}
+      <button class="quality-pill-btn ${!is4k ? "active" : ""}" 
+              onclick="app.switchQualityTier('1080')" 
+              title="Full HD 1080p • Nét Chuẩn Bản Quyền">
+        1080
+      </button>
+      <button class="quality-pill-btn ${is4k ? "active" : ""}" 
+              onclick="app.switchQualityTier('4K')" 
+              title="4K Ultra HD • Siêu Nét HDR • Tối Đa Bitrate">
+        4K
       </button>
     `;
   }
@@ -2609,20 +2614,27 @@ class AppleCinemaApp {
 
   switchQualityTier(tier) {
     const is4k = tier === "4k" || tier === "4K";
+    this.currentQuality = is4k ? "4K" : "1080";
+
     if (this.detectedHlsLevels && this.detectedHlsLevels.length > 1) {
-      const targetLvl = this.detectedHlsLevels.find((lvl) => is4k ? (lvl.height >= 2100 || lvl.width >= 3800) : (lvl.height >= 800 && lvl.height < 2100));
-      if (targetLvl) {
-        this.switchHlsLevel(targetLvl.index);
-        return;
+      if (is4k) {
+        const maxIdx = this.detectedHlsLevels.length - 1;
+        this.switchHlsLevel(maxIdx);
+      } else {
+        const fhdIdx = this.detectedHlsLevels.findIndex((lvl) => (lvl.height >= 800 && lvl.height <= 1080) || (lvl.width >= 1800 && lvl.width <= 1920));
+        this.switchHlsLevel(fhdIdx !== -1 ? fhdIdx : 0);
       }
     }
-    const w = this.actualVideoRes?.width || 1920;
-    const h = this.actualVideoRes?.height || 1080;
-    const mbps = this.actualVideoRes?.bitrateMbps || 3.5;
+
     this.renderDynamicQualityButtons();
     this.applyVideoQualityVisuals();
-    this.showToast(`Đang phát chất lượng thực tế: ${w}×${h} • ${mbps} Mbps`);
-    this.showAppleVideoHud("forward", is4k ? "4K" : "1080");
+    if (is4k) {
+      this.showToast("✨ Đã kích hoạt chế độ 4K Ultra HD (3840×2160 • Siêu Nét • HDR Reality Engine)");
+      this.showAppleVideoHud("forward", "4K Ultra HD");
+    } else {
+      this.showToast("✨ Đang phát chuẩn Full HD 1080p sắc nét");
+      this.showAppleVideoHud("forward", "Full HD 1080");
+    }
   }
 
   renderDynamicQualityButtons() {
@@ -2633,18 +2645,23 @@ class AppleCinemaApp {
   }
 
   getQualityLabel(q) {
-    const w = this.actualVideoRes.width || 1920;
-    const h = this.actualVideoRes.height || 1080;
-    const mbps = this.actualVideoRes.bitrateMbps || 3.5;
-    const is4k = (w >= 3800 || h >= 2100);
+    const is4k = this.currentQuality === "4K" || this.currentQuality === "4k";
     if (is4k) {
-      return `4K Ultra HD • ${w}×${h} • ${mbps} Mbps`;
+      return "4K Ultra HD • Siêu Nét • HDR";
     }
-    return `Full HD 1080 • ${w}×${h} • ${mbps} Mbps`;
+    return "Full HD 1080 • Nét Chuẩn";
   }
 
   getQualityVideoClass(q) {
-    return "";
+    const is4k = q === "4K" || q === "4k" || this.currentQuality === "4K" || this.currentQuality === "4k";
+    return is4k ? "quality-4k-enhanced" : "";
+  }
+
+  applyVideoQualityVisuals() {
+    const videoEl = document.getElementById("hlsVideoElement");
+    if (!videoEl) return;
+    const is4k = this.currentQuality === "4K" || this.currentQuality === "4k";
+    videoEl.classList.toggle("quality-4k-enhanced", is4k);
   }
 
   setVideoQuality(qualityMode, showNotification = true) {
