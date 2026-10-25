@@ -7570,8 +7570,25 @@ iframe:focus-within,
   pointer-events: none;
 }
 
-.active-video-container.controls-hidden {
-  cursor: none;
+/* Triệt để ẩn con trỏ chuột khi ẩn điều khiển hoặc khi ở chế độ toàn màn hình */
+.active-video-container.controls-hidden,
+.active-video-container.controls-hidden *,
+.active-video-container.controls-hidden video,
+.active-video-container.controls-hidden iframe,
+.active-video-container.controls-hidden .apple-player-overlay,
+.active-video-container.controls-hidden .apple-player-click-layer,
+.active-video-container:fullscreen.controls-hidden,
+.active-video-container:fullscreen.controls-hidden *,
+.active-video-container:fullscreen.controls-hidden video,
+.active-video-container:-webkit-full-screen.controls-hidden,
+.active-video-container:-webkit-full-screen.controls-hidden *,
+.active-video-container:-webkit-full-screen.controls-hidden video {
+  cursor: none !important;
+}
+
+.active-video-container.controls-hidden .apple-player-click-layer {
+  pointer-events: auto !important;
+  cursor: none !important;
 }
 
 /* Lớp bấm trực tiếp lên phim để Play / Pause / Toàn màn hình */
@@ -7950,6 +7967,14 @@ iframe:focus-within,
   width: 100vw !important;
   height: 100vh !important;
   object-fit: contain !important;
+}
+
+/* Toàn màn hình khi ẩn controls triệt tiêu con trỏ chuột tuyệt đối */
+.active-video-container:fullscreen.controls-hidden,
+.active-video-container:fullscreen.controls-hidden *,
+.active-video-container:-webkit-full-screen.controls-hidden,
+.active-video-container:-webkit-full-screen.controls-hidden * {
+  cursor: none !important;
 }
 
 /* ==========================================================================

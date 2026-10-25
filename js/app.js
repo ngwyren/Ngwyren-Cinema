@@ -3047,7 +3047,7 @@ class AppleCinemaApp {
     const appleOverlay = document.getElementById("applePlayerOverlay");
     if (appleOverlay) appleOverlay.style.display = "flex";
 
-    // Auto-hide controls khi xem phim (2.5 giây không di chuột)
+    // Auto-hide controls & con trỏ chuột khi xem phim (2 giây không di chuột)
     const resetControlsTimer = () => {
       container.classList.remove("controls-hidden");
       if (this._appleControlsTimeout) {
@@ -3059,13 +3059,45 @@ class AppleCinemaApp {
           if (!videoEl.paused) {
             container.classList.add("controls-hidden");
           }
-        }, 2500);
+        }, 2000);
       }
     };
+    this._resetControlsTimer = resetControlsTimer;
 
     container.onmousemove = resetControlsTimer;
     container.onmousedown = resetControlsTimer;
     container.ontouchstart = resetControlsTimer;
+
+    // Lắng nghe di chuột toàn màn hình trên document (đặc biệt khi đang toàn màn hình)
+    if (this._boundDocMouseMove) {
+      document.removeEventListener("mousemove", this._boundDocMouseMove);
+    }
+    this._boundDocMouseMove = () => {
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        resetControlsTimer();
+      }
+    };
+    document.addEventListener("mousemove", this._boundDocMouseMove);
+
+    // Lắng nghe sự kiện toàn màn hình để đồng bộ icon và kích hoạt ẩn chuột ngay lập tức
+    if (this._boundFsChange) {
+      document.removeEventListener("fullscreenchange", this._boundFsChange);
+      document.removeEventListener("webkitfullscreenchange", this._boundFsChange);
+    }
+    this._boundFsChange = () => {
+      const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+      const fsIcon = document.getElementById("appleFsIcon");
+      if (fsIcon) {
+        fsIcon.className = isFs ? "fas fa-compress" : "fas fa-expand";
+      }
+      const fsBtn = document.getElementById("appleFsBtn");
+      if (fsBtn) {
+        fsBtn.title = isFs ? "Thu nhỏ (F)" : "Toàn màn hình (F)";
+      }
+      resetControlsTimer();
+    };
+    document.addEventListener("fullscreenchange", this._boundFsChange);
+    document.addEventListener("webkitfullscreenchange", this._boundFsChange);
 
     videoEl.onplay = () => {
       this.isPlaying = true;
@@ -3309,8 +3341,14 @@ class AppleCinemaApp {
       if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
       else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
     } else {
-      if (stage.requestFullscreen) stage.requestFullscreen().catch(() => {});
-      else if (stage.webkitRequestFullscreen) stage.webkitRequestFullscreen();
+      if (stage.requestFullscreen) {
+        stage.requestFullscreen().then(() => {
+          if (this._resetControlsTimer) this._resetControlsTimer();
+        }).catch(() => {});
+      } else if (stage.webkitRequestFullscreen) {
+        stage.webkitRequestFullscreen();
+        if (this._resetControlsTimer) this._resetControlsTimer();
+      }
     }
   }
 
