@@ -1498,17 +1498,6 @@ body::-webkit-scrollbar {
   text-overflow: ellipsis;
 }
 
-.movie-card-reason {
-  font-size: 0.72rem;
-  color: var(--text-tertiary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
 /* Top 10 Ranked Card Variant (Apple Music Charts Style) */
 .ranked-card {
   position: relative;
@@ -7554,13 +7543,17 @@ iframe:focus-within,
   pointer-events: none;
 }
 
-/* Triệt để ẩn con trỏ chuột khi ẩn điều khiển hoặc khi ở chế độ toàn màn hình */
+/* Triệt để ẩn con trỏ chuột khi xem phim hoặc khi ở chế độ toàn màn hình */
+body.video-cursor-hidden,
+body.video-cursor-hidden *,
 .active-video-container.controls-hidden,
 .active-video-container.controls-hidden *,
 .active-video-container.controls-hidden video,
 .active-video-container.controls-hidden iframe,
 .active-video-container.controls-hidden .apple-player-overlay,
 .active-video-container.controls-hidden .apple-player-click-layer,
+.modal-player-stage.controls-hidden,
+.modal-player-stage.controls-hidden *,
 .active-video-container:fullscreen.controls-hidden,
 .active-video-container:fullscreen.controls-hidden *,
 .active-video-container:fullscreen.controls-hidden video,

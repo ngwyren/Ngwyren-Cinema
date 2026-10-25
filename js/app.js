@@ -1409,7 +1409,7 @@ class AppleCinemaApp {
     `;
   }
 
-  renderMovieCardHTML(movie, rankNum = null, reasonText = null) {
+  renderMovieCardHTML(movie, rankNum = null) {
     const inMyList = this.isInMyList(movie);
     const is4k = Boolean(
       (movie.quality && movie.quality.toString().toUpperCase().includes("4K")) ||
@@ -1459,7 +1459,6 @@ class AppleCinemaApp {
         <div class="movie-card-info">
           <h3 class="movie-card-title" title="${movie.title}">${movie.title}</h3>
           <div class="movie-card-sub">${movie.originTitle} • ${movie.year}</div>
-          ${reasonText ? `<div class="movie-card-reason"><i class="fas fa-link" style="font-size:0.6rem; color:#38ef7d; margin-right:3px;"></i>${reasonText}</div>` : ""}
         </div>
       </article>
     `;
@@ -1571,6 +1570,7 @@ class AppleCinemaApp {
     modalBackdrop.classList.remove("open");
     modalBackdrop.classList.remove("lights-off");
     document.getElementById("movieDetailSheet")?.classList.remove("apple-theater-mode");
+    document.body.classList.remove("video-cursor-hidden");
     if (this._appleControlsTimeout) {
       clearTimeout(this._appleControlsTimeout);
       this._appleControlsTimeout = null;
@@ -1954,9 +1954,7 @@ class AppleCinemaApp {
           <div id="modalTabPanelRelated" style="padding-top: 20px;">
             <div class="movie-grid">
               ${relatedItems
-                .map(({ movie: rel, reasons }) =>
-                  this.renderMovieCardHTML(rel, null, reasons?.[0] || "")
-                )
+                .map(({ movie: rel }) => this.renderMovieCardHTML(rel))
                 .join("")}
             </div>
           </div>
@@ -2043,13 +2041,86 @@ class AppleCinemaApp {
   }
 
   cleanHlsAdSegments(playlistText) {
-    // Bảo toàn trọn vẹn 100% tất cả các phân đoạn video trong luồng để đảm bảo không bị gián đoạn hay cắt xén nội dung phim
-    return playlistText;
+    if (!playlistText || typeof playlistText !== "string" || !playlistText.includes("#EXTM3U")) {
+      return playlistText;
+    }
+    const lines = playlistText.split(/\r?\n/);
+    const cleanLines = [];
+
+    const isAdSegment = (uri) => {
+      if (!uri || typeof uri !== "string") return false;
+      const u = uri.trim();
+      // Khử chính xác phân đoạn video quảng cáo cờ bạc chèn vào luồng:
+      // Định dạng quảng cáo: /(v7|convertv)/[hash 16-64 hex]/segment_... hoặc domain cờ bạc
+      if (/\/(?:v7|convertv)\/[a-f0-9]{16,64}\/segment_\d+\.ts/i.test(u)) return true;
+      if (/https?:\/\/[^\/]+\/(?:v7|convertv)\/[a-f0-9]{16,64}\/segment_\d+\.ts/i.test(u)) return true;
+      if (/(?:9922|i999|cwin|nohu|casinopromo)\.com/i.test(u)) return true;
+      return false;
+    };
+
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i];
+
+      // Nếu gặp #EXT-X-DISCONTINUITY mà phân đoạn tiếp theo là quảng cáo -> bỏ qua tag
+      if (line.trim() === "#EXT-X-DISCONTINUITY") {
+        let peek = i + 1;
+        while (peek < lines.length && lines[peek].startsWith("#")) {
+          peek++;
+        }
+        if (peek < lines.length && isAdSegment(lines[peek])) {
+          i++;
+          continue;
+        }
+      }
+
+      // Nếu gặp phân đoạn quảng cáo (#EXTINF)
+      if (line.startsWith("#EXTINF:")) {
+        let peek = i + 1;
+        while (peek < lines.length && lines[peek].startsWith("#") && !lines[peek].startsWith("#EXTINF:")) {
+          peek++;
+        }
+        if (peek < lines.length && isAdSegment(lines[peek])) {
+          i = peek + 1;
+          // Bỏ qua tag #EXT-X-DISCONTINUITY kết thúc khối quảng cáo
+          if (i < lines.length && lines[i].trim() === "#EXT-X-DISCONTINUITY") {
+            i++;
+          }
+          continue;
+        }
+      }
+
+      if (isAdSegment(line)) {
+        i++;
+        continue;
+      }
+
+      cleanLines.push(line);
+      i++;
+    }
+
+    return cleanLines.join("\n");
   }
 
   createAdFreePlaylistLoader() {
-    // Sử dụng loader mặc định hiệu năng cao của Hls.js giúp tối ưu tốc độ đệm và ngăn chặn mất gói tin
-    return undefined;
+    const self = this;
+    if (!window.Hls || !window.Hls.DefaultConfig || !window.Hls.DefaultConfig.loader) return undefined;
+    return class extends window.Hls.DefaultConfig.loader {
+      constructor(config) {
+        super(config);
+        const origLoad = this.load.bind(this);
+        this.load = (context, cfg, callbacks) => {
+          const origSuccess = callbacks.onSuccess;
+          callbacks.onSuccess = (response, stats, ctx, networkDetails) => {
+            if (response && typeof response.data === "string" && response.data.includes("#EXTM3U")) {
+              response.data = self.cleanHlsAdSegments(response.data);
+            }
+            if (origSuccess) origSuccess(response, stats, ctx, networkDetails);
+          };
+          origLoad(context, cfg, callbacks);
+        };
+      }
+    };
   }
 
   renderServerButtons(movie, epIndex = 0) {
@@ -3022,6 +3093,7 @@ class AppleCinemaApp {
     // Auto-hide controls & con trỏ chuột khi xem phim (2 giây không di chuột)
     const resetControlsTimer = () => {
       container.classList.remove("controls-hidden");
+      document.body.classList.remove("video-cursor-hidden");
       if (this._appleControlsTimeout) {
         clearTimeout(this._appleControlsTimeout);
         this._appleControlsTimeout = null;
@@ -3030,6 +3102,7 @@ class AppleCinemaApp {
         this._appleControlsTimeout = setTimeout(() => {
           if (!videoEl.paused) {
             container.classList.add("controls-hidden");
+            document.body.classList.add("video-cursor-hidden");
           }
         }, 2000);
       }
@@ -3040,12 +3113,13 @@ class AppleCinemaApp {
     container.onmousedown = resetControlsTimer;
     container.ontouchstart = resetControlsTimer;
 
-    // Lắng nghe di chuột toàn màn hình trên document (đặc biệt khi đang toàn màn hình)
+    // Lắng nghe di chuột trên document khi modal mở để phục hồi chuột tức thì và tự động ẩn khi dừng
     if (this._boundDocMouseMove) {
       document.removeEventListener("mousemove", this._boundDocMouseMove);
     }
     this._boundDocMouseMove = () => {
-      if (document.fullscreenElement || document.webkitFullscreenElement) {
+      const modal = document.getElementById("movieDetailModal");
+      if (modal?.classList.contains("open") && !videoEl.paused) {
         resetControlsTimer();
       }
     };
@@ -3087,6 +3161,7 @@ class AppleCinemaApp {
       if (playIcon) playIcon.className = "fas fa-play";
       this.setNowPlayingBar(this.playingMovie, this.currentEpisodeIndex, false);
       container.classList.remove("controls-hidden");
+      document.body.classList.remove("video-cursor-hidden");
       videoEl.blur();
     };
 
