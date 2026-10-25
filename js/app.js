@@ -153,13 +153,25 @@ class AppleCinemaApp {
       "dich-nhan-kiet-lang-nhan-kiep"
     ];
 
+    // Bộ lọc chuẩn 16:9 widescreen HD cho ảnh banner Hero Showcase (loại bỏ ảnh poster dọc, ảnh mờ)
+    const isWidescreenHd = (m) => {
+      if (!m || !m.backdrop || !m.poster) return false;
+      const b = m.backdrop;
+      if (b === m.poster) return false;
+      if (b.includes("animevsub") || b.includes("animevietsub")) return false;
+      if (b.includes("data/poster") || b.includes("-poster.") || b.includes("/poster/")) return false;
+      if (b.endsWith("-poster.webp") || b.endsWith("-poster.jpg")) return false;
+      if (b.includes("nguonc.com")) return false;
+      return true;
+    };
+
     // Lọc các phim bom tấn có ảnh nền nét từ ứng viên và catalog
     const seedMovies = candidateSlugs
       .map((s) => this.service.slugMap.get(s))
-      .filter((m) => m && m.backdrop);
+      .filter((m) => isWidescreenHd(m));
 
     const catalogHdMovies = this.service.movies
-      .filter((m) => m && m.backdrop && !m.backdrop.includes("nguonc.com") && (m.rating >= 8.0 || m.year >= 2024))
+      .filter((m) => isWidescreenHd(m) && (m.rating >= 8.0 || m.year >= 2024))
       .slice(0, 45);
 
     const pool = Array.from(new Set([...seedMovies, ...catalogHdMovies]));
@@ -1162,7 +1174,7 @@ class AppleCinemaApp {
   renderVisionTrailerCardHTML(movie) {
     return `
       <article class="vision-trailer-card" onclick="app.openMovieModal('${movie.slug}', true)">
-        <img src="${movie.backdrop || movie.poster}" alt="${movie.title}" loading="lazy" decoding="async"
+        <img src="${this.getMovieBackdrop(movie)}" alt="${movie.title}" loading="lazy" decoding="async"
              onerror="this.src='https://phimmoiz.one/wp-content/uploads/2026/10/matchbox-phim-dien-anh-poster.webp'" />
         <div class="vision-trailer-overlay">
           <div class="vision-trailer-title">${movie.title}</div>
@@ -1183,7 +1195,7 @@ class AppleCinemaApp {
     return `
       <div class="vision-continue-item" onclick="app.openMovieModal('${movie.slug}', true, ${epIndex})" title="Tiếp tục xem ${movie.title}">
         <div class="vision-continue-thumb-box">
-          <img class="vision-continue-thumb" src="${movie.poster}" alt="${movie.title}" loading="lazy" decoding="async" />
+          <img class="vision-continue-thumb" src="${this.getMoviePoster(movie)}" alt="${movie.title}" loading="lazy" decoding="async" />
           <div class="vision-continue-progress-bg">
             <div class="vision-continue-progress-fill" style="width: ${pct}%;"></div>
           </div>
@@ -1203,7 +1215,7 @@ class AppleCinemaApp {
     const inMyList = this.isInMyList(movie);
     return `
       <article class="vision-feature-card" onclick="app.openMovieModal('${movie.slug}', false)">
-        <img class="vision-feature-img" src="${movie.poster}" alt="${movie.title}" loading="lazy" decoding="async"
+        <img class="vision-feature-img" src="${this.getMoviePoster(movie)}" alt="${movie.title}" loading="lazy" decoding="async"
              onerror="this.src='https://phimmoiz.one/wp-content/uploads/2026/10/matchbox-phim-dien-anh-poster.webp'" />
         <div class="vision-feature-shade"></div>
 
@@ -1351,7 +1363,7 @@ class AppleCinemaApp {
       <article class="movie-card ${rankNum ? "ranked-card" : ""}"
                onclick="app.openMovieModal('${movie.slug}', false)">
         <div class="movie-poster-wrap">
-          <img src="${movie.poster}" alt="${movie.title}" loading="lazy" decoding="async"
+          <img src="${this.getMoviePoster(movie)}" alt="${movie.title}" loading="lazy" decoding="async"
                onerror="this.src='https://phimmoiz.one/wp-content/uploads/2026/10/matchbox-phim-dien-anh-poster.webp'" />
           <div class="poster-badges-top">
             <span class="ribbon-quality">${movie.quality}</span>
@@ -1554,16 +1566,44 @@ class AppleCinemaApp {
 
   getMovieBackdrop(movie) {
     if (!movie) return "";
-    let b = movie.backdrop || movie.poster || "";
-    if (b && !b.includes("animevietsub") && !b.includes("data/poster")) {
+    let b = movie.backdrop || "";
+    const isSuspicious = !b ||
+      (movie.poster && b === movie.poster) ||
+      b.includes("animevietsub") ||
+      b.includes("animevsub") ||
+      b.includes("data/poster") ||
+      b.includes("-poster.") ||
+      b.includes("/poster/") ||
+      b.endsWith("-poster.webp") ||
+      b.endsWith("-poster.jpg");
+
+    if (!isSuspicious) {
       return b;
     }
+
     const match = this.service?.movies?.find(
-      (m) => m && m.backdrop && m.backdrop.includes("phimimg") &&
-             (m.slug === movie.slug || m.title === movie.title || m.originTitle === movie.originTitle)
+      (m) => m && m.backdrop && m.backdrop !== m.poster &&
+             !m.backdrop.includes("data/poster") && !m.backdrop.includes("-poster.") &&
+             (m.slug === movie.slug || m.title === movie.title || m.originTitle === movie.originTitle ||
+              (m.crawlSlug && movie.crawlSlug && m.crawlSlug === movie.crawlSlug))
     );
     if (match && match.backdrop) return match.backdrop;
-    return b;
+    return b || movie.poster || "";
+  }
+
+  getMoviePoster(movie) {
+    if (!movie) return "";
+    let p = movie.poster || "";
+    if (p && !p.includes("animevietsub") && !p.includes("animevsub")) {
+      return p;
+    }
+    const match = this.service?.movies?.find(
+      (m) => m && m.poster && !m.poster.includes("animevietsub") && !m.poster.includes("animevsub") &&
+             (m.slug === movie.slug || m.title === movie.title || m.originTitle === movie.originTitle ||
+              (m.crawlSlug && movie.crawlSlug && m.crawlSlug === movie.crawlSlug))
+    );
+    if (match && match.poster) return match.poster;
+    return p || movie.backdrop || "";
   }
 
   renderModalContent(movie, isPlayingNow = false) {
@@ -2740,7 +2780,7 @@ class AppleCinemaApp {
     const eqBars = document.getElementById("nowPlayingEq");
     const playIcon = document.getElementById("nowPlayingPlayIcon");
 
-    if (artImg) artImg.src = movie.poster;
+    if (artImg) artImg.src = this.getMoviePoster(movie);
     if (titleText) titleText.textContent = movie.title;
     const epLabel = this.formatEpisodeLabel(ep ? ep.name : "Tập 1", "Tập 1");
     if (subText) {
