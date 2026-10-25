@@ -1632,11 +1632,6 @@ class AppleCinemaApp {
             <div class="apple-hud-text" id="appleHudText" style="display: none;"></div>
           </div>
 
-          <!-- Nút bỏ qua 15s Quảng cáo / Intro (Tự động hiện trong 30s đầu hoặc khi gặp QC mid-roll) -->
-          <button class="apple-skip-intro-btn" id="appleSkipIntroBtn" onclick="app.skipAdIntro(15)" style="display: none;" title="Bỏ qua quảng cáo / intro (Phím S)">
-            <i class="fas fa-forward-fast"></i> <span id="appleSkipIntroText">Bỏ qua 15s QC</span>
-          </button>
-
           <!-- Apple Glass Player Overlay Controls (Giao diện điều khiển kính mờ chuẩn Apple visionOS / Apple TV+) -->
           <div class="apple-player-overlay" id="applePlayerOverlay">
             <!-- Click Layer phủ toàn màn hình để Play/Pause và Double click Toàn màn hình -->
@@ -2102,10 +2097,6 @@ class AppleCinemaApp {
             </button>`
           : ""
       }
-      <button class="server-btn" id="srvBtnRefreshApi"
-              onclick="app.refreshMovieApiSources()" title="Lấy lại nguồn API mới nhất từ máy chủ (Full HD 1080p chuẩn)">
-        <i class="fas fa-arrows-rotate"></i> Lấy Nguồn API
-      </button>
     `;
   }
 
@@ -2461,30 +2452,6 @@ class AppleCinemaApp {
             this.showAppleVideoHud("forward", "Bỏ qua QC");
             break;
           }
-        }
-      }
-
-      // Quản lý hiển thị nút Bỏ qua quảng cáo / Intro (ở đầu video 0-35s hoặc sát các khoảng quảng cáo mid-roll)
-      const skipBtn = document.getElementById("appleSkipIntroBtn");
-      if (skipBtn) {
-        const isNearDetectedAd = Array.isArray(this.detectedAdRanges) && this.detectedAdRanges.some(
-          (r) => videoEl.currentTime >= r.start - 10 && videoEl.currentTime <= r.end + 3
-        );
-        const isNearCommonAdSlot =
-          (videoEl.currentTime > 0.5 && videoEl.currentTime < 35) ||
-          (videoEl.currentTime >= 170 && videoEl.currentTime <= 210) ||
-          (videoEl.currentTime >= 890 && videoEl.currentTime <= 950);
-
-        if (isNearDetectedAd || isNearCommonAdSlot) {
-          skipBtn.style.display = "inline-flex";
-          const isMidRoll = videoEl.currentTime > 60;
-          skipBtn.title = isMidRoll ? "Bỏ qua quảng cáo nhà cái (Phím S)" : "Bỏ qua giới thiệu (Phím S)";
-          const textEl = document.getElementById("appleSkipIntroText");
-          if (textEl) {
-            textEl.textContent = isMidRoll ? "Bỏ qua QC (S)" : "Bỏ qua 15s QC";
-          }
-        } else {
-          skipBtn.style.display = "none";
         }
       }
 

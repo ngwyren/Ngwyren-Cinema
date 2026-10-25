@@ -7536,41 +7536,13 @@ iframe:focus-within,
 }
 
 /* ==========================================================================
-   7. NÚT BỎ QUA QUẢNG CÁO / INTRO & BỘ LỌC 4K AI UPSCALE
+   7. NÚT BỎ QUA QUẢNG CÁO / INTRO (Ẩn theo yêu cầu người dùng)
    ========================================================================== */
 .apple-skip-intro-btn {
-  position: absolute;
-  bottom: 84px;
-  right: 28px;
-  background: rgba(18, 18, 24, 0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  color: #ffffff;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  z-index: 120;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-  user-select: none;
-}
-
-.apple-skip-intro-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: #00b4d8;
-  color: #00f0ff;
-  transform: scale(1.05);
-}
-
-.apple-skip-intro-btn i {
-  color: #00b4d8;
-  font-size: 0.88rem;
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
 }
 
 /* ==========================================================================
