@@ -2163,7 +2163,6 @@ class AppleCinemaApp {
     const hasDub = Boolean(movie.dubEpisodes && movie.dubEpisodes.length > 0);
 
     return `
-      <span class="server-label"><i class="fas fa-server"></i> Nguồn phát:</span>
       <button class="server-btn ${this.currentServerMode === "hls-1" || !this.currentServerMode || this.currentServerMode.startsWith("alt-") ? "active" : ""}" id="srvBtnHls1"
               onclick="app.startVideoPlayback(app.selectedMovie, app.currentEpisodeIndex, 'hls-1')" title="Phát Server 1 chất lượng tốt nhất">
         <i class="fas fa-server"></i> Server 1
