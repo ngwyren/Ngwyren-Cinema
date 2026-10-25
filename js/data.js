@@ -1562,7 +1562,10 @@ class PhimmoiService {
     if (!force && movie._isEnriched && movie.episodes && movie.episodes.length > 0 && movie.episodes[0].source) {
       return movie;
     }
-    const slugToTry = movie.crawlSlug || movie.slug.replace(/-\d+$/, "");
+    // Tuyệt đối không xóa hậu tố năm phát hành 4 chữ số (19xx hoặc 20xx)
+    // Chỉ xóa hậu tố số thứ tự bài đăng trùng lặp như -2, -3 hoặc ID ngắn
+    const hasYearSuffix = /-(19\d\d|20\d\d)$/.test(movie.slug);
+    const slugToTry = movie.crawlSlug || (hasYearSuffix ? movie.slug : movie.slug.replace(/-(?!(19\d\d|20\d\d)$)\d+$/, ""));
 
     let [phimApiRes, nguoncRes, wpPosts] = await Promise.all([
       this.smartFetchJson(`${PHIMMOI_CONFIG.phimApiBase}${encodeURIComponent(slugToTry)}`, 6000),
@@ -1573,17 +1576,49 @@ class PhimmoiService {
     // Nếu slug có hậu tố số hoặc khác chuẩn khiến PhimAPI chưa khớp, tự động tìm theo tên phim để lấy luồng .m3u8 thật
     if ((!phimApiRes || !Array.isArray(phimApiRes.episodes) || phimApiRes.episodes.length === 0) && movie.title) {
       const searchRes = await this.smartFetchJson(
-        `${PHIMMOI_CONFIG.phimApiSearch}?keyword=${encodeURIComponent(movie.title)}&limit=4`,
+        `${PHIMMOI_CONFIG.phimApiSearch}?keyword=${encodeURIComponent(movie.title)}&limit=6`,
         4500
       );
       const items = searchRes?.data?.items;
       if (Array.isArray(items) && items.length > 0) {
         const cleanTarget = movie.title.toLowerCase().trim();
-        const bestHit =
-          items.find((it) => (it.name || "").toLowerCase().trim() === cleanTarget) ||
-          items.find((it) => (it.origin_name || "").toLowerCase().trim() === (movie.originTitle || "").toLowerCase().trim()) ||
-          items[0];
-        if (bestHit && bestHit.slug) {
+        const originTarget = (movie.originTitle || "").toLowerCase().trim();
+        const movieYear = parseInt(movie.year, 10);
+
+        let bestHit = null;
+        let highestScore = -999;
+
+        items.forEach((it) => {
+          let score = 0;
+          const itName = (it.name || "").toLowerCase().trim();
+          const itOrigin = (it.origin_name || "").toLowerCase().trim();
+          const itYear = parseInt(it.year, 10);
+
+          if (it.slug === movie.slug || it.slug === slugToTry) score += 200;
+          if (itName === cleanTarget) score += 60;
+          else if (cleanTarget && itName.includes(cleanTarget)) score += 25;
+          if (originTarget && itOrigin === originTarget) score += 60;
+          else if (originTarget && itOrigin.includes(originTarget)) score += 20;
+
+          if (!isNaN(movieYear) && !isNaN(itYear)) {
+            const yearDiff = Math.abs(movieYear - itYear);
+            if (yearDiff === 0) {
+              score += 150;
+            } else if (yearDiff === 1) {
+              score += 80;
+            } else {
+              // Khác năm nặng (VD: 2014 vs 1998, 2005 vs 2015) -> Trừ điểm triệt để
+              score -= 400;
+            }
+          }
+
+          if (score > highestScore) {
+            highestScore = score;
+            bestHit = it;
+          }
+        });
+
+        if (bestHit && highestScore > 0 && bestHit.slug) {
           movie.crawlSlug = bestHit.slug;
           phimApiRes = await this.smartFetchJson(`${PHIMMOI_CONFIG.phimApiBase}${encodeURIComponent(bestHit.slug)}`, 5000);
         }
@@ -1599,11 +1634,37 @@ class PhimmoiService {
       const ncItems = ncSearch?.items || ncSearch?.data?.items;
       if (Array.isArray(ncItems) && ncItems.length > 0) {
         const cleanTarget = movie.title.toLowerCase().trim();
-        const bestNc =
-          ncItems.find((it) => (it.name || "").toLowerCase().trim() === cleanTarget) ||
-          ncItems.find((it) => (it.slug || "").includes(movie.slug)) ||
-          ncItems[0];
-        if (bestNc && bestNc.slug) {
+        const originTarget = (movie.originTitle || "").toLowerCase().trim();
+        const movieYear = parseInt(movie.year, 10);
+
+        let bestNc = null;
+        let highestNcScore = -999;
+
+        ncItems.forEach((it) => {
+          let score = 0;
+          const itName = (it.name || "").toLowerCase().trim();
+          const itOrigin = (it.origin_name || "").toLowerCase().trim();
+          const itYear = parseInt(it.year, 10);
+
+          if (it.slug === movie.slug || it.slug === slugToTry) score += 200;
+          if (itName === cleanTarget) score += 60;
+          else if (cleanTarget && itName.includes(cleanTarget)) score += 25;
+          if (originTarget && itOrigin === originTarget) score += 60;
+
+          if (!isNaN(movieYear) && !isNaN(itYear)) {
+            const yearDiff = Math.abs(movieYear - itYear);
+            if (yearDiff === 0) score += 150;
+            else if (yearDiff === 1) score += 80;
+            else score -= 400;
+          }
+
+          if (score > highestNcScore) {
+            highestNcScore = score;
+            bestNc = it;
+          }
+        });
+
+        if (bestNc && highestNcScore > 0 && bestNc.slug) {
           nguoncRes = await this.smartFetchJson(`${PHIMMOI_CONFIG.nguoncApiBase}${encodeURIComponent(bestNc.slug)}`, 4500);
         }
       }
@@ -1611,129 +1672,141 @@ class PhimmoiService {
 
     // 1. Nguồn PhimAPI (Netflix / KKPhim Vietsub #1 + Lồng Tiếng / Thuyết Minh + Các luồng Server phụ)
     if (phimApiRes && Array.isArray(phimApiRes.episodes) && phimApiRes.episodes.length > 0) {
-      const allServers = phimApiRes.episodes;
-      // Sắp xếp các server để ưu tiên server VIP, 4K, FHD có tốc độ cao nhất
-      const sortedServers = [...allServers].sort((a, b) => {
-        const nameA = (a.server_name || "").toLowerCase();
-        const nameB = (b.server_name || "").toLowerCase();
-        const score = (name) => {
-          if (name.includes("4k") || name.includes("uhd")) return 100;
-          if (name.includes("vip") || name.includes("fhd") || name.includes("1080")) return 80;
-          if (name.includes("vietsub") && !name.includes("trailer")) return 60;
-          return 30;
-        };
-        return score(nameB) - score(nameA);
-      });
-      const primaryServer = sortedServers[0] || allServers[0];
-      const serverData1 = primaryServer.server_data || [];
-      if (serverData1.length > 0) {
-        const parsedEps = serverData1
-          .filter((ep) => ep.link_m3u8 || ep.link_embed)
-          .map((ep, idx) => {
-            const rawName = ep.name || `Tập ${idx + 1}`;
-            // Gom tất cả các luồng .m3u8 khác nhau của cùng tập phim từ các server trong PhimAPI
-            const altSources = [];
-            sortedServers.forEach((srv, sIdx) => {
-              const candidateEp = srv.server_data?.[idx];
-              if (candidateEp && candidateEp.link_m3u8) {
-                altSources.push({
-                  id: `srv-${sIdx}`,
-                  label: srv.server_name || `Server #${sIdx + 1}`,
-                  source: candidateEp.link_m3u8,
-                  embed: candidateEp.link_embed || ""
-                });
-              }
+      const resYear = parseInt(phimApiRes.movie?.year, 10);
+      const movYear = parseInt(movie.year, 10);
+      const isYearCompatible = isNaN(resYear) || isNaN(movYear) || Math.abs(resYear - movYear) <= 1;
+
+      if (isYearCompatible) {
+        const allServers = phimApiRes.episodes;
+        // Sắp xếp các server để ưu tiên server VIP, 4K, FHD có tốc độ cao nhất
+        const sortedServers = [...allServers].sort((a, b) => {
+          const nameA = (a.server_name || "").toLowerCase();
+          const nameB = (b.server_name || "").toLowerCase();
+          const score = (name) => {
+            if (name.includes("4k") || name.includes("uhd")) return 100;
+            if (name.includes("vip") || name.includes("fhd") || name.includes("1080")) return 80;
+            if (name.includes("vietsub") && !name.includes("trailer")) return 60;
+            return 30;
+          };
+          return score(nameB) - score(nameA);
+        });
+        const primaryServer = sortedServers[0] || allServers[0];
+        const serverData1 = primaryServer.server_data || [];
+        if (serverData1.length > 0) {
+          const parsedEps = serverData1
+            .filter((ep) => ep.link_m3u8 || ep.link_embed)
+            .map((ep, idx) => {
+              const rawName = ep.name || `Tập ${idx + 1}`;
+              // Gom tất cả các luồng .m3u8 khác nhau của cùng tập phim từ các server trong PhimAPI
+              const altSources = [];
+              sortedServers.forEach((srv, sIdx) => {
+                const candidateEp = srv.server_data?.[idx];
+                if (candidateEp && candidateEp.link_m3u8) {
+                  altSources.push({
+                    id: `srv-${sIdx}`,
+                    label: srv.server_name || `Server #${sIdx + 1}`,
+                    source: candidateEp.link_m3u8,
+                    embed: candidateEp.link_embed || ""
+                  });
+                }
+              });
+              return {
+                name: rawName.startsWith("Tập") || rawName.includes("Full") ? rawName : `Tập ${rawName}`,
+                slug: ep.slug || `tap-${idx + 1}`,
+                source: ep.link_m3u8 || "",
+                embed: ep.link_embed || "",
+                altSources
+              };
             });
-            return {
-              name: rawName.startsWith("Tập") || rawName.includes("Full") ? rawName : `Tập ${rawName}`,
+          if (parsedEps.length > 0) {
+            movie.episodes = parsedEps;
+          }
+        }
+        // Server 2: Lồng Tiếng / Thuyết Minh (nếu có)
+        if (allServers.length > 1 && allServers[1].server_data) {
+          movie.dubEpisodes = allServers[1].server_data
+            .filter((ep) => ep.link_m3u8 || ep.link_embed)
+            .map((ep, idx) => ({
+              name: ep.name || `Tập ${idx + 1}`,
               slug: ep.slug || `tap-${idx + 1}`,
               source: ep.link_m3u8 || "",
-              embed: ep.link_embed || "",
-              altSources
-            };
-          });
-        if (parsedEps.length > 0) {
-          movie.episodes = parsedEps;
+              embed: ep.link_embed || ""
+            }));
         }
-      }
-      // Server 2: Lồng Tiếng / Thuyết Minh (nếu có)
-      if (allServers.length > 1 && allServers[1].server_data) {
-        movie.dubEpisodes = allServers[1].server_data
-          .filter((ep) => ep.link_m3u8 || ep.link_embed)
-          .map((ep, idx) => ({
-            name: ep.name || `Tập ${idx + 1}`,
-            slug: ep.slug || `tap-${idx + 1}`,
-            source: ep.link_m3u8 || "",
-            embed: ep.link_embed || ""
-          }));
-      }
-      if (phimApiRes.movie) {
-        if (phimApiRes.movie.thumb_url) {
-          const hdThumb = phimApiRes.movie.thumb_url.startsWith("http") ? phimApiRes.movie.thumb_url : `https://phimimg.com/${phimApiRes.movie.thumb_url.replace(/^\//, "")}`;
-          if (hdThumb && (!movie.backdrop || movie.backdrop.includes("phimmoiz.one") || movie.backdrop === movie.poster)) {
-            movie.backdrop = hdThumb;
+        if (phimApiRes.movie) {
+          if (phimApiRes.movie.thumb_url) {
+            const hdThumb = phimApiRes.movie.thumb_url.startsWith("http") ? phimApiRes.movie.thumb_url : `https://phimimg.com/${phimApiRes.movie.thumb_url.replace(/^\//, "")}`;
+            if (hdThumb && (!movie.backdrop || movie.backdrop.includes("phimmoiz.one") || movie.backdrop === movie.poster)) {
+              movie.backdrop = hdThumb;
+            }
           }
-        }
-        if (phimApiRes.movie.poster_url) {
-          const hdPoster = phimApiRes.movie.poster_url.startsWith("http") ? phimApiRes.movie.poster_url : `https://phimimg.com/${phimApiRes.movie.poster_url.replace(/^\//, "")}`;
-          if (hdPoster && (!movie.poster || movie.poster.includes("phimmoiz.one"))) {
-            movie.poster = hdPoster;
+          if (phimApiRes.movie.poster_url) {
+            const hdPoster = phimApiRes.movie.poster_url.startsWith("http") ? phimApiRes.movie.poster_url : `https://phimimg.com/${phimApiRes.movie.poster_url.replace(/^\//, "")}`;
+            if (hdPoster && (!movie.poster || movie.poster.includes("phimmoiz.one"))) {
+              movie.poster = hdPoster;
+            }
           }
-        }
-        if (phimApiRes.movie.quality) {
-          movie.nativeQuality = phimApiRes.movie.quality;
-          const qStr = String(phimApiRes.movie.quality).toUpperCase();
-          movie.quality = (qStr.includes("4K") || qStr.includes("UHD") || qStr.includes("2160")) ? "4K" : "1080";
-        }
-        if (phimApiRes.movie.trailer_url && !movie.trailerUrl) {
-          movie.trailerUrl = phimApiRes.movie.trailer_url;
-        }
-        if (phimApiRes.movie.content) {
-          const clean = this.cleanAdText(this.stripHtml(phimApiRes.movie.content));
-          if (clean.length > (movie.synopsis || "").length) movie.synopsis = clean;
+          if (phimApiRes.movie.quality) {
+            movie.nativeQuality = phimApiRes.movie.quality;
+            const qStr = String(phimApiRes.movie.quality).toUpperCase();
+            movie.quality = (qStr.includes("4K") || qStr.includes("UHD") || qStr.includes("2160")) ? "4K" : "1080";
+          }
+          if (phimApiRes.movie.trailer_url && !movie.trailerUrl) {
+            movie.trailerUrl = phimApiRes.movie.trailer_url;
+          }
+          if (phimApiRes.movie.content) {
+            const clean = this.cleanAdText(this.stripHtml(phimApiRes.movie.content));
+            if (clean.length > (movie.synopsis || "").length) movie.synopsis = clean;
+          }
         }
       }
     }
 
     // 2. Nguồn NguonC (StreamC Vietsub CDN + Thuyết Minh)
     if (nguoncRes && nguoncRes.movie && Array.isArray(nguoncRes.movie.episodes)) {
-      const ncServers = nguoncRes.movie.episodes;
-      if (ncServers[0] && Array.isArray(ncServers[0].items) && ncServers[0].items.length > 0) {
-        movie.nguoncEpisodes = ncServers[0].items.map((item, idx) => ({
-          name: item.name?.startsWith("Tập") || item.name === "Full" ? item.name : `Tập ${item.name || idx + 1}`,
-          slug: item.slug || `tap-${idx + 1}`,
-          source: item.m3u8 || "",
-          embed: item.embed || ""
-        }));
-        // Nếu NguonC có luồng m3u8 riêng, bổ sung vào altSources của tập tương ứng
-        movie.nguoncEpisodes.forEach((ncEp, idx) => {
-          if (ncEp.source && movie.episodes?.[idx]) {
-            movie.episodes[idx].altSources = movie.episodes[idx].altSources || [];
-            if (!movie.episodes[idx].altSources.some((a) => a.source === ncEp.source)) {
-              movie.episodes[idx].altSources.push({
-                id: `nguonc-${idx}`,
-                label: "StreamC FHD",
-                source: ncEp.source,
-                embed: ncEp.embed || ""
-              });
+      const ncYear = parseInt(nguoncRes.movie.year, 10);
+      const movYear = parseInt(movie.year, 10);
+      const isNcYearCompatible = isNaN(ncYear) || isNaN(movYear) || Math.abs(ncYear - movYear) <= 1;
+
+      if (isNcYearCompatible) {
+        const ncServers = nguoncRes.movie.episodes;
+        if (ncServers[0] && Array.isArray(ncServers[0].items) && ncServers[0].items.length > 0) {
+          movie.nguoncEpisodes = ncServers[0].items.map((item, idx) => ({
+            name: item.name?.startsWith("Tập") || item.name === "Full" ? item.name : `Tập ${item.name || idx + 1}`,
+            slug: item.slug || `tap-${idx + 1}`,
+            source: item.m3u8 || "",
+            embed: item.embed || ""
+          }));
+          // Nếu NguonC có luồng m3u8 riêng, bổ sung vào altSources của tập tương ứng
+          movie.nguoncEpisodes.forEach((ncEp, idx) => {
+            if (ncEp.source && movie.episodes?.[idx]) {
+              movie.episodes[idx].altSources = movie.episodes[idx].altSources || [];
+              if (!movie.episodes[idx].altSources.some((a) => a.source === ncEp.source)) {
+                movie.episodes[idx].altSources.push({
+                  id: `nguonc-${idx}`,
+                  label: "StreamC FHD",
+                  source: ncEp.source,
+                  embed: ncEp.embed || ""
+                });
+              }
             }
+          });
+          // Nếu nguồn chính chỉ có 1 tập mẫu mà NguonC có nhiều tập hơn thì cập nhật luôn
+          if (movie.nguoncEpisodes.length > (movie.episodes ? movie.episodes.length : 0)) {
+            movie.episodes = movie.nguoncEpisodes.map((ep, i) => ({
+              ...ep,
+              source: movie.episodes?.[i]?.source || ep.source || "https://a.kvp726.com/20261011/XdpIV8L5/index.m3u8"
+            }));
           }
-        });
-        // Nếu nguồn chính chỉ có 1 tập mẫu mà NguonC có nhiều tập hơn thì cập nhật luôn
-        if (movie.nguoncEpisodes.length > (movie.episodes ? movie.episodes.length : 0)) {
-          movie.episodes = movie.nguoncEpisodes.map((ep, i) => ({
-            ...ep,
-            source: movie.episodes?.[i]?.source || ep.source || "https://a.kvp726.com/20261011/XdpIV8L5/index.m3u8"
+        }
+        if (ncServers[1] && Array.isArray(ncServers[1].items) && (!movie.dubEpisodes || movie.dubEpisodes.length === 0)) {
+          movie.dubEpisodes = ncServers[1].items.map((item, idx) => ({
+            name: `Tập ${item.name || idx + 1}`,
+            slug: item.slug || `tap-${idx + 1}`,
+            source: item.m3u8 || "",
+            embed: item.embed || ""
           }));
         }
-      }
-      if (ncServers[1] && Array.isArray(ncServers[1].items) && (!movie.dubEpisodes || movie.dubEpisodes.length === 0)) {
-        movie.dubEpisodes = ncServers[1].items.map((item, idx) => ({
-          name: `Tập ${item.name || idx + 1}`,
-          slug: item.slug || `tap-${idx + 1}`,
-          source: item.m3u8 || "",
-          embed: item.embed || ""
-        }));
       }
     }
 
