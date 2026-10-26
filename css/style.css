@@ -3157,7 +3157,7 @@ body {
   color: #ffffff;
 }
 
-/* Soft-focus Spatial Room Backdrop (Zero-Lag Pure CSS Gradients) */
+/* Soft-focus Spatial Room Backdrop (Zero-Lag Pure CSS Gradients, Isolated GPU Layer) */
 .spatial-room-bg {
   position: fixed;
   inset: 0;
@@ -3168,6 +3168,9 @@ body {
     radial-gradient(ellipse 60% 55% at 85% 22%, rgba(190, 195, 205, 0.24), transparent 72%),
     radial-gradient(ellipse 75% 60% at 50% 88%, rgba(95, 98, 106, 0.32), transparent 75%),
     linear-gradient(165deg, #56585e 0%, #37393f 42%, #23252a 100%);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
 }
 
 /* Spatial Stage: Full-Screen Edge-to-Edge with Left Floating Pill Dock */
@@ -3333,17 +3336,17 @@ body {
 
 /* Smooth Apple Spatial Scale In - Out Motion when switching tabs (Zero Blur, Zero Slide, 120FPS GPU Composited) */
 .vision-view-exit {
-  opacity: 0 !important;
-  transform: scale(0.985) !important;
+  opacity: 0.35 !important;
+  transform: scale(0.992) !important;
   transition:
-    opacity 0.15s cubic-bezier(0.25, 0.1, 0.25, 1),
-    transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1) !important;
+    opacity 0.075s cubic-bezier(0.2, 0, 0.4, 1),
+    transform 0.075s cubic-bezier(0.2, 0, 0.4, 1) !important;
   pointer-events: none !important;
   will-change: opacity, transform;
 }
 
 .vision-view-enter {
-  animation: appleSpatialScaleIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+  animation: appleSpatialScaleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both !important;
   will-change: opacity, transform;
 }
 
@@ -3352,19 +3355,19 @@ body {
 }
 
 .vision-hero-slide-anim {
-  animation: appleSpatialScaleIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: visionHeroSlideFade 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
   will-change: transform, opacity;
 }
 
 .modal-movie-switch {
-  animation: appleSpatialScaleIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: appleSpatialScaleIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
   will-change: transform, opacity;
 }
 
 @keyframes appleSpatialScaleIn {
   0% {
-    opacity: 0;
-    transform: scale(0.985);
+    opacity: 0.35;
+    transform: scale(0.992);
   }
   100% {
     opacity: 1;
@@ -4412,13 +4415,19 @@ body {
   flex-direction: column;
   justify-content: flex-end;
   padding: 14px;
-  contain: layout style paint;
-  content-visibility: auto;
-  contain-intrinsic-size: 0 235px;
+  contain: layout paint;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  transition:
+    border-color 0.18s ease,
+    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.22s ease;
 }
 
 .vision-feature-card:hover {
   border-color: rgba(255, 255, 255, 0.48);
+  transform: translateY(-2px) scale(1.008);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
 }
 
 .vision-feature-img {
@@ -5468,7 +5477,12 @@ button, a, input, select,
 .apple-player-bar,
 .liquid-mobile-dock,
 .detail-modal-sheet,
-.vision-hero-banner {
+.vision-hero-banner,
+.spatial-room-bg,
+#mainContentWrapper,
+.vision-dashboard-grid,
+.vision-left-dock,
+.vision-shelf-section {
   transform: translateZ(0);
   backface-visibility: hidden;
 }
@@ -6745,10 +6759,6 @@ html.dragging-glass .vision-left-dock {
 
 .vision-nav-pill {
   position: relative;
-  background: transparent;
-  border: 1px solid transparent;
-  color: rgba(255, 255, 255, 0.72);
-  position: relative;
   background: transparent !important;
   border: none !important;
   outline: none !important;
@@ -6769,10 +6779,11 @@ html.dragging-glass .vision-left-dock {
   line-height: 1.25;
   transform: scale(0.97);
   transition:
-    transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1),
-    background 0.24s ease,
-    color 0.2s ease,
-    box-shadow 0.28s ease !important;
+    transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.16s ease,
+    color 0.14s ease,
+    box-shadow 0.18s ease !important;
+  will-change: transform;
 }
 
 .vision-nav-pill:not(.active):hover {

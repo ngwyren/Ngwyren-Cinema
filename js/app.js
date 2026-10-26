@@ -275,23 +275,28 @@ class AppleCinemaApp {
       this._navTransitionTimer = null;
     }
 
-    // Giai đoạn Fade Out: Thu nhỏ và mờ dần cực êm, không lag (Compositor GPU thuần túy)
+    // Giai đoạn Fade Out: Thu nhỏ và mờ nhẹ cực êm (Compositor GPU 120fps siêu nhanh 75ms)
     container.classList.remove("vision-view-enter");
     container.classList.add("vision-view-exit");
 
     this._navTransitionTimer = setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: "instant" });
+      const htmlEl = document.documentElement;
+      const prevBehavior = htmlEl.style.scrollBehavior;
+      htmlEl.style.scrollBehavior = "auto";
+      window.scrollTo(0, 0);
+      htmlEl.style.scrollBehavior = prevBehavior;
+
       if (updateCallback) updateCallback();
 
-      // Giai đoạn Fade In: Hiện dần và scale từ 0.985 về 1 mượt mà (Scale In thuần túy, không trượt)
+      // Giai đoạn Fade In: Nở nhẹ nhàng từ 0.992 về 1 (Scale In thuần túy, êm dịu chuẩn Apple)
       container.classList.remove("vision-view-exit");
       container.classList.add("vision-view-enter");
 
       this._navTransitionTimer = setTimeout(() => {
         container.classList.remove("vision-view-enter");
         this._navTransitionTimer = null;
-      }, 300);
-    }, 150);
+      }, 220);
+    }, 75);
   }
 
   triggerHaptic(type = "light") {
@@ -1518,11 +1523,11 @@ class AppleCinemaApp {
     document.body.style.overflow = "hidden";
     document.body.classList.add("modal-open");
 
-    // Tự động kéo mượt lên đầu Modal khi bấm chọn phim khác ở mục Nội Dung Tương Tự / Cùng Thể Loại
-    modalBackdrop.scrollTo({ top: 0, behavior: "smooth" });
+    // Kéo lên đầu Modal tức thì không trễ
+    modalBackdrop.scrollTop = 0;
     const sheet = document.getElementById("movieDetailSheet");
     if (sheet) {
-      sheet.scrollTo({ top: 0, behavior: "smooth" });
+      sheet.scrollTop = 0;
       sheet.classList.remove("modal-movie-switch");
       requestAnimationFrame(() => {
         sheet.classList.add("modal-movie-switch");
