@@ -68,9 +68,14 @@ class AppleCinemaApp {
     const initialPlaying = this.service.slugMap.get(this.watchHistory[0]?.slug) || this.heroMovies[this.heroIndex] || this.service.movies[0];
     this.setNowPlayingBar(initialPlaying, 0, false);
 
-    // Render giao diện tức thì (0ms)
+    // Render giao diện tức thì (0ms) & định vị viên nhộng trượt
     this.renderMainView();
+    this.syncNavPillIndicator();
     this.startHeroAutoRotate();
+
+    window.addEventListener("resize", () => {
+      this.syncNavPillIndicator();
+    }, { passive: true });
 
     // Trì hoãn đồng bộ ngầm khi trình duyệt rảnh để không gây giật lag lúc mới mở trang
     setTimeout(() => this.syncLivePhimmoi(false), 6000);
@@ -236,29 +241,93 @@ class AppleCinemaApp {
   }
 
   setNavigation(navKey, customTitle = null) {
+    if (this.currentNav === navKey && !customTitle && !this.customFilterTitle && this.activeGenreFilter === "Tất cả") {
+      return;
+    }
+
     this.currentNav = navKey;
     this.customFilterTitle = customTitle;
     this.activeGenreFilter = "Tất cả";
     this.currentSegment = "all";
     this.visibleGridLimit = 36;
 
-    // Highlight left floating icon dock, top category pills & mobile bottom dock
+    // 1. Phản hồi xúc giác tức thì: Cập nhật active pill & trượt viên nhộng Liquid Glass
     document.querySelectorAll("[data-nav]").forEach((el) => {
       el.classList.toggle("active", el.dataset.nav === navKey);
     });
 
-    // Đồng bộ chính xác thanh Dock bên trái với trang lớn
+    this.syncNavPillIndicator(navKey);
     this.syncLeftDockIndicator(navKey);
-    // Đóng sidebar mobile nếu đang mở
     this.toggleMobileSidebar(false);
 
-    // Cuộn mượt lên đầu trang & hiệu ứng chuyển trang không gian visionOS
-    window.scrollTo({ top: 0, behavior: "instant" });
-    this.renderMainView();
-    this.triggerPageTransition();
+    // 2. Chuyển cảnh giao diện mượt mà cả IN lẫn OUT (Apple Spatial Fluid Transition)
+    this.transitionView(() => {
+      this.renderMainView();
+    });
   }
 
-  syncNavPillIndicator() {}
+  syncNavPillIndicator(navKey = null) {
+    const nav = navKey || this.currentNav;
+    const indicator = document.getElementById("navPillIndicator");
+    const pillsNav = document.getElementById("visionNavPills");
+    if (!indicator || !pillsNav) return;
+
+    pillsNav.classList.add("has-indicator");
+    const activeBtn = pillsNav.querySelector(`.vision-nav-pill[data-nav="${nav}"]`) ||
+                      pillsNav.querySelector(".vision-nav-pill.active");
+    if (!activeBtn) {
+      indicator.style.opacity = "0";
+      return;
+    }
+
+    const left = activeBtn.offsetLeft;
+    const top = activeBtn.offsetTop;
+    const width = activeBtn.offsetWidth;
+    const height = activeBtn.offsetHeight;
+
+    indicator.style.opacity = "1";
+    indicator.style.width = `${width}px`;
+    indicator.style.height = `${height}px`;
+    indicator.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+
+    // Cuộn ngang êm ái trên màn hình nhỏ nếu nút bị khuất
+    if (pillsNav.scrollWidth > pillsNav.clientWidth) {
+      const scrollTarget = left - (pillsNav.clientWidth - width) / 2;
+      pillsNav.scrollTo({ left: Math.max(0, scrollTarget), behavior: "smooth" });
+    }
+  }
+
+  transitionView(updateCallback) {
+    const container = document.getElementById("mainContentWrapper");
+    if (!container) {
+      if (updateCallback) updateCallback();
+      return;
+    }
+
+    if (this._navTransitionTimer) {
+      clearTimeout(this._navTransitionTimer);
+      this._navTransitionTimer = null;
+    }
+
+    // Giai đoạn OUT: Hòa tan êm ái (-6px, mờ sương 4px)
+    container.classList.remove("vision-view-enter");
+    container.classList.add("vision-view-exit");
+
+    this._navTransitionTimer = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "instant" });
+      if (updateCallback) updateCallback();
+
+      // Giai đoạn IN: Nở mịn màng từ +10px unmask độ sắc nét chuẩn visionOS
+      container.classList.remove("vision-view-exit");
+      container.classList.add("vision-view-enter");
+      this.syncNavPillIndicator();
+
+      this._navTransitionTimer = setTimeout(() => {
+        container.classList.remove("vision-view-enter");
+        this._navTransitionTimer = null;
+      }, 400);
+    }, 125);
+  }
 
   triggerHaptic(type = "light") {
     if (typeof navigator !== "undefined" && navigator.vibrate) {
@@ -295,9 +364,6 @@ class AppleCinemaApp {
     };
     const targetIdx = dockMap[navKey] !== undefined ? dockMap[navKey] : 0;
 
-    // Hiệu ứng co giãn thấu kính chất lỏng Liquid Glass
-    
-
     dockEl.style.setProperty("--dock-idx", String(targetIdx));
     document.querySelectorAll(".vision-dock-icon").forEach((btn) => {
       btn.classList.toggle("active", Number(btn.dataset.dockIdx) === targetIdx);
@@ -305,15 +371,9 @@ class AppleCinemaApp {
   }
 
   triggerPageTransition() {
-    const container = document.getElementById("mainContentWrapper");
-    if (container) {
-      container.classList.remove("vision-view-enter");
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          container.classList.add("vision-view-enter");
-        });
-      });
-    }
+    this.transitionView(() => {
+      this.renderMainView();
+    });
   }
 
   renderLeftSideColumnHTML(contextMovies = null, panelTitle = "Đề Xuất") {
@@ -3606,9 +3666,9 @@ class AppleCinemaApp {
     this.lastSearchQuery = query;
     this.lastSearchResults = await this.service.searchMovies(query);
     this.currentNav = "search-results";
-    window.scrollTo({ top: 0, behavior: "instant" });
-    this.renderMainView();
-    this.triggerPageTransition();
+    this.transitionView(() => {
+      this.renderMainView();
+    });
   }
 
   clearSearch() {
@@ -3630,8 +3690,9 @@ class AppleCinemaApp {
     }
     this.activeGenreFilter = genreLabel;
     this.syncLeftDockIndicator(this.currentNav);
-    this.renderMainView();
-    this.triggerPageTransition();
+    this.transitionView(() => {
+      this.renderMainView();
+    });
   }
 
   filterByGenreFromModal(genreLabel) {
@@ -3642,9 +3703,9 @@ class AppleCinemaApp {
     }
     this.activeGenreFilter = genreLabel;
     this.syncLeftDockIndicator(this.currentNav);
-    window.scrollTo({ top: 0, behavior: "instant" });
-    this.renderMainView();
-    this.triggerPageTransition();
+    this.transitionView(() => {
+      this.renderMainView();
+    });
   }
 
   filterByPerson(personName) {
@@ -3652,9 +3713,9 @@ class AppleCinemaApp {
     this.customFilterValue = personName;
     this.currentNav = "person-filter";
     this.syncLeftDockIndicator("kham-pha");
-    window.scrollTo({ top: 0, behavior: "instant" });
-    this.renderMainView();
-    this.triggerPageTransition();
+    this.transitionView(() => {
+      this.renderMainView();
+    });
   }
 
   toggleMyList(slug, event) {

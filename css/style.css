@@ -3331,10 +3331,21 @@ body {
   transform: translate3d(0, -50%, 0) scale(1);
 }
 
-/* Smooth Apple Spatial Entrance Motion when switching tabs (Chậm rãi, mượt mà, có motion tinh tế) */
+/* Smooth Apple Spatial In - Out Motion when switching tabs */
+.vision-view-exit {
+  opacity: 0 !important;
+  transform: translate3d(0, -6px, 0) scale(0.995) !important;
+  filter: blur(4px) !important;
+  transition:
+    opacity 0.13s cubic-bezier(0.4, 0, 1, 1),
+    transform 0.13s cubic-bezier(0.4, 0, 1, 1),
+    filter 0.13s ease !important;
+  pointer-events: none !important;
+}
+
 .vision-view-enter {
-  animation: appleTabEnterMotion 0.48s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: transform, opacity;
+  animation: appleTabEnterMotion 0.38s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+  will-change: transform, opacity, filter;
 }
 
 .vision-col-transition {
@@ -3342,23 +3353,25 @@ body {
 }
 
 .vision-hero-slide-anim {
-  animation: appleTabEnterMotion 0.48s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: appleTabEnterMotion 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
   will-change: transform, opacity;
 }
 
 .modal-movie-switch {
-  animation: appleTabEnterMotion 0.44s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: appleTabEnterMotion 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
   will-change: transform, opacity;
 }
 
 @keyframes appleTabEnterMotion {
   0% {
     opacity: 0;
-    transform: translate3d(0, 14px, 0) scale(0.994);
+    transform: translate3d(0, 10px, 0) scale(0.992);
+    filter: blur(6px);
   }
   100% {
     opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
   }
 }
 
@@ -6777,7 +6790,11 @@ html.dragging-glass .vision-left-dock {
 }
 
 /* 5. TACTILE TOUCH PACK & HAPTIC PRESS (APPLE PHYSICAL FEEDBACK) */
-.vision-nav-pill:active,
+.vision-nav-pill:active {
+  transform: scale(0.96) !important;
+  transition: transform 0.12s cubic-bezier(0.2, 0.9, 0.3, 1) !important;
+}
+
 .vision-dock-icon:active,
 .dock-tab-btn:active,
 .filter-chip:active,
@@ -6797,6 +6814,74 @@ html.dragging-glass .vision-left-dock {
 /* ==========================================================================
    CATEGORY NAV PILLS (SURGICALLY REMOVED INACTIVE BORDER & FOCUS RINGS)
    ========================================================================== */
+.vision-nav-pills {
+  position: relative !important;
+}
+
+/* Sliding Liquid White Pill Indicator (Apple Spatial Precision Glide) */
+.vision-nav-pill-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow:
+    0 2px 14px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.95);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  will-change: transform, width, height, opacity;
+  transform: translate3d(0, 0, 0);
+  transition:
+    transform 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+    width 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+    height 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.22s ease;
+}
+
+[data-theme="emerald"] .vision-nav-pill-indicator {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45), inset 0 1px 0.5px rgba(255, 255, 255, 0.6) !important;
+}
+
+[data-theme="aurora"] .vision-nav-pill-indicator {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1) !important;
+  box-shadow: 0 4px 18px rgba(139, 92, 246, 0.45), inset 0 1px 0.5px rgba(255, 255, 255, 0.6) !important;
+}
+
+[data-theme="amber"] .vision-nav-pill-indicator {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.45), inset 0 1px 0.5px rgba(255, 255, 255, 0.6) !important;
+}
+
+.vision-nav-pills.has-indicator .vision-nav-pill {
+  position: relative;
+  z-index: 2;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  transition: color 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.16s cubic-bezier(0.2, 0.9, 0.3, 1) !important;
+}
+
+.vision-nav-pills.has-indicator .vision-nav-pill.active {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  color: #111216 !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="emerald"] .vision-nav-pills.has-indicator .vision-nav-pill.active,
+[data-theme="aurora"] .vision-nav-pills.has-indicator .vision-nav-pill.active,
+[data-theme="amber"] .vision-nav-pills.has-indicator .vision-nav-pill.active {
+  color: #ffffff !important;
+}
+
+.vision-nav-pills.has-indicator .vision-nav-pill:not(.active):hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
 .vision-nav-pill,
 .vision-nav-pill:focus,
 .vision-nav-pill:focus-visible {
