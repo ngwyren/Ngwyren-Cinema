@@ -921,7 +921,7 @@ class AppleCinemaApp {
             <!-- Anime Row -->
             <section class="vision-shelf-section">
               <div class="vision-shelf-header">
-                <h2 class="vision-shelf-title">Anime & Hoạt Hình</h2>
+                <h2 class="vision-shelf-title">Anime</h2>
                 <button class="vision-see-all-pill" onclick="app.setNavigation('anime')">
                   Xem Tất Cả (${this.getMoviesByTag("anime").length})
                 </button>
@@ -1087,7 +1087,7 @@ class AppleCinemaApp {
         break;
       case "anime":
         base = this.getMoviesByTag("anime");
-        title = "Anime & Hoạt Hình";
+        title = "Anime";
         subtitle = "Tuyển tập Anime Nhật Bản & Hoạt hình đặc sắc";
         break;
       case "viet-nam":
