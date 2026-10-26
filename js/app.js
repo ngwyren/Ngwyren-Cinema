@@ -1412,7 +1412,7 @@ class AppleCinemaApp {
   renderMovieCardHTML(movie, rankNum = null) {
     const inMyList = this.isInMyList(movie);
     const is4k = Boolean(
-      (movie.quality && movie.quality.toString().toUpperCase().includes("4K")) ||
+      (movie.quality && movie.quality.toString().toUpperCase() === "4K") &&
       (Array.isArray(movie.sectionTags) && movie.sectionTags.includes("4k"))
     );
     const qualityBadge = is4k
@@ -2289,10 +2289,10 @@ class AppleCinemaApp {
 
     let isDirectM3u8 = Boolean(streamUrl && (streamUrl.includes(".m3u8") || streamUrl.includes("/hls/")));
 
-    // Nếu phim có định dạng 4K thì ưu tiên phát 4K sắc nét nhất, ngược lại phát 1080
+    // Mặc định phát chuẩn Full HD 1080p sắc nét nhất, chỉ kích hoạt 4K nếu luồng thực tế xác thực 4K
     const has4k = Boolean(
-      (movie.quality && movie.quality.toString().toUpperCase().includes("4K")) ||
-      (Array.isArray(movie.sectionTags) && movie.sectionTags.includes("4k"))
+      movie.quality === "4K" &&
+      Array.isArray(movie.sectionTags) && movie.sectionTags.includes("4k")
     );
     this.currentQuality = has4k ? "4K" : "1080";
 
@@ -2578,6 +2578,27 @@ class AppleCinemaApp {
         bitrateMbps: highest.bitrateMbps
       };
     }
+
+    // Xác thực thực tế: Nếu không có mức nào đạt 4K (height >= 2160 hoặc width >= 3800), đồng bộ chất lượng về Full HD trung thực
+    const hasReal4k = this.detectedHlsLevels.some((l) => l.height >= 2160 || l.width >= 3800);
+    if (!hasReal4k) {
+      this.currentQuality = "1080";
+      if (this.selectedMovie && this.selectedMovie.quality === "4K") {
+        this.selectedMovie.quality = "1080";
+      }
+      if (this.playingMovie && this.playingMovie.quality === "4K") {
+        this.playingMovie.quality = "1080";
+      }
+      const modalPill = document.getElementById("modalQualityPill");
+      if (modalPill) {
+        modalPill.className = "meta-pill badge-1080";
+        modalPill.textContent = "Full HD 1080p";
+      }
+      const islandPill = document.getElementById("nowPlayingQuality");
+      if (islandPill) {
+        islandPill.textContent = "Full HD";
+      }
+    }
   }
 
   resolveResolutionTier(w, h) {
@@ -2593,16 +2614,14 @@ class AppleCinemaApp {
 
   buildQualityButtonsHTML(movie) {
     const mov = movie || this.selectedMovie || this.playingMovie;
-    // Chỉ kích hoạt 4K khi thực sự có luồng 4K UHD thật (chiều rộng >= 3840 hoặc chiều cao >= 2160, hoặc altSources có server 4K)
+    // Chỉ kích hoạt nút 4K khi thực sự có luồng 4K UHD thật trong HLS manifest (chiều rộng >= 3800 hoặc chiều cao >= 2160)
     const hasReal4kStream = Boolean(
-      (this.detectedHlsLevels && this.detectedHlsLevels.length > 1 && this.detectedHlsLevels.some((l) => l.height >= 2160 || l.width >= 3840)) ||
-      (mov?.episodes?.some((ep) => ep.altSources?.some((a) => (a.label || "").toLowerCase().includes("4k") || (a.source || "").toLowerCase().includes("4k")))) ||
-      ((mov?.quality === "4K" || mov?.nativeQuality === "4K") && (mov?.episodes?.some((ep) => (ep.source || "").toLowerCase().includes("4k") || (ep.name || "").toLowerCase().includes("4k"))))
+      this.detectedHlsLevels &&
+      this.detectedHlsLevels.length > 0 &&
+      this.detectedHlsLevels.some((l) => l.height >= 2160 || l.width >= 3800)
     );
 
-    const is4k = this.currentQuality === "4K" || this.currentQuality === "4k";
-
-    // Phim không có định dạng 4K thực tế thì chỉ hiển thị nút Full HD (không hiện nút 4K ảo)
+    // Phim không có định dạng 4K thực tế thì chỉ hiển thị duy nhất nút Full HD (không hiện nút 4K ảo)
     if (!hasReal4kStream) {
       return `
         <button class="quality-pill-btn active" 
@@ -2613,6 +2632,7 @@ class AppleCinemaApp {
       `;
     }
 
+    const is4k = this.currentQuality === "4K" || this.currentQuality === "4k";
     return `
       <button class="quality-pill-btn ${!is4k ? "active" : ""}" 
               onclick="app.switchQualityTier('1080')" 
@@ -2758,9 +2778,9 @@ class AppleCinemaApp {
 
   handleQualityPillClick(label, isReal4k) {
     if (!isReal4k) {
-      this.showToast("✨ Đang phát chất lượng Full HD 1080p sắc nét nhất từ API.");
+      this.showToast("✨ Chuẩn Full HD 1080p gốc từ máy chủ bản quyền");
     } else {
-      this.showToast("✨ Đang phát chất lượng thực tế: 4K Ultra HD");
+      this.showToast("✨ Đang phát chuẩn 4K Ultra HD gốc");
     }
   }
 
@@ -2781,41 +2801,31 @@ class AppleCinemaApp {
 
   switchQualityTier(tier) {
     const is4k = tier === "4k" || tier === "4K";
-    this.currentQuality = is4k ? "4K" : "1080";
+    const hasReal4k = Boolean(
+      this.detectedHlsLevels &&
+      this.detectedHlsLevels.length > 0 &&
+      this.detectedHlsLevels.some((l) => l.height >= 2160 || l.width >= 3800)
+    );
 
-    const videoEl = document.getElementById("hlsVideoElement");
-    const resumeTime = videoEl ? videoEl.currentTime : 0;
-    const wasPlaying = videoEl ? !videoEl.paused : true;
-
-    // Khi chuyển sang 4K: nạp lại/chuyển sang luồng 4K chất lượng cao nhất
     if (is4k) {
-      const ep = this.selectedMovie?.episodes?.[this.currentEpisodeIndex] || this.selectedMovie?.episodes?.[0];
-      const alt4k = ep?.altSources?.find((a) => (a.label || "").toLowerCase().includes("4k") || (a.source || "").toLowerCase().includes("4k"));
-      if (alt4k && alt4k.source && this.hlsInstance && this.hlsInstance.url !== alt4k.source) {
-        this.hlsInstance.loadSource(alt4k.source);
-        this.hlsInstance.once(window.Hls.Events.MANIFEST_PARSED, () => {
-          if (videoEl && resumeTime > 1) videoEl.currentTime = resumeTime;
-          if (wasPlaying) videoEl?.play().catch(() => {});
-        });
-      } else if (this.detectedHlsLevels && this.detectedHlsLevels.length > 1) {
-        let highestIdx = this.detectedHlsLevels.length - 1;
-        let maxMetric = 0;
-        this.detectedHlsLevels.forEach((lvl, idx) => {
-          const metric = (lvl.width || 0) * (lvl.height || 0) * (lvl.bitrateMbps || 1);
-          if (metric > maxMetric) {
-            maxMetric = metric;
-            highestIdx = idx;
-          }
-        });
-        if (this.hlsInstance) {
-          this.hlsInstance.currentLevel = highestIdx;
-          this.hlsInstance.loadLevel = highestIdx;
-          this.hlsInstance.nextLevel = highestIdx;
-        }
+      if (!hasReal4k) {
+        this.currentQuality = "1080";
+        this.renderDynamicQualityButtons();
+        this.applyVideoQualityVisuals();
+        this.showToast("ℹ️ Phim này nguồn gốc cao nhất là Full HD 1080p (chưa có bản 4K gốc).");
+        return;
       }
+      this.currentQuality = "4K";
+      const k4Idx = this.detectedHlsLevels.findIndex((l) => l.height >= 2160 || l.width >= 3800);
+      if (k4Idx !== -1 && this.hlsInstance) {
+        this.hlsInstance.currentLevel = k4Idx;
+        this.hlsInstance.loadLevel = k4Idx;
+        this.hlsInstance.nextLevel = k4Idx;
+      }
+      this.showToast("✨ Đã kích hoạt độ phân giải 4K Ultra HD sắc nét");
     } else {
-      // Chuyển về 1080: Nếu có mức 1080p, khóa ở mức 1080
-      if (this.detectedHlsLevels && this.detectedHlsLevels.length > 1) {
+      this.currentQuality = "1080";
+      if (this.detectedHlsLevels && this.detectedHlsLevels.length > 0) {
         const fhdIdx = this.detectedHlsLevels.findIndex((lvl) => (lvl.height >= 800 && lvl.height <= 1080) || (lvl.width >= 1800 && lvl.width <= 1920));
         const targetIdx = fhdIdx !== -1 ? fhdIdx : 0;
         if (this.hlsInstance) {
@@ -2824,17 +2834,11 @@ class AppleCinemaApp {
           this.hlsInstance.nextLevel = targetIdx;
         }
       }
+      this.showToast("✨ Đang phát chuẩn Full HD 1080p");
     }
 
     this.renderDynamicQualityButtons();
     this.applyVideoQualityVisuals();
-
-    // Thông báo toast tinh tế, không hiện icon HUD tròn đè giữa khung hình
-    if (is4k) {
-      this.showToast("✨ Đã kích hoạt 4K Ultra HD sắc nét");
-    } else {
-      this.showToast("✨ Đang phát chuẩn Full HD 1080p");
-    }
   }
 
   renderDynamicQualityButtons() {
@@ -2855,13 +2859,6 @@ class AppleCinemaApp {
   getQualityVideoClass(q) {
     const is4k = q === "4K" || q === "4k" || this.currentQuality === "4K" || this.currentQuality === "4k";
     return is4k ? "quality-4k-enhanced" : "";
-  }
-
-  applyVideoQualityVisuals() {
-    const videoEl = document.getElementById("hlsVideoElement");
-    if (!videoEl) return;
-    const is4k = this.currentQuality === "4K" || this.currentQuality === "4k";
-    videoEl.classList.toggle("quality-4k-enhanced", is4k);
   }
 
   setVideoQuality(qualityMode, showNotification = true) {
@@ -2940,14 +2937,20 @@ class AppleCinemaApp {
 
   applyVideoQualityVisuals() {
     const videoEl = document.getElementById("hlsVideoElement");
+    const is4k = Boolean(
+      (this.currentQuality === "4K" || this.currentQuality === "4k") &&
+      this.detectedHlsLevels &&
+      this.detectedHlsLevels.some((l) => l.height >= 2160 || l.width >= 3800)
+    );
     if (videoEl) {
-      videoEl.classList.remove("quality-4k", "quality-2k", "quality-720p", "quality-4k-upscale");
-      const cls = this.getQualityVideoClass(this.currentQuality);
-      if (cls) videoEl.classList.add(cls);
+      videoEl.classList.remove("quality-4k", "quality-2k", "quality-720p", "quality-4k-upscale", "quality-4k-enhanced");
+      if (is4k) {
+        videoEl.classList.add("quality-4k-enhanced");
+      }
     }
     const badgeText = document.getElementById("playerFloatingQualityText");
     if (badgeText) {
-      badgeText.textContent = this.getQualityLabel(this.currentQuality);
+      badgeText.textContent = is4k ? "4K Ultra HD" : "Full HD 1080p";
     }
   }
 
@@ -2999,7 +3002,8 @@ class AppleCinemaApp {
     if (titleText) titleText.textContent = movie.title;
     const epLabel = this.formatEpisodeLabel(ep ? ep.name : "Tập 1", "Tập 1");
     if (subText) {
-      subText.textContent = `${epLabel} • ${movie.originTitle} (${movie.quality})`;
+      const qText = (movie.quality === "4K") ? "4K" : "Full HD";
+      subText.textContent = `${epLabel} • ${movie.originTitle} (${qText})`;
     }
     if (eqBars) eqBars.classList.toggle("paused", !playing);
     if (playIcon) {
@@ -3018,7 +3022,14 @@ class AppleCinemaApp {
     if (islandBackdrop) islandBackdrop.src = this.getMovieBackdrop(movie);
     if (islandTitle) islandTitle.textContent = movie.title;
     if (islandDuration) islandDuration.textContent = movie.duration || "Full HD";
-    if (islandQuality) islandQuality.textContent = (movie.quality && movie.quality.includes("4K")) ? "4K" : "Full HD";
+    if (islandQuality) {
+      const is4k = Boolean(
+        (this.currentQuality === "4K" || this.currentQuality === "4k") &&
+        this.detectedHlsLevels &&
+        this.detectedHlsLevels.some((l) => l.height >= 2160 || l.width >= 3800)
+      );
+      islandQuality.textContent = is4k ? "4K" : "Full HD";
+    }
     if (islandLang) islandLang.textContent = this.getMovieLanguageLabel(movie);
     if (islandEp) islandEp.textContent = epLabel;
     if (islandPlayIcon) islandPlayIcon.className = playing ? "fas fa-pause" : "fas fa-play";

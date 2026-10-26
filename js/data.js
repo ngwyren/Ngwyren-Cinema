@@ -1313,7 +1313,7 @@ class PhimmoiService {
       backdrop: backdropUrl || posterUrl,
       type: isSeries ? "series" : "single",
       sectionTags,
-      quality: (mb.quality && mb.quality.toString().toUpperCase().includes("4K")) || (Array.isArray(sectionTags) && sectionTags.includes("4k")) ? "4K" : "1080",
+      quality: "1080",
       language: mb.language || "Vietsub",
       duration: mb.time || (isSeries ? "45 phút/tập" : "115 phút"),
       episodeCurrent: isSeries ? `Tập ${uniqueEps.length || mb.so_tap || 1}` : "Full",
@@ -1458,7 +1458,7 @@ class PhimmoiService {
           backdrop: thumbUrl || posterUrl,
           type: isSer ? "series" : "single",
           sectionTags: ["netflix", "vietsub", "hot", isSer ? "phim-bo" : "phim-le"],
-          quality: (item.quality && item.quality.toString().toUpperCase().includes("4K")) ? "4K" : "1080",
+          quality: "1080",
           language: item.lang || "Vietsub",
           duration: item.time || "1080",
           episodeCurrent: item.episode_current || "Full Vietsub",
@@ -1474,7 +1474,7 @@ class PhimmoiService {
           ambientColors: ["#ffffff", "#d4d4d4", "#a3a3a3"],
           trailerUrl: "",
           link: "",
-          synopsis: `${item.name} (${item.origin_name}) bản ${item.quality && item.quality.toString().toUpperCase().includes("4K") ? "4K" : "1080"} ${item.lang || "Vietsub"} trên Ngwyren Cinema.`,
+          synopsis: `${item.name} (${item.origin_name}) bản Full HD 1080p ${item.lang || "Vietsub"} trên Ngwyren Cinema.`,
           episodes: [{ name: "Tập 1 (Vietsub)", slug: "tap-1", source: "", embed: "", needsEnrich: true }]
         };
         this.movies.unshift(newMovie);
@@ -1498,7 +1498,7 @@ class PhimmoiService {
           backdrop: nc.poster_url || nc.thumb_url,
           type: isSer ? "series" : "single",
           sectionTags: ["vietsub", "hot", isSer ? "phim-bo" : "phim-le"],
-          quality: (nc.quality && nc.quality.toString().toUpperCase().includes("4K")) ? "4K" : "1080",
+          quality: "1080",
           language: nc.language || "Vietsub",
           duration: nc.time || "1080",
           episodeCurrent: nc.current_episode || "Full Vietsub",
@@ -1754,8 +1754,9 @@ class PhimmoiService {
           }
           if (phimApiRes.movie.quality) {
             movie.nativeQuality = phimApiRes.movie.quality;
-            const qStr = String(phimApiRes.movie.quality).toUpperCase();
-            movie.quality = (qStr.includes("4K") || qStr.includes("UHD") || qStr.includes("2160")) ? "4K" : "1080";
+            // Chuẩn hóa trung thực: Tất cả luồng phim từ máy chủ API hiện tại đều là Full HD 1080p
+            // Tuyệt đối không gắn nhãn 4K ảo nếu luồng thực tế là 1080p
+            movie.quality = "1080";
           }
           if (phimApiRes.movie.trailer_url && !movie.trailerUrl) {
             movie.trailerUrl = phimApiRes.movie.trailer_url;
