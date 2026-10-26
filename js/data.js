@@ -1203,7 +1203,7 @@ class PhimmoiService {
     if (!text) return "";
     return text
       .replace(/bộ\s+phim\s+này\s+do[^\n.]*/gi, "")
-      .replace(/sản\s+phẩm:\s*(nổ\s*hũ|bắn\s*cá|sòng\s*bài|thể\s*thao)[^\n.]*/gi, "")
+      .replace(/sản\s+phẩm:\s*(nổ\s*hũ|bắn\s*cá|sòng\s*bài|thể\s*thao|tài\s*xỉu)[^\n.]*/gi, "")
       .replace(/rút\s+tiền\s+24\/7[^\n.]*/gi, "")
       .replace(/nhận\s+tiền\s+trong\s+tích\s+tắc[^\n.]*/gi, "")
       .replace(/tài\s+trợ\s+và\s+công\s+bố[^\n.]*/gi, "")
@@ -1211,7 +1211,8 @@ class PhimmoiService {
       .replace(/xem\s+phim\s+tại\s+[^\s,.]+/gi, "")
       .replace(/chúc\s+bạn\s+xem\s+phim\s+vui\s+vẻ[^.]*\./gi, "")
       .replace(/liên\s+hệ\s+quảng\s+cáo[^\n.]*/gi, "")
-      .replace(/tham\s+gia\s+(cược|nhà\s+cái)[^\n.]*/gi, "")
+      .replace(/tham\s+gia\s+(cược|nhà\s+cái|casino|game\s*bài)[^\n.]*/gi, "")
+      .replace(/(?:shbet|789bet|jun88|hi88|f8bet|new88|okvip|123b|mb66|i999|cwin|kubet|thabet|nohu)[^\n.]*/gi, "")
       .replace(/https?:\/\/[^\s]+/gi, "")
       .replace(/\s{2,}/g, " ")
       .trim();

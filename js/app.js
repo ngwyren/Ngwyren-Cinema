@@ -1784,6 +1784,7 @@ class AppleCinemaApp {
           <!-- Video Element (đã bỏ controls mặc định của trình duyệt để triệt tiêu hoàn toàn viền xanh khi bấm phím cách) -->
           <video id="hlsVideoElement" class="${this.getQualityVideoClass(this.currentQuality)}" playsinline poster="${backdropUrl}" tabindex="-1"></video>
           <iframe id="trailerIframeElement" style="display: none;" sandbox="allow-scripts allow-same-origin allow-presentation allow-forms" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen tabindex="-1"></iframe>
+          <div class="apple-video-buffering-ring" id="appleVideoBufferingRing"></div>
 
           <!-- Apple Center HUD Pulse: Không vòng tròn, chỉ hiển thị icon -->
           <div class="apple-video-hud" id="appleVideoHud">
@@ -2083,7 +2084,8 @@ class AppleCinemaApp {
       // Định dạng quảng cáo: /(v7|convertv)/[hash 16-64 hex]/segment_... hoặc domain cờ bạc
       if (/\/(?:v7|convertv)\/[a-f0-9]{16,64}\/segment_\d+\.ts/i.test(u)) return true;
       if (/https?:\/\/[^\/]+\/(?:v7|convertv)\/[a-f0-9]{16,64}\/segment_\d+\.ts/i.test(u)) return true;
-      if (/(?:9922|i999|cwin|nohu|casinopromo)\.com/i.test(u)) return true;
+      if (/(?:9922|i999|cwin|nohu|casinopromo|shbet|789bet|jun88|hi88|okvip|f8bet|new88)\.com/i.test(u)) return true;
+      if (/promo|advert|banner|trailer-ad/i.test(u)) return true;
       return false;
     };
 
@@ -2388,11 +2390,15 @@ class AppleCinemaApp {
         enableWorker: true,
         lowLatencyMode: false,
         progressive: true,
-        backBufferLength: 60,
-        maxBufferLength: 60,
-        maxMaxBufferLength: 120,
+        backBufferLength: 90,
+        maxBufferLength: 90,
+        maxMaxBufferLength: 180,
         maxBufferSize: 120 * 1000 * 1000,
-        maxBufferHole: 0.5,
+        maxBufferHole: 0.8,
+        highBufferWatchdogPeriod: 3,
+        nudgeOffset: 0.2,
+        nudgeMaxRetry: 5,
+        maxFragLookUpTolerance: 0.4,
         startLevel: -1,
         capLevelToPlayerSize: false,
         abrEwmaDefaultEstimate: 50000000,
@@ -3099,7 +3105,9 @@ class AppleCinemaApp {
         if (!track.cues) return;
         const badKeywords = [
           "i999", "cwin", "nohu", "nổ hũ", "bắn cá", "sòng bài", "rút tiền",
-          "tài trợ", "nhà cái", "kubet", "thabet", "cá cược", "đặt cược"
+          "tài trợ", "nhà cái", "kubet", "thabet", "cá cược", "đặt cược",
+          "shbet", "789bet", "jun88", "hi88", "f8bet", "new88", "okvip", "123b", "mb66",
+          "tài xỉu", "game bài", "hoàn trả"
         ];
         for (let i = track.cues.length - 1; i >= 0; i--) {
           const cue = track.cues[i];
@@ -3187,12 +3195,32 @@ class AppleCinemaApp {
 
     videoEl.onplay = () => {
       this.isPlaying = true;
+      videoEl.removeAttribute("poster");
       const playIcon = document.getElementById("applePlayIcon");
       if (playIcon) playIcon.className = "fas fa-pause";
       this.setNowPlayingBar(this.playingMovie, this.currentEpisodeIndex, true);
       resetControlsTimer();
       // Bỏ focus của browser để triệt tiêu vĩnh viễn viền xanh
       videoEl.blur();
+    };
+
+    videoEl.onplaying = () => {
+      container.classList.remove("video-is-seeking");
+      container.classList.remove("video-is-waiting");
+      videoEl.removeAttribute("poster");
+    };
+
+    videoEl.onseeking = () => {
+      container.classList.add("video-is-seeking");
+    };
+
+    videoEl.onseeked = () => {
+      container.classList.remove("video-is-seeking");
+      container.classList.remove("video-is-waiting");
+    };
+
+    videoEl.onwaiting = () => {
+      container.classList.add("video-is-waiting");
     };
 
     videoEl.onpause = () => {
@@ -3327,12 +3355,48 @@ class AppleCinemaApp {
   seekRelative(seconds = 5, showHud = false, e) {
     if (e) e.stopPropagation();
     const videoEl = document.getElementById("hlsVideoElement");
-    if (videoEl && !isNaN(videoEl.duration)) {
-      videoEl.currentTime = Math.max(0, Math.min(videoEl.duration, videoEl.currentTime + seconds));
-      if (showHud) {
-        this.showAppleVideoHud(seconds > 0 ? "forward" : "backward", `${seconds > 0 ? "+" : ""}${seconds}s`);
-      }
+    if (!videoEl || isNaN(videoEl.duration) || videoEl.duration <= 0) return;
+
+    // Tích lũy thời gian tua nhanh/lùi khi bấm liên tục (Debounce chống nhấp nháy đen decoder)
+    if (this._seekAccumulatorTimer) {
+      clearTimeout(this._seekAccumulatorTimer);
+      this._seekAccumulatedDelta = (this._seekAccumulatedDelta || 0) + seconds;
+    } else {
+      this._seekAccumulatedDelta = seconds;
+      this._seekBaseTime = videoEl.currentTime;
     }
+
+    const totalDelta = this._seekAccumulatedDelta;
+    const targetTime = Math.max(0, Math.min(videoEl.duration, this._seekBaseTime + totalDelta));
+
+    // Cập nhật ngay thanh Scrubber UI & hiển thị HUD cực nhạy
+    const pct = (targetTime / videoEl.duration) * 100;
+    const fill = document.getElementById("appleScrubFill");
+    const thumb = document.getElementById("appleScrubThumb");
+    if (fill) fill.style.width = `${pct}%`;
+    if (thumb) thumb.style.left = `${pct}%`;
+    const curTimeEl = document.getElementById("appleCurrentTime");
+    if (curTimeEl) curTimeEl.textContent = this.formatTime(targetTime);
+
+    if (showHud) {
+      const sign = totalDelta > 0 ? "+" : "";
+      this.showAppleVideoHud(totalDelta > 0 ? "forward" : "backward", `${sign}${totalDelta}s`);
+    }
+
+    // Debounce 60ms: gom các lần bấm liên tục thành một lệnh seek duy nhất, triệt tiêu hoàn toàn nhấp nháy đen
+    this._seekAccumulatorTimer = setTimeout(() => {
+      this._seekAccumulatorTimer = null;
+      this._seekAccumulatedDelta = 0;
+      if (typeof videoEl.fastSeek === "function") {
+        try {
+          videoEl.fastSeek(targetTime);
+        } catch (_) {
+          videoEl.currentTime = targetTime;
+        }
+      } else {
+        videoEl.currentTime = targetTime;
+      }
+    }, 60);
   }
 
   setVideoVolume(val, showHud = false) {
@@ -3445,25 +3509,34 @@ class AppleCinemaApp {
     const videoEl = document.getElementById("hlsVideoElement");
     if (!track || !videoEl || !videoEl.duration) return;
 
-    const scrub = (moveEvent) => {
+    let targetTime = videoEl.currentTime;
+
+    const updateUI = (moveEvent) => {
       const rect = track.getBoundingClientRect();
       const pos = Math.max(0, Math.min(1, (moveEvent.clientX - rect.left) / rect.width));
-      videoEl.currentTime = pos * videoEl.duration;
+      targetTime = pos * videoEl.duration;
       const fillEl = document.getElementById("appleScrubFill");
       const thumbEl = document.getElementById("appleScrubThumb");
       if (fillEl) fillEl.style.width = `${pos * 100}%`;
       if (thumbEl) thumbEl.style.left = `${pos * 100}%`;
+      const curTimeEl = document.getElementById("appleCurrentTime");
+      if (curTimeEl) curTimeEl.textContent = this.formatTime(targetTime);
     };
 
-    scrub(e);
+    updateUI(e);
 
     const onMouseMove = (moveEvent) => {
-      scrub(moveEvent);
+      updateUI(moveEvent);
     };
 
     const onMouseUp = () => {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
+      if (typeof videoEl.fastSeek === "function") {
+        try { videoEl.fastSeek(targetTime); } catch (_) { videoEl.currentTime = targetTime; }
+      } else {
+        videoEl.currentTime = targetTime;
+      }
     };
 
     window.addEventListener("mousemove", onMouseMove);

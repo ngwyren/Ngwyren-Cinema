@@ -6,7 +6,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Giới Môn Chi Hạ",
       "poster": "https://phimimg.com/uploads/movies/20260807/gioi-mon-chi-ha-poster.webp",
       "backdrop": "https://phimimg.com/uploads/movies/20260807/gioi-mon-chi-ha-thumb.webp",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -25,7 +25,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Thành Dã Tiêu Hà",
       "poster": "https://phimimg.com/uploads/movies/20260805/thanh-da-tieu-ha-poster.webp",
       "backdrop": "https://phimimg.com/uploads/movies/20260805/thanh-da-tieu-ha-thumb.webp",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -44,7 +44,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Vạn Cổ Chí Tôn: Lý Vân Tiêu Truyện",
       "poster": "https://phimimg.com/uploads/movies/20260726/van-co-chi-ton-ly-van-tieu-truyen-poster.webp",
       "backdrop": "https://phimimg.com/uploads/movies/20260726/van-co-chi-ton-ly-van-tieu-truyen-thumb.webp",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -63,7 +63,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Nhất Trảm Thương Khung",
       "poster": "https://phimimg.com/uploads/movies/20260729/nhat-tram-thuong-khung-poster.webp",
       "backdrop": "https://phimimg.com/uploads/movies/20260729/nhat-tram-thuong-khung-thumb.webp",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -82,7 +82,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Đại Lục Linh Võ",
       "poster": "https://phimimg.com/upload/vod/20250224-1/f10d225c86bd40ae0eaa2ef5d957c24e.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20250224-1/f68af9aa9f67c035f72938fb5291ba55.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -101,7 +101,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Nghịch Thiên Chí Tôn",
       "poster": "https://phimimg.com/upload/vod/20250903-1/fe12e74047daf65d58b996a82987f6aa.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20250903-1/cc1e9fd59cf70b050455ceb0bf183bf3.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -120,7 +120,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Vô Thượng Thần Đế",
       "poster": "https://artworks.thetvdb.com/banners/series/388383/posters/5f85d24ec6210.jpg",
       "backdrop": "https://img.nguonc.com/images/img-f7a00473500a534e55ab534244980bb00ef03051a40550b1e5ce1b2e15f7a975.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -139,7 +139,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Thôn Phệ Tinh Không",
       "poster": "https://phimimg.com/upload/vod/20240821-1/a651652396e9f53c09cd88d28700d5c4.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20240821-1/22c49ba9590b0e5f3d126696c0bfbecf.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -198,7 +198,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Võ Thần Chúa Tể",
       "poster": "https://artworks.thetvdb.com/banners/series/379070/posters/5e7e34365dc42.jpg",
       "backdrop": "https://artworks.thetvdb.com/banners/v4/series/379070/backgrounds/6745d5d7e784e.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -217,7 +217,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Luyện Khí Mười Vạn Năm",
       "poster": "https://phimimg.com/upload/vod/20250219-1/0ddffeb590aa6bad556a0724302487ad.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20250219-1/9e7246fa85194e2fad2da74ce43f0c7d.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -236,7 +236,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Tuyệt Thế Chiến Hồn",
       "poster": "https://phimimg.com/upload/vod/20250219-1/b880c627b5571d9afd22e58d056e772a.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20250219-1/b2facbf6cebbf66d0c728df0b75ad5b9.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -255,7 +255,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Già Thiên",
       "poster": "https://phimimg.com/upload/vod/20240411-1/0a4084fdfad19ecab9f1f53d629bf422.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20240411-1/bbf5847cc8ae2ce6528d5b51ef6f877a.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -274,7 +274,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Vạn Giới Độc Tôn",
       "poster": "https://phimimg.com/upload/vod/20250308-1/25c9c7486b5de820475bd8fe0ccb316e.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20250308-1/4b81238b9844aa16e3f7e9ee8afdbc94.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -293,7 +293,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Nhất Niệm Vĩnh Hằng",
       "poster": "https://phimimg.com/upload/vod/20240820-1/2007f3532c1c69fc35ec612aeb7a9d30.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20240820-1/9a7edcb43abcae56b909720e1fcb2ebe.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -333,7 +333,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Đại Lý Tự Nhật Chí Phần 3",
       "poster": "https://phimimg.com/upload/vod/20240229-1/ae6916fc580d6aeb505d4491cfce0299.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20240229-1/fc42380711d115a471f7093c8a6d38d7.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "11:00 Trưa",
       "genres": [
@@ -352,7 +352,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Người Giữ Mộ Đại Hạ",
       "poster": "https://phimimg.com/uploads/movies/20260930/nguoi-giu-mo-dai-ha-poster.webp",
       "backdrop": "https://phimimg.com/uploads/movies/20260930/nguoi-giu-mo-dai-ha-thumb.webp",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "11:00 Trưa",
       "genres": [
@@ -371,7 +371,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Giới Môn Chi Hạ",
       "poster": "https://phimimg.com/uploads/movies/20260807/gioi-mon-chi-ha-poster.webp",
       "backdrop": "https://phimimg.com/uploads/movies/20260807/gioi-mon-chi-ha-thumb.webp",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -390,7 +390,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Linh Cảnh Hành Giả",
       "poster": "https://phimimg.com/uploads/movies/20260904/linh-canh-hanh-gia-poster.webp",
       "backdrop": "https://phimimg.com/uploads/movies/20260904/linh-canh-hanh-gia-thumb.webp",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "11:00 Trưa",
       "genres": [
@@ -409,7 +409,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Ta Trời Sinh Đã Là Nhân Vật Phản Diện",
       "poster": "https://phimimg.com/uploads/movies/20260726/huyen-huyen-ta-thien-menh-trum-phan-dien-poster.webp",
       "backdrop": "https://phimimg.com/uploads/movies/20260726/huyen-huyen-ta-thien-menh-trum-phan-dien-thumb.webp",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "11:00 Trưa",
       "genres": [
@@ -428,7 +428,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Lý Hùng Miêu",
       "poster": "https://phimimg.com/uploads/movies/20260801/ly-hung-mieu-poster.webp",
       "backdrop": "https://phimimg.com/uploads/movies/20260801/ly-hung-mieu-thumb.webp",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "11:00 Trưa",
       "genres": [
@@ -447,7 +447,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Thần Y Cổ Đại Ở Đô Thị",
       "poster": "https://phimimg.com/upload/vod/20241018-1/422e01866d2bfcb0adfd4ae2a31ef32f.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20241018-1/f39df234908b4305fdd20c97020c0eea.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -466,7 +466,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Sư Huynh À Sư Huynh",
       "poster": "https://phimimg.com/upload/vod/20250117-1/a9e32b44820101a9ba2c887344f7334c.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20250117-1/d2d7ee02b72e59bea282b367e36b0094.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "11:00 Trưa",
       "genres": [
@@ -525,7 +525,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Người Giữ Mộ Đại Hạ",
       "poster": "https://phimimg.com/uploads/movies/20260930/nguoi-giu-mo-dai-ha-poster.webp",
       "backdrop": "https://phimimg.com/uploads/movies/20260930/nguoi-giu-mo-dai-ha-thumb.webp",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "11:00 Trưa",
       "genres": [
@@ -544,7 +544,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Thái Cổ Thần Tôn",
       "poster": "https://phimimg.com/uploads/movies/20260801/thai-co-than-ton-poster.webp",
       "backdrop": "https://phimimg.com/uploads/movies/20260801/thai-co-than-ton-thumb.webp",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -563,7 +563,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Học Viện Cao Võ Đông Đại",
       "poster": "https://phimimg.com/uploads/movies/20260718/hoc-vien-cao-vo-dong-dai-phan-1-poster.webp",
       "backdrop": "https://phimimg.com/uploads/movies/20260718/hoc-vien-cao-vo-dong-dai-phan-1-thumb.webp",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -582,7 +582,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Thế Giới Hoàn Mỹ",
       "poster": "https://phimimg.com/upload/vod/20240822-1/97aa8ce6feea9737ac591a26a289b725.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20240822-1/98b87edeb63d262313f864bc57df93d5.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -601,7 +601,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Tru Tiên",
       "poster": "https://phimimg.com/upload/vod/20250710-1/3a1c89d60b8e66fc7d6a95992444b958.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20250710-1/e1308950e246287ef6892927c31a7f0c.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -620,7 +620,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Nghịch Thiên Tà Thần 3D",
       "poster": "https://phimimg.com/upload/vod/20260420-1/0a4c1589001cf10c879d5b8c4f7e75d6.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20260420-1/a00de874909fb1bfb7f7749f926081a3.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -679,7 +679,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Pháp Sư Tử Linh: Ta Chính Là Thiên Tai",
       "poster": "https://phimimg.com/uploads/movies/20260807/phap-su-tu-linh-ta-chinh-la-thien-tai-poster.webp",
       "backdrop": "https://phimimg.com/uploads/movies/20260807/phap-su-tu-linh-ta-chinh-la-thien-tai-thumb.webp",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -698,7 +698,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Bắt Đầu Với Chí Tôn Đan Điền",
       "poster": "https://phimimg.com/upload/vod/20251008-1/9ea5adf1e158025b17f0d3ac241e4172.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20251008-1/5969b30193530e9ca100cb6683241181.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -717,7 +717,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Đại Lục Linh Võ",
       "poster": "https://phimimg.com/upload/vod/20250224-1/f10d225c86bd40ae0eaa2ef5d957c24e.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20250224-1/f68af9aa9f67c035f72938fb5291ba55.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -736,7 +736,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Nghịch Thiên Chí Tôn",
       "poster": "https://phimimg.com/upload/vod/20250903-1/fe12e74047daf65d58b996a82987f6aa.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20250903-1/cc1e9fd59cf70b050455ceb0bf183bf3.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -755,7 +755,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Vô Thượng Thần Đế",
       "poster": "https://artworks.thetvdb.com/banners/series/388383/posters/5f85d24ec6210.jpg",
       "backdrop": "https://img.nguonc.com/images/img-f7a00473500a534e55ab534244980bb00ef03051a40550b1e5ce1b2e15f7a975.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -774,7 +774,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Đấu La Đại Lục 2: Tuyệt Thế Đường Môn",
       "poster": "https://phimimg.com/upload/vod/20240103-1/af2ae10bcb72617994f00dce440205dc.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20240103-1/bbe888d771d0e6ff0f9935f8f6194c79.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -793,7 +793,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Thương Nguyên Đồ",
       "poster": "https://phimimg.com/upload/vod/20250530-1/435941e1bbd5462ab142b2d1d03b608e.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20250530-1/9c37d265d1409b9652a7a7afeb35fd6f.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -812,7 +812,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Đại Chúa Tể",
       "poster": "https://phimimg.com/upload/vod/20260415-1/b5d7394aa49cde793f86f5d9163ced85.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20260415-1/708b632451a627340ce179f85e88fd3e.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "18:00 Tối",
       "genres": [
@@ -852,7 +852,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Đại Lý Tự Nhật Chí Phần 3",
       "poster": "https://phimimg.com/upload/vod/20240229-1/ae6916fc580d6aeb505d4491cfce0299.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20240229-1/fc42380711d115a471f7093c8a6d38d7.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "11:00 Trưa",
       "genres": [
@@ -871,7 +871,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Đại Vương Tha Mạng Phần 3",
       "poster": "https://phimimg.com/uploads/movies/20261005/dai-vuong-tha-mang-phan-3-poster.webp",
       "backdrop": "https://phimimg.com/uploads/movies/20261005/dai-vuong-tha-mang-phan-3-thumb.webp",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -890,7 +890,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Vạn Cổ Chí Tôn: Lý Vân Tiêu Truyện",
       "poster": "https://phimimg.com/uploads/movies/20260726/van-co-chi-ton-ly-van-tieu-truyen-poster.webp",
       "backdrop": "https://phimimg.com/uploads/movies/20260726/van-co-chi-ton-ly-van-tieu-truyen-thumb.webp",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -909,7 +909,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Trạch Nhật Phi Thăng",
       "poster": "https://yanhh3d.ee/wp-content/uploads/2026/07/Trach-Nhat-Phi-Thang-3.jpg",
       "backdrop": "https://yanhh3d.ee/wp-content/uploads/2026/07/Trach-Nhat-Phi-Thang-3.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -928,7 +928,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Quang Âm Chi Ngoại",
       "poster": "https://phimimg.com/upload/vod/20251229-1/d7f24b91fd95fb7cf353e1369e2318b7.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20251229-1/fce1ee8b2fe5ee1e48e670ddf1417ee8.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -947,7 +947,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Đấu Phá Thương Khung Phần 5",
       "poster": "https://phimimg.com/upload/vod/20240822-1/58a4a1135f235b376641c5171d410b04.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20240822-1/27bfb98b2cf23111b0c11e82b0483fc4.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -966,7 +966,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Phàm Nhân Tu Tiên",
       "poster": "https://phimimg.com/upload/vod/20240715-1/ed827a6e5d8f7c41aa0728403665cd87.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20240715-1/fe09a10062768cca301682eba6c8245b.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -985,7 +985,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Luyện Khí Mười Vạn Năm",
       "poster": "https://phimimg.com/upload/vod/20250219-1/0ddffeb590aa6bad556a0724302487ad.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20250219-1/9e7246fa85194e2fad2da74ce43f0c7d.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -1004,7 +1004,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Tuyệt Thế Chiến Hồn",
       "poster": "https://phimimg.com/upload/vod/20250219-1/b880c627b5571d9afd22e58d056e772a.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20250219-1/b2facbf6cebbf66d0c728df0b75ad5b9.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -1023,7 +1023,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Vạn Giới Độc Tôn",
       "poster": "https://phimimg.com/upload/vod/20250308-1/25c9c7486b5de820475bd8fe0ccb316e.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20250308-1/4b81238b9844aa16e3f7e9ee8afdbc94.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -1063,7 +1063,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Thái Cổ Thần Tôn",
       "poster": "https://phimimg.com/uploads/movies/20260801/thai-co-than-ton-poster.webp",
       "backdrop": "https://phimimg.com/uploads/movies/20260801/thai-co-than-ton-thumb.webp",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -1082,7 +1082,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Thần Tài Đậu Chiêm Long",
       "poster": "https://phimimg.com/uploads/movies/20260818/than-tai-dau-chiem-long-poster.webp",
       "backdrop": "https://phimimg.com/uploads/movies/20260818/than-tai-dau-chiem-long-thumb.webp",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -1101,7 +1101,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Mục Thần Ký",
       "poster": "https://phimimg.com/upload/vod/20241028-1/33727a6c4cec6ab127dbb0092bc99c9e.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20241028-1/79ad9da402005ec184aa14bd1f781d05.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -1120,7 +1120,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Tiên Nghịch",
       "poster": "https://phimimg.com/uploads/movies/20260720/tien-nghich-poster.webp",
       "backdrop": "https://phimimg.com/uploads/movies/20260720/tien-nghich-thumb.webp",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -1139,7 +1139,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Thần Y Cổ Đại Ở Đô Thị",
       "poster": "https://phimimg.com/upload/vod/20241018-1/422e01866d2bfcb0adfd4ae2a31ef32f.jpg",
       "backdrop": "https://phimimg.com/upload/vod/20241018-1/f39df234908b4305fdd20c97020c0eea.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [
@@ -1158,7 +1158,7 @@ window.NGWYREN_AIR_SCHEDULE = {
       "originTitle": "Võ Thần Chúa Tể",
       "poster": "https://artworks.thetvdb.com/banners/series/379070/posters/5e7e34365dc42.jpg",
       "backdrop": "https://artworks.thetvdb.com/banners/v4/series/379070/backgrounds/6745d5d7e784e.jpg",
-      "quality": "4K",
+      "quality": "1080",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
       "genres": [

@@ -7567,6 +7567,38 @@ iframe:focus-within,
   display: none !important;
 }
 
+/* Apple Player Buffering Ring (Giữ khung hình không nháy đen khi tua hoặc đệm) */
+.active-video-container video {
+  background-color: transparent !important;
+}
+
+.apple-video-buffering-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 3.5px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #ffffff;
+  animation: appleBufferingSpin 0.75s linear infinite;
+  pointer-events: none;
+  z-index: 30;
+  display: none;
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.6));
+}
+
+.active-video-container.video-is-waiting .apple-video-buffering-ring,
+.active-video-container.video-is-seeking .apple-video-buffering-ring {
+  display: block;
+}
+
+@keyframes appleBufferingSpin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
 /* 4. Apple Glass Player Overlay & Controls */
 .apple-player-overlay {
   position: absolute;
