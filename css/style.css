@@ -3331,21 +3331,20 @@ body {
   transform: translate3d(0, -50%, 0) scale(1);
 }
 
-/* Smooth Apple Spatial Scale In - Out Motion when switching tabs (Zero Slide Jump) */
+/* Smooth Apple Spatial Scale In - Out Motion when switching tabs (Zero Blur, Zero Slide, 120FPS GPU Composited) */
 .vision-view-exit {
   opacity: 0 !important;
   transform: scale(0.985) !important;
-  filter: blur(3px) !important;
   transition:
-    opacity 0.12s cubic-bezier(0.4, 0, 1, 1),
-    transform 0.12s cubic-bezier(0.4, 0, 1, 1),
-    filter 0.12s ease !important;
+    opacity 0.15s cubic-bezier(0.25, 0.1, 0.25, 1),
+    transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1) !important;
   pointer-events: none !important;
+  will-change: opacity, transform;
 }
 
 .vision-view-enter {
-  animation: appleSpatialScaleIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both !important;
-  will-change: transform, opacity, filter;
+  animation: appleSpatialScaleIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+  will-change: opacity, transform;
 }
 
 .vision-col-transition {
@@ -3353,12 +3352,12 @@ body {
 }
 
 .vision-hero-slide-anim {
-  animation: appleSpatialScaleIn 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: appleSpatialScaleIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
   will-change: transform, opacity;
 }
 
 .modal-movie-switch {
-  animation: appleSpatialScaleIn 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: appleSpatialScaleIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
   will-change: transform, opacity;
 }
 
@@ -3366,12 +3365,10 @@ body {
   0% {
     opacity: 0;
     transform: scale(0.985);
-    filter: blur(4px);
   }
   100% {
     opacity: 1;
     transform: scale(1);
-    filter: blur(0);
   }
 }
 
@@ -4233,13 +4230,22 @@ body {
 }
 
 .vision-hero-desc {
-  font-size: 0.84rem;
-  color: rgba(255, 255, 255, 0.74);
-  line-height: 1.5;
+  font-size: 0.86rem;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.55;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3 !important;
+  line-clamp: 3 !important;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: calc(1.55em * 3);
+}
+
+.vision-hero-desc * {
+  display: inline !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .vision-hero-actions {
@@ -6742,6 +6748,12 @@ html.dragging-glass .vision-left-dock {
   background: transparent;
   border: 1px solid transparent;
   color: rgba(255, 255, 255, 0.72);
+  position: relative;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, 0.72) !important;
   padding: 8px 18px;
   border-radius: 999px;
   font-size: 0.85rem;
@@ -6755,10 +6767,10 @@ html.dragging-glass .vision-left-dock {
   gap: 6px;
   box-sizing: border-box;
   line-height: 1.25;
-  transform: scale(0.96);
+  transform: scale(0.97);
   transition:
-    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-    background 0.22s ease,
+    transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1),
+    background 0.24s ease,
     color 0.2s ease,
     box-shadow 0.28s ease !important;
 }
@@ -6766,29 +6778,17 @@ html.dragging-glass .vision-left-dock {
 .vision-nav-pill:not(.active):hover {
   background: rgba(255, 255, 255, 0.12) !important;
   color: #ffffff !important;
-  transform: scale(1) !important;
+  transform: scale(1.02) !important;
 }
 
 .vision-nav-pill.active {
   background: #ffffff !important;
-  border-color: #ffffff !important;
+  border: none !important;
+  outline: none !important;
   color: #111216 !important;
   font-weight: 700 !important;
-  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.28), inset 0 1px 0.5px rgba(255, 255, 255, 0.9) !important;
-  transform: scale(1.05) !important;
-  animation: pillScaleSpring 0.32s cubic-bezier(0.175, 0.885, 0.32, 1.275) both !important;
-}
-
-@keyframes pillScaleSpring {
-  0% {
-    transform: scale(0.92);
-  }
-  60% {
-    transform: scale(1.08);
-  }
-  100% {
-    transform: scale(1.05);
-  }
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.32), inset 0 1px 0.5px rgba(255, 255, 255, 0.95) !important;
+  transform: scale(1.04) !important;
 }
 
 .filter-chip.active {
@@ -6889,8 +6889,6 @@ html.dragging-glass .vision-left-dock {
    FIX: TRIỆT TIÊU HOÀN TOÀN NHẢY SHAPE KHI RÊ CHUỘT (ZERO POSITION JUMP)
    ========================================================================== */
 .filter-chip:hover,
-.vision-nav-pill:hover,
-.vision-nav-pill:not(.active):hover,
 .segment-btn:hover {
   transform: none !important;
 }

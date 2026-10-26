@@ -235,8 +235,9 @@ class AppleCinemaApp {
     if (backdrop) backdrop.classList.toggle("open", isOpen);
   }
 
-  setNavigation(navKey, customTitle = null) {
-    if (this.currentNav === navKey && !customTitle && !this.customFilterTitle && this.activeGenreFilter === "Tất cả") {
+  setNavigation(navKey, customTitle = null, force = false) {
+    if (!force && this.currentNav === navKey && !customTitle && !this.customFilterTitle && this.activeGenreFilter === "Tất cả") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
@@ -246,7 +247,7 @@ class AppleCinemaApp {
     this.currentSegment = "all";
     this.visibleGridLimit = 36;
 
-    // 1. Phản hồi nhấp nháy xúc giác: Cập nhật active pill với hiệu ứng Scale Spring
+    // 1. Phản hồi nhấp nháy: Cập nhật active pill
     document.querySelectorAll("[data-nav]").forEach((el) => {
       el.classList.toggle("active", el.dataset.nav === navKey);
     });
@@ -254,7 +255,7 @@ class AppleCinemaApp {
     this.syncLeftDockIndicator(navKey);
     this.toggleMobileSidebar(false);
 
-    // 2. Chuyển cảnh giao diện mượt mà bằng Scale In - Out (Không trượt slide)
+    // 2. Chuyển cảnh giao diện mượt mà bằng Scale In - Out (Không trượt slide, không blur, 120fps)
     this.transitionView(() => {
       this.renderMainView();
     });
@@ -274,7 +275,7 @@ class AppleCinemaApp {
       this._navTransitionTimer = null;
     }
 
-    // Giai đoạn OUT: Thu nhỏ nhẹ nhàng (Scale: 0.985, mờ dần)
+    // Giai đoạn Fade Out: Thu nhỏ và mờ dần cực êm, không lag (Compositor GPU thuần túy)
     container.classList.remove("vision-view-enter");
     container.classList.add("vision-view-exit");
 
@@ -282,15 +283,15 @@ class AppleCinemaApp {
       window.scrollTo({ top: 0, behavior: "instant" });
       if (updateCallback) updateCallback();
 
-      // Giai đoạn IN: Nở nhẹ nhàng từ 0.985 về 1 (Scale In thuần túy, không trượt)
+      // Giai đoạn Fade In: Hiện dần và scale từ 0.985 về 1 mượt mà (Scale In thuần túy, không trượt)
       container.classList.remove("vision-view-exit");
       container.classList.add("vision-view-enter");
 
       this._navTransitionTimer = setTimeout(() => {
         container.classList.remove("vision-view-enter");
         this._navTransitionTimer = null;
-      }, 340);
-    }, 120);
+      }, 300);
+    }, 150);
   }
 
   triggerHaptic(type = "light") {
@@ -1037,9 +1038,6 @@ class AppleCinemaApp {
               !isPersonalPage
                 ? `<div class="vision-shelf-header">
                      <h2 class="vision-shelf-title">${title}</h2>
-                     <button class="vision-see-all-pill" onclick="app.resetAllFilters()">
-                       <i class="fas fa-rotate-left"></i> Về Khám Phá
-                     </button>
                    </div>`
                 : ""
             }
@@ -1179,13 +1177,14 @@ class AppleCinemaApp {
   }
 
   resetAllFilters() {
-    this.currentNav = "kham-pha";
     this.currentSegment = "all";
     this.activeGenreFilter = "Tất cả";
+    this.customFilterTitle = null;
+    this.customFilterValue = null;
     document.querySelectorAll(".segment-btn").forEach((b) => {
       b.classList.toggle("active", b.dataset.segment === "all");
     });
-    this.setNavigation("kham-pha");
+    this.setNavigation("kham-pha", null, true);
   }
 
   /* ==========================================================================
@@ -1197,6 +1196,7 @@ class AppleCinemaApp {
     const inMyList = this.isInMyList(movie);
     const prevIdx = (this.heroIndex - 1 + this.heroMovies.length) % this.heroMovies.length;
     const nextIdx = (this.heroIndex + 1) % this.heroMovies.length;
+    const cleanSynopsis = (movie.synopsis || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
     return `
       <section class="vision-hero-banner" id="heroShowcase" onmouseenter="app.pauseHeroAutoRotate()" onmouseleave="app.resumeHeroAutoRotate()">
@@ -1218,7 +1218,7 @@ class AppleCinemaApp {
             </div>
 
             <h1 class="vision-hero-title">${movie.title}</h1>
-            <p class="vision-hero-desc">${movie.synopsis}</p>
+            <p class="vision-hero-desc">${cleanSynopsis}</p>
 
             <div class="vision-hero-actions">
               <button class="vision-btn-watch" onclick="app.openMovieModal('${movie.slug}', true)">
@@ -1906,7 +1906,7 @@ class AppleCinemaApp {
             </div>
             ${
               (() => {
-                const syn = (movie.synopsis || "").trim();
+                const syn = (movie.synopsis || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
                 const isBoilerplate = syn.includes("được cập nhật liên tục tại Ngwyren Cinema") ||
                                       syn.includes("tác phẩm Anime hấp dẫn đang phát sóng");
                 if (!syn || isBoilerplate) return "";
