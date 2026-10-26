@@ -68,14 +68,9 @@ class AppleCinemaApp {
     const initialPlaying = this.service.slugMap.get(this.watchHistory[0]?.slug) || this.heroMovies[this.heroIndex] || this.service.movies[0];
     this.setNowPlayingBar(initialPlaying, 0, false);
 
-    // Render giao diện tức thì (0ms) & định vị viên nhộng trượt
+    // Render giao diện tức thì (0ms)
     this.renderMainView();
-    this.syncNavPillIndicator();
     this.startHeroAutoRotate();
-
-    window.addEventListener("resize", () => {
-      this.syncNavPillIndicator();
-    }, { passive: true });
 
     // Trì hoãn đồng bộ ngầm khi trình duyệt rảnh để không gây giật lag lúc mới mở trang
     setTimeout(() => this.syncLivePhimmoi(false), 6000);
@@ -251,51 +246,21 @@ class AppleCinemaApp {
     this.currentSegment = "all";
     this.visibleGridLimit = 36;
 
-    // 1. Phản hồi xúc giác tức thì: Cập nhật active pill & trượt viên nhộng Liquid Glass
+    // 1. Phản hồi nhấp nháy xúc giác: Cập nhật active pill với hiệu ứng Scale Spring
     document.querySelectorAll("[data-nav]").forEach((el) => {
       el.classList.toggle("active", el.dataset.nav === navKey);
     });
 
-    this.syncNavPillIndicator(navKey);
     this.syncLeftDockIndicator(navKey);
     this.toggleMobileSidebar(false);
 
-    // 2. Chuyển cảnh giao diện mượt mà cả IN lẫn OUT (Apple Spatial Fluid Transition)
+    // 2. Chuyển cảnh giao diện mượt mà bằng Scale In - Out (Không trượt slide)
     this.transitionView(() => {
       this.renderMainView();
     });
   }
 
-  syncNavPillIndicator(navKey = null) {
-    const nav = navKey || this.currentNav;
-    const indicator = document.getElementById("navPillIndicator");
-    const pillsNav = document.getElementById("visionNavPills");
-    if (!indicator || !pillsNav) return;
-
-    pillsNav.classList.add("has-indicator");
-    const activeBtn = pillsNav.querySelector(`.vision-nav-pill[data-nav="${nav}"]`) ||
-                      pillsNav.querySelector(".vision-nav-pill.active");
-    if (!activeBtn) {
-      indicator.style.opacity = "0";
-      return;
-    }
-
-    const left = activeBtn.offsetLeft;
-    const top = activeBtn.offsetTop;
-    const width = activeBtn.offsetWidth;
-    const height = activeBtn.offsetHeight;
-
-    indicator.style.opacity = "1";
-    indicator.style.width = `${width}px`;
-    indicator.style.height = `${height}px`;
-    indicator.style.transform = `translate3d(${left}px, ${top}px, 0)`;
-
-    // Cuộn ngang êm ái trên màn hình nhỏ nếu nút bị khuất
-    if (pillsNav.scrollWidth > pillsNav.clientWidth) {
-      const scrollTarget = left - (pillsNav.clientWidth - width) / 2;
-      pillsNav.scrollTo({ left: Math.max(0, scrollTarget), behavior: "smooth" });
-    }
-  }
+  syncNavPillIndicator() {}
 
   transitionView(updateCallback) {
     const container = document.getElementById("mainContentWrapper");
@@ -309,7 +274,7 @@ class AppleCinemaApp {
       this._navTransitionTimer = null;
     }
 
-    // Giai đoạn OUT: Hòa tan êm ái (-6px, mờ sương 4px)
+    // Giai đoạn OUT: Thu nhỏ nhẹ nhàng (Scale: 0.985, mờ dần)
     container.classList.remove("vision-view-enter");
     container.classList.add("vision-view-exit");
 
@@ -317,16 +282,15 @@ class AppleCinemaApp {
       window.scrollTo({ top: 0, behavior: "instant" });
       if (updateCallback) updateCallback();
 
-      // Giai đoạn IN: Nở mịn màng từ +10px unmask độ sắc nét chuẩn visionOS
+      // Giai đoạn IN: Nở nhẹ nhàng từ 0.985 về 1 (Scale In thuần túy, không trượt)
       container.classList.remove("vision-view-exit");
       container.classList.add("vision-view-enter");
-      this.syncNavPillIndicator();
 
       this._navTransitionTimer = setTimeout(() => {
         container.classList.remove("vision-view-enter");
         this._navTransitionTimer = null;
-      }, 400);
-    }, 125);
+      }, 340);
+    }, 120);
   }
 
   triggerHaptic(type = "light") {
