@@ -2183,6 +2183,158 @@ class AppleCinemaApp {
     return cleanLines.join("\n");
   }
 
+  async readFirstVideoPtsFromTs(segUrl) {
+    if (!segUrl) return null;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 1800);
+    try {
+      const res = await fetch(segUrl, { signal: ctrl.signal });
+      if (!res.ok) return null;
+      let buf = null;
+      if (res.body && typeof res.body.getReader === "function") {
+        const reader = res.body.getReader();
+        const chunks = [];
+        let total = 0;
+        while (total < 8192) {
+          const { done, value } = await reader.read();
+          if (done || !value) break;
+          chunks.push(value);
+          total += value.byteLength;
+        }
+        try {
+          reader.cancel();
+        } catch (_) {}
+        buf = new Uint8Array(total);
+        let offset = 0;
+        for (const c of chunks) {
+          buf.set(c, offset);
+          offset += c.byteLength;
+        }
+      } else {
+        const ab = await res.arrayBuffer();
+        buf = new Uint8Array(ab, 0, Math.min(ab.byteLength, 8192));
+      }
+      if (!buf || buf.length < 376) return null;
+
+      let sync = 0;
+      for (let s = 0; s < 188 && s + 188 < buf.length; s++) {
+        if (buf[s] === 0x47 && buf[s + 188] === 0x47) {
+          sync = s;
+          break;
+        }
+      }
+
+      for (let i = sync; i + 188 <= buf.length; i += 188) {
+        if (buf[i] !== 0x47) continue;
+        const pusi = (buf[i + 1] >> 6) & 1;
+        if (!pusi) continue;
+        const afc = (buf[i + 3] >> 4) & 3;
+        let pos = i + 4;
+        if (afc === 2 || afc === 3) {
+          pos += 1 + buf[pos];
+        }
+        if (pos + 14 <= i + 188 && buf[pos] === 0x00 && buf[pos + 1] === 0x00 && buf[pos + 2] === 0x01) {
+          const streamId = buf[pos + 3];
+          if (streamId >= 0xe0 && streamId <= 0xef) {
+            const flags = (buf[pos + 7] >> 6) & 3;
+            if (flags === 3 && pos + 19 <= i + 188) {
+              const d0 = buf[pos + 14], d1 = buf[pos + 15], d2 = buf[pos + 16], d3 = buf[pos + 17], d4 = buf[pos + 18];
+              const dts = ((d0 & 0x0e) * 536870912) + (d1 * 4194304) + ((d2 & 0xfe) * 16384) + (d3 * 128) + ((d4 >> 1) & 0x7f);
+              return dts / 90000;
+            }
+            if (flags >= 2) {
+              const b0 = buf[pos + 9], b1 = buf[pos + 10], b2 = buf[pos + 11], b3 = buf[pos + 12], b4 = buf[pos + 13];
+              const pts = ((b0 & 0x0e) * 536870912) + (b1 * 4194304) + ((b2 & 0xfe) * 16384) + (b3 * 128) + ((b4 >> 1) & 0x7f);
+              return pts / 90000;
+            }
+          }
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async calibrateHlsPlaylistTimestamps(playlistText, playlistUrl) {
+    if (!playlistText || !playlistUrl || !playlistText.includes("#EXTINF:") || playlistText.includes("#EXT-X-STREAM-INF")) {
+      return playlistText;
+    }
+    try {
+      const lines = playlistText.split(/\r?\n/);
+      const firstBlockSegs = [];
+      let curDur = 0;
+      let cumTime = 0;
+      for (let i = 0; i < lines.length; i++) {
+        const t = lines[i].trim();
+        if (!t) continue;
+        if (t === "#EXT-X-DISCONTINUITY" && firstBlockSegs.length > 0) {
+          break;
+        }
+        if (t.startsWith("#EXTINF:")) {
+          curDur = parseFloat(t.slice(8).split(",")[0]) || 0;
+        } else if (!t.startsWith("#")) {
+          firstBlockSegs.push({
+            index: firstBlockSegs.length,
+            start: cumTime,
+            dur: curDur,
+            uri: t
+          });
+          cumTime += curDur;
+        }
+      }
+
+      if (firstBlockSegs.length < 15) return playlistText;
+      const segA = firstBlockSegs[0];
+      const probeIdx = Math.min(60, firstBlockSegs.length - 1);
+      const segB = firstBlockSegs[probeIdx];
+      const extinfDelta = segB.start - segA.start;
+      if (extinfDelta < 30) return playlistText;
+
+      const urlA = new URL(segA.uri, playlistUrl).href;
+      const urlB = new URL(segB.uri, playlistUrl).href;
+      const [ptsA, ptsB] = await Promise.all([
+        this.readFirstVideoPtsFromTs(urlA),
+        this.readFirstVideoPtsFromTs(urlB)
+      ]);
+
+      if (ptsA === null || ptsB === null || ptsB <= ptsA) return playlistText;
+      const ptsDelta = ptsB - ptsA;
+      const rawRatio = ptsDelta / extinfDelta;
+
+      // Hiệu chuẩn khi phát hiện lệch xung nhịp thực tế giữa MPEG-TS PTS và #EXTINF (ví dụ phim 23.976fps đóng gói #EXTINF theo 25fps gây trôi +4.27% ở phút 14:30)
+      if (Math.abs(rawRatio - 1.0) < 0.008 || rawRatio < 0.9 || rawRatio > 1.15) {
+        return playlistText;
+      }
+
+      const ntscTelecineRatio = 1001 / 960; // 25 / (24000 / 1001) = 1.0427083333
+      const scale = Math.abs(rawRatio - ntscTelecineRatio) < 0.004 ? ntscTelecineRatio : rawRatio;
+
+      let seenFirstSeg = false;
+      const calibratedLines = lines.map((line) => {
+        const trimmed = line.trim();
+        if (trimmed.startsWith("#EXTINF:")) {
+          const rawVal = parseFloat(trimmed.slice(8).split(",")[0]);
+          if (rawVal > 0) {
+            if (!seenFirstSeg) {
+              seenFirstSeg = true;
+              const baseVal = Math.abs(rawVal - 3.14) < 0.01 ? 3.0 : rawVal;
+              return `#EXTINF:${(baseVal * scale).toFixed(5)},`;
+            }
+            return `#EXTINF:${(rawVal * scale).toFixed(5)},`;
+          }
+        }
+        return line;
+      });
+
+      return calibratedLines.join("\n");
+    } catch (_) {
+      return playlistText;
+    }
+  }
+
   createAdFreePlaylistLoader() {
     const self = this;
     if (!window.Hls || !window.Hls.DefaultConfig || !window.Hls.DefaultConfig.loader) return undefined;
@@ -2194,7 +2346,18 @@ class AppleCinemaApp {
           const origSuccess = callbacks.onSuccess;
           callbacks.onSuccess = (response, stats, ctx, networkDetails) => {
             if (response && typeof response.data === "string" && response.data.includes("#EXTM3U")) {
-              response.data = self.cleanHlsAdSegments(response.data);
+              const cleaned = self.cleanHlsAdSegments(response.data);
+              response.data = cleaned;
+              if (cleaned.includes("#EXTINF:") && !cleaned.includes("#EXT-X-STREAM-INF")) {
+                const targetUrl = (response && response.url) || (ctx && ctx.url) || (context && context.url) || "";
+                self.calibrateHlsPlaylistTimestamps(cleaned, targetUrl).then((calibrated) => {
+                  response.data = calibrated;
+                  if (origSuccess) origSuccess(response, stats, ctx, networkDetails);
+                }).catch(() => {
+                  if (origSuccess) origSuccess(response, stats, ctx, networkDetails);
+                });
+                return;
+              }
             }
             if (origSuccess) origSuccess(response, stats, ctx, networkDetails);
           };
