@@ -74,6 +74,32 @@ class AppleCinemaApp {
 
     // Trì hoãn đồng bộ ngầm khi trình duyệt rảnh để không gây giật lag lúc mới mở trang
     setTimeout(() => this.syncLivePhimmoi(false), 6000);
+
+    // Khởi chạy lịch tự động cập nhật phim mới và bảo trì sửa lỗi định kỳ (mỗi 30 phút)
+    this.startPeriodicMaintenanceScheduler();
+  }
+
+  startPeriodicMaintenanceScheduler() {
+    if (this._maintenanceInterval) clearInterval(this._maintenanceInterval);
+    this._maintenanceInterval = setInterval(async () => {
+      try {
+        // 1. Dọn dẹp bộ nhớ đệm API nếu vượt ngưỡng để giải phóng RAM trình duyệt
+        if (this.service?._smartCache && this.service._smartCache.size > 250) {
+          this.service._smartCache.clear();
+        }
+        // 2. Tự động kiểm tra và sửa lỗi trạng thái lớp phủ trình phát nếu iframe đang bật
+        const iframeEl = document.getElementById("trailerIframeElement");
+        const overlayEl = document.getElementById("applePlayerOverlay");
+        if (iframeEl && iframeEl.style.display === "block" && overlayEl && overlayEl.style.display !== "none") {
+          overlayEl.style.setProperty("display", "none");
+        }
+        // 3. Tự động đồng bộ phim mới và tập mới ngầm từ API, khử trùng lặp và cập nhật chỉ mục
+        await this.syncLivePhimmoi(false);
+        this.buildFastIndexes();
+      } catch (err) {
+        console.warn("[Maintenance] Bảo trì định kỳ:", err);
+      }
+    }, 30 * 60 * 1000);
   }
 
   buildFastIndexes() {

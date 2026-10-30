@@ -1083,13 +1083,19 @@ class PhimmoiService {
     });
 
     this.slugMap = new Map();
+    this.canonicalKeyMap = new Map();
     this._smartCache = new Map();
     this.movies.forEach((m) => {
       this.slugMap.set(m.slug, m);
       if (m.crawlSlug) this.slugMap.set(m.crawlSlug, m);
+      if (Array.isArray(m.aliasSlugs)) {
+        m.aliasSlugs.forEach((a) => this.slugMap.set(a, m));
+      }
+      const cKey = this.getCanonicalMovieKey(m);
+      if (cKey) this.canonicalKeyMap.set(cKey, m);
     });
 
-    // Tự động nạp toàn bộ kho phim đầy đủ (1739+ phim) từ js/movies-catalog.js với 100% luồng .m3u8 thật
+    // Tự động nạp toàn bộ kho phim đầy đủ từ js/movies-catalog.js, khử trùng lặp và chọn bản chất lượng tốt nhất
     if (Array.isArray(window.NGWYREN_FULL_CATALOG)) {
       window.NGWYREN_FULL_CATALOG.forEach((item) => {
         if (!item || !item.slug) return;
@@ -1134,42 +1140,28 @@ class PhimmoiService {
           }
         }
 
+        const cKey = this.getCanonicalMovieKey(normalizedItem);
         const existing =
           this.slugMap.get(normalizedItem.slug) ||
-          (normalizedItem.crawlSlug && this.slugMap.get(normalizedItem.crawlSlug));
+          (normalizedItem.crawlSlug && this.slugMap.get(normalizedItem.crawlSlug)) ||
+          (cKey && this.canonicalKeyMap.get(cKey));
+
         if (existing) {
-          const existingHasValidM3u8 = existing.episodes?.some(
-            (e) => e.source && e.source.includes(".m3u8") && !e.source.includes("opstream")
-          );
-          const catalogHasValidM3u8 = normalizedItem.episodes?.some(
-            (e) => e.source && e.source.includes(".m3u8") && !e.source.includes("opstream")
-          );
-          if (
-            normalizedItem.episodes &&
-            (normalizedItem.episodes.length > (existing.episodes ? existing.episodes.length : 0) ||
-              (!existingHasValidM3u8 && catalogHasValidM3u8))
-          ) {
-            existing.episodes = normalizedItem.episodes;
+          this.mergeBestQualityMovie(existing, normalizedItem);
+          this.slugMap.set(normalizedItem.slug, existing);
+          if (normalizedItem.crawlSlug) this.slugMap.set(normalizedItem.crawlSlug, existing);
+          if (Array.isArray(normalizedItem.aliasSlugs)) {
+            normalizedItem.aliasSlugs.forEach((a) => this.slugMap.set(a, existing));
           }
-          if (normalizedItem.dubEpisodes && normalizedItem.dubEpisodes.length > 0) {
-            existing.dubEpisodes = normalizedItem.dubEpisodes;
-          }
-          if (normalizedItem.quality) {
-            existing.quality = normalizedItem.quality;
-          }
-          if (normalizedItem.episodeCurrent) {
-            existing.episodeCurrent = normalizedItem.episodeCurrent;
-          }
-          if (normalizedItem.poster && (!existing.poster || existing.poster.includes("phimmoiz.one"))) {
-            existing.poster = normalizedItem.poster;
-          }
-          if (normalizedItem.backdrop && (!existing.backdrop || existing.backdrop.includes("phimmoiz.one") || existing.backdrop === existing.poster)) {
-            existing.backdrop = normalizedItem.backdrop;
-          }
+          if (cKey) this.canonicalKeyMap.set(cKey, existing);
         } else {
           this.movies.push(normalizedItem);
           this.slugMap.set(normalizedItem.slug, normalizedItem);
           if (normalizedItem.crawlSlug) this.slugMap.set(normalizedItem.crawlSlug, normalizedItem);
+          if (Array.isArray(normalizedItem.aliasSlugs)) {
+            normalizedItem.aliasSlugs.forEach((a) => this.slugMap.set(a, normalizedItem));
+          }
+          if (cKey) this.canonicalKeyMap.set(cKey, normalizedItem);
         }
       });
     }
@@ -1184,6 +1176,114 @@ class PhimmoiService {
 
     this.isLiveConnected = true;
     this.lastSyncedCount = this.movies.length;
+  }
+
+  /**
+   * Chuẩn hóa khóa nhận diện phim để phát hiện chính xác các phim trùng lặp (kể cả khác hậu tố tên hoặc slug)
+   */
+  getCanonicalMovieKey(movie) {
+    if (!movie || !movie.title) return "";
+    let t = (movie.title || "")
+      .toLowerCase()
+      .replace(/đ/g, "d")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+    t = t.replace(/\s*\((?!phan\s*\d|mua\s*\d|season\s*\d|part\s*\d|ban\s+|19\d\d|20\d\d)[^)]+\)/g, "");
+    t = t.replace(/\(phan\s*\d+\)\s*\(([^)]+)\)/g, "$1");
+    t = t.replace(/\b(?:phan|mua|season)\s*(\d+)\b/g, "s$1");
+    t = t.replace(/\b(\d+)(?:st|nd|rd|th)\s*season\b/g, "s$1");
+    t = t.replace(/\s+iii\b/g, " s3");
+    t = t.replace(/\s+ii\b/g, " s2");
+    t = t.replace(/\s+(\d+)$/g, " s$1");
+    t = t.replace(/[^a-z0-9]+/g, " ").trim();
+    if (movie.type === "single" && movie.year && Number(movie.year) < 2022) {
+      t = `${t} ${movie.year}`;
+    }
+    return t;
+  }
+
+  /**
+   * Chấm điểm chất lượng của một bản phim (ưu tiên luồng .m3u8 thật, 4K/1080p, số tập đầy đủ, Thuyết Minh/Lồng Tiếng, ảnh 16:9)
+   */
+  scoreMovieQuality(m) {
+    if (!m) return -999;
+    let score = 0;
+    const eps = Array.isArray(m.episodes) ? m.episodes : [];
+    const validM3u8Eps = eps.filter(
+      (e) => e && e.source && (e.source.includes(".m3u8") || e.source.includes("/hls/")) && !e.source.includes("opstream")
+    );
+    if (validM3u8Eps.length > 0) {
+      score += 1000 + Math.min(600, validM3u8Eps.length * 12);
+    } else {
+      score -= 500;
+    }
+    if (m.quality === "4K" && Array.isArray(m.sectionTags) && m.sectionTags.includes("4k")) {
+      score += 300;
+    } else if (String(m.quality || "").includes("1080")) {
+      score += 150;
+    }
+    const lang = (m.language || "").toLowerCase();
+    if ((Array.isArray(m.dubEpisodes) && m.dubEpisodes.length > 0) || lang.includes("thuyết minh") || lang.includes("lồng tiếng")) {
+      score += 120;
+    }
+    if (m.backdrop && m.backdrop !== m.poster && !m.backdrop.includes("phimmoiz.one")) {
+      score += 80;
+    }
+    if (m.trailerUrl) score += 20;
+    return score;
+  }
+
+  /**
+   * Gộp 2 bản ghi trùng lặp của cùng 1 bộ phim, luôn giữ lại nguồn phát và siêu dữ liệu có chất lượng cao nhất
+   */
+  mergeBestQualityMovie(existing, candidate) {
+    if (!existing || !candidate) return existing;
+    const existingValidEps = (existing.episodes || []).filter(
+      (e) => e && e.source && (e.source.includes(".m3u8") || e.source.includes("/hls/")) && !e.source.includes("opstream")
+    );
+    const candidateValidEps = (candidate.episodes || []).filter(
+      (e) => e && e.source && (e.source.includes(".m3u8") || e.source.includes("/hls/")) && !e.source.includes("opstream")
+    );
+
+    if (
+      candidateValidEps.length > existingValidEps.length ||
+      (existingValidEps.length === 0 && (candidate.episodes?.length || 0) > (existing.episodes?.length || 0))
+    ) {
+      existing.episodes = candidate.episodes;
+      if (candidate.episodeCurrent) existing.episodeCurrent = candidate.episodeCurrent;
+      if (candidate.episodeTotal) existing.episodeTotal = candidate.episodeTotal;
+    }
+    if (candidate.dubEpisodes && candidate.dubEpisodes.length > (existing.dubEpisodes?.length || 0)) {
+      existing.dubEpisodes = candidate.dubEpisodes;
+    }
+    if (candidate.nguoncEpisodes && candidate.nguoncEpisodes.length > (existing.nguoncEpisodes?.length || 0)) {
+      existing.nguoncEpisodes = candidate.nguoncEpisodes;
+    }
+    if (candidate.quality === "4K" && Array.isArray(candidate.sectionTags) && candidate.sectionTags.includes("4k")) {
+      existing.quality = "4K";
+      if (!existing.sectionTags.includes("4k")) existing.sectionTags.push("4k");
+    }
+    if (candidate.language && candidate.language.length > (existing.language?.length || 0)) {
+      existing.language = candidate.language;
+    }
+    if (candidate.poster && (!existing.poster || existing.poster.includes("phimmoiz.one"))) {
+      existing.poster = candidate.poster;
+    }
+    if (candidate.backdrop && (!existing.backdrop || existing.backdrop.includes("phimmoiz.one") || existing.backdrop === existing.poster)) {
+      existing.backdrop = candidate.backdrop;
+    }
+    if (!existing.trailerUrl && candidate.trailerUrl) {
+      existing.trailerUrl = candidate.trailerUrl;
+    }
+    if (Array.isArray(candidate.sectionTags)) {
+      candidate.sectionTags.forEach((tag) => {
+        if (tag !== "4k" && !existing.sectionTags.includes(tag)) {
+          existing.sectionTags.push(tag);
+        }
+      });
+    }
+    return existing;
   }
 
   /**
@@ -1407,16 +1507,21 @@ class PhimmoiService {
       const normalized = this.normalizeWpPost(post);
       if (!normalized) return;
 
-      if (this.slugMap.has(normalized.slug)) {
-        const existing = this.slugMap.get(normalized.slug);
-        if (normalized.episodes && normalized.episodes.length > 0) {
-          existing.episodes = normalized.episodes;
-        }
-        if (normalized.backdrop && (!existing.backdrop || existing.backdrop.includes("phimmoiz.one") || existing.backdrop === existing.poster)) existing.backdrop = normalized.backdrop;
-        if (normalized.trailerUrl) existing.trailerUrl = normalized.trailerUrl;
+      const cKey = this.getCanonicalMovieKey(normalized);
+      const existing =
+        this.slugMap.get(normalized.slug) ||
+        (normalized.crawlSlug && this.slugMap.get(normalized.crawlSlug)) ||
+        (cKey && this.canonicalKeyMap.get(cKey));
+
+      if (existing) {
+        this.mergeBestQualityMovie(existing, normalized);
+        this.slugMap.set(normalized.slug, existing);
+        if (normalized.crawlSlug) this.slugMap.set(normalized.crawlSlug, existing);
       } else {
         newlyAdded.push(normalized);
         this.slugMap.set(normalized.slug, normalized);
+        if (normalized.crawlSlug) this.slugMap.set(normalized.crawlSlug, normalized);
+        if (cKey) this.canonicalKeyMap.set(cKey, normalized);
         addedCount++;
       }
     });
@@ -1494,8 +1599,17 @@ class PhimmoiService {
           synopsis: `${item.name} (${item.origin_name}) bản Full HD 1080p ${item.lang || "Vietsub"} trên Ngwyren Cinema.`,
           episodes: [{ name: "Tập 1 (Vietsub)", slug: "tap-1", source: "", embed: "", needsEnrich: true }]
         };
+        const cKey = this.getCanonicalMovieKey(newMovie);
+        const existingDup = cKey && this.canonicalKeyMap.get(cKey);
+        if (existingDup) {
+          this.mergeBestQualityMovie(existingDup, newMovie);
+          this.slugMap.set(newMovie.slug, existingDup);
+          if (!localMatches.includes(existingDup)) localMatches.push(existingDup);
+          return;
+        }
         this.movies.unshift(newMovie);
         this.slugMap.set(newMovie.slug, newMovie);
+        if (cKey) this.canonicalKeyMap.set(cKey, newMovie);
         localMatches.push(newMovie);
       });
     }
@@ -1534,8 +1648,17 @@ class PhimmoiService {
           synopsis: this.cleanAdText(nc.description) || `${nc.name} chất lượng cao Vietsub.`,
           episodes: [{ name: "Tập 1 (Vietsub)", slug: "tap-1", source: "", embed: "", needsEnrich: true }]
         };
+        const cKey = this.getCanonicalMovieKey(newMovie);
+        const existingDup = cKey && this.canonicalKeyMap.get(cKey);
+        if (existingDup) {
+          this.mergeBestQualityMovie(existingDup, newMovie);
+          this.slugMap.set(newMovie.slug, existingDup);
+          if (!localMatches.includes(existingDup)) localMatches.push(existingDup);
+          return;
+        }
         this.movies.unshift(newMovie);
         this.slugMap.set(newMovie.slug, newMovie);
+        if (cKey) this.canonicalKeyMap.set(cKey, newMovie);
         localMatches.push(newMovie);
       });
     }
