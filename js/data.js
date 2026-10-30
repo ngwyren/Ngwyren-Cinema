@@ -1084,7 +1084,10 @@ class PhimmoiService {
 
     this.slugMap = new Map();
     this._smartCache = new Map();
-    this.movies.forEach((m) => this.slugMap.set(m.slug, m));
+    this.movies.forEach((m) => {
+      this.slugMap.set(m.slug, m);
+      if (m.crawlSlug) this.slugMap.set(m.crawlSlug, m);
+    });
 
     // Tự động nạp toàn bộ kho phim đầy đủ (1739+ phim) từ js/movies-catalog.js với 100% luồng .m3u8 thật
     if (Array.isArray(window.NGWYREN_FULL_CATALOG)) {
@@ -1131,9 +1134,21 @@ class PhimmoiService {
           }
         }
 
-        if (this.slugMap.has(normalizedItem.slug)) {
-          const existing = this.slugMap.get(normalizedItem.slug);
-          if (normalizedItem.episodes && normalizedItem.episodes.length > (existing.episodes ? existing.episodes.length : 0)) {
+        const existing =
+          this.slugMap.get(normalizedItem.slug) ||
+          (normalizedItem.crawlSlug && this.slugMap.get(normalizedItem.crawlSlug));
+        if (existing) {
+          const existingHasValidM3u8 = existing.episodes?.some(
+            (e) => e.source && e.source.includes(".m3u8") && !e.source.includes("opstream")
+          );
+          const catalogHasValidM3u8 = normalizedItem.episodes?.some(
+            (e) => e.source && e.source.includes(".m3u8") && !e.source.includes("opstream")
+          );
+          if (
+            normalizedItem.episodes &&
+            (normalizedItem.episodes.length > (existing.episodes ? existing.episodes.length : 0) ||
+              (!existingHasValidM3u8 && catalogHasValidM3u8))
+          ) {
             existing.episodes = normalizedItem.episodes;
           }
           if (normalizedItem.dubEpisodes && normalizedItem.dubEpisodes.length > 0) {
@@ -1154,6 +1169,7 @@ class PhimmoiService {
         } else {
           this.movies.push(normalizedItem);
           this.slugMap.set(normalizedItem.slug, normalizedItem);
+          if (normalizedItem.crawlSlug) this.slugMap.set(normalizedItem.crawlSlug, normalizedItem);
         }
       });
     }
@@ -1597,11 +1613,11 @@ class PhimmoiService {
 
           if (it.slug === movie.slug || it.slug === slugToTry) score += 200;
           if (itName === cleanTarget) score += 60;
-          else if (cleanTarget && itName.includes(cleanTarget)) score += 25;
+          else if (cleanTarget && cleanTarget.length >= 3 && itName.includes(cleanTarget)) score += 25;
           if (originTarget && itOrigin === originTarget) score += 60;
-          else if (originTarget && itOrigin.includes(originTarget)) score += 20;
+          else if (originTarget && originTarget.length >= 3 && itOrigin.includes(originTarget)) score += 20;
 
-          if (!isNaN(movieYear) && !isNaN(itYear)) {
+          if (score > 0 && !isNaN(movieYear) && !isNaN(itYear)) {
             const yearDiff = Math.abs(movieYear - itYear);
             if (yearDiff === 0) {
               score += 150;
@@ -1649,10 +1665,10 @@ class PhimmoiService {
 
           if (it.slug === movie.slug || it.slug === slugToTry) score += 200;
           if (itName === cleanTarget) score += 60;
-          else if (cleanTarget && itName.includes(cleanTarget)) score += 25;
+          else if (cleanTarget && cleanTarget.length >= 3 && itName.includes(cleanTarget)) score += 25;
           if (originTarget && itOrigin === originTarget) score += 60;
 
-          if (!isNaN(movieYear) && !isNaN(itYear)) {
+          if (score > 0 && !isNaN(movieYear) && !isNaN(itYear)) {
             const yearDiff = Math.abs(movieYear - itYear);
             if (yearDiff === 0) score += 150;
             else if (yearDiff === 1) score += 80;
@@ -1711,11 +1727,14 @@ class PhimmoiService {
                   });
                 }
               });
+              const prevEp = movie.episodes?.[idx];
+              const prevSource =
+                prevEp?.source && !prevEp.source.includes("opstream") ? prevEp.source : "";
               return {
                 name: rawName.startsWith("Tập") || rawName.includes("Full") ? rawName : `Tập ${rawName}`,
                 slug: ep.slug || `tap-${idx + 1}`,
-                source: ep.link_m3u8 || "",
-                embed: ep.link_embed || "",
+                source: ep.link_m3u8 || prevSource || "",
+                embed: ep.link_embed || prevEp?.embed || "",
                 altSources
               };
             });
@@ -1801,10 +1820,15 @@ class PhimmoiService {
           });
           // Nếu nguồn chính chỉ có 1 tập mẫu mà NguonC có nhiều tập hơn thì cập nhật luôn
           if (movie.nguoncEpisodes.length > (movie.episodes ? movie.episodes.length : 0)) {
-            movie.episodes = movie.nguoncEpisodes.map((ep, i) => ({
-              ...ep,
-              source: movie.episodes?.[i]?.source || ep.source || "https://a.kvp726.com/20261011/XdpIV8L5/index.m3u8"
-            }));
+            movie.episodes = movie.nguoncEpisodes.map((ep, i) => {
+              const prevEp = movie.episodes?.[i];
+              const prevSource =
+                prevEp?.source && !prevEp.source.includes("opstream") ? prevEp.source : "";
+              return {
+                ...ep,
+                source: prevSource || ep.source || ""
+              };
+            });
           }
         }
         const ncDubServer = ncServers.find((srv) => {
