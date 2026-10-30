@@ -194,11 +194,11 @@ window.NGWYREN_AIR_SCHEDULE = {
       "source": "donghua"
     },
     {
-      "slug": "tuyet-the-chien-hon",
+      "slug": "tuyet-the-chien-hon-2020",
       "title": "Tuyệt Thế Chiến Hồn",
-      "originTitle": "Peerless Soul",
-      "poster": "https://phimimg.com/upload/vod/20250219-1/b880c627b5571d9afd22e58d056e772a.jpg",
-      "backdrop": "https://phimimg.com/upload/vod/20250219-1/b2facbf6cebbf66d0c728df0b75ad5b9.jpg",
+      "originTitle": "The Soul Of A Warrior",
+      "poster": "https://phimimg.com/uploads/movies/20261030/tuyet-the-chien-hon-2020-poster.webp",
+      "backdrop": "https://phimimg.com/uploads/movies/20261030/tuyet-the-chien-hon-2020-thumb.webp",
       "quality": "1080p Full HD",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",
@@ -810,11 +810,11 @@ window.NGWYREN_AIR_SCHEDULE = {
       "source": "donghua"
     },
     {
-      "slug": "tuyet-the-chien-hon",
+      "slug": "tuyet-the-chien-hon-2020",
       "title": "Tuyệt Thế Chiến Hồn",
-      "originTitle": "Peerless Soul",
-      "poster": "https://phimimg.com/upload/vod/20250219-1/b880c627b5571d9afd22e58d056e772a.jpg",
-      "backdrop": "https://phimimg.com/upload/vod/20250219-1/b2facbf6cebbf66d0c728df0b75ad5b9.jpg",
+      "originTitle": "The Soul Of A Warrior",
+      "poster": "https://phimimg.com/uploads/movies/20261030/tuyet-the-chien-hon-2020-poster.webp",
+      "backdrop": "https://phimimg.com/uploads/movies/20261030/tuyet-the-chien-hon-2020-thumb.webp",
       "quality": "1080p Full HD",
       "language": "Vietsub + Thuyết Minh",
       "airTime": "10:00 Sáng",

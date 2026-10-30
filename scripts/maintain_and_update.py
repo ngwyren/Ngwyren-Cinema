@@ -420,10 +420,14 @@ def fetch_kk_detail(slug):
 
 def crawl_latest_movies(existing_catalog, max_pages=3):
     existing_slugs = set()
+    existing_tkeys = set()
     for m in existing_catalog:
-        existing_slugs.add(m.get("slug"))
+        s = m.get("slug")
+        if s:
+            existing_slugs.add(s)
         for a in m.get("aliasSlugs", []):
             existing_slugs.add(a)
+        existing_tkeys.add(canonical_title_key(m))
 
     candidates = []
     for p in range(1, max_pages + 1):
@@ -434,12 +438,14 @@ def crawl_latest_movies(existing_catalog, max_pages=3):
                 data = json.loads(resp.read().decode("utf-8"))
                 for it in data.get("items", []):
                     s = it.get("slug")
-                    if s and s not in existing_slugs and s not in candidates:
+                    tkey = canonical_title_key({"title": it.get("name", "")})
+                    if s and s not in existing_slugs and tkey not in existing_tkeys and s not in candidates:
                         candidates.append(s)
         except Exception:
             pass
 
     if not candidates:
+        print("[UPDATE] Catalog is already up to date with latest PhimAPI releases.")
         return []
 
     fetched = []
