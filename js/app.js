@@ -2082,11 +2082,11 @@ class AppleCinemaApp {
       if (!uri || typeof uri !== "string") return false;
       const u = uri.trim();
       // Khử chính xác phân đoạn video quảng cáo cờ bạc chèn vào luồng:
-      // Định dạng quảng cáo: /(v7|convertv)/[hash 16-64 hex]/segment_... hoặc domain cờ bạc
-      if (/\/(?:v7|convertv)\/[a-f0-9]{16,64}\/segment_\d+\.ts/i.test(u)) return true;
-      if (/https?:\/\/[^\/]+\/(?:v7|convertv)\/[a-f0-9]{16,64}\/segment_\d+\.ts/i.test(u)) return true;
+      // Định dạng quảng cáo: /(v7|v8|convertv)/[hash 16-64 hex]/segment_XXXX.ts hoặc domain cờ bạc
+      // TUYỆT ĐỐI KHÔNG chạm vào các phân đoạn phim gốc dạng convertv7/[8-ky-tu].ts hoặc convertv8/[8-ky-tu].ts
+      if (/\/(?:v\d+|convertv\d*)\/[a-f0-9]{16,64}\/segment_\d+\.ts/i.test(u)) return true;
+      if (/https?:\/\/[^\/]+\/(?:v\d+|convertv\d*)\/[a-f0-9]{16,64}\/segment_\d+\.ts/i.test(u)) return true;
       if (/(?:9922|i999|cwin|nohu|casinopromo|shbet|789bet|jun88|hi88|okvip|f8bet|new88)\.com/i.test(u)) return true;
-      if (/promo|advert|banner|trailer-ad/i.test(u)) return true;
       return false;
     };
 
@@ -2094,19 +2094,43 @@ class AppleCinemaApp {
     while (i < lines.length) {
       const line = lines[i];
 
-      // Nếu gặp #EXT-X-DISCONTINUITY mà phân đoạn tiếp theo là quảng cáo -> bỏ qua tag
+      // Nếu gặp #EXT-X-DISCONTINUITY mà phân đoạn tiếp theo là quảng cáo -> bỏ qua toàn bộ khối quảng cáo và thẻ đóng
       if (line.trim() === "#EXT-X-DISCONTINUITY") {
         let peek = i + 1;
         while (peek < lines.length && lines[peek].startsWith("#")) {
           peek++;
         }
         if (peek < lines.length && isAdSegment(lines[peek])) {
+          // Bỏ qua toàn bộ các phân đoạn quảng cáo liên tiếp cùng các thẻ #EXT-X-KEY / #EXTINF bên trong khối quảng cáo
+          let cursor = i + 1;
+          while (cursor < lines.length) {
+            const curTrim = lines[cursor].trim();
+            if (curTrim === "#EXT-X-DISCONTINUITY") {
+              cursor++;
+              // Bỏ qua các thẻ #EXT-X-DISCONTINUITY trùng lặp ngay sau khối quảng cáo
+              while (cursor < lines.length && lines[cursor].trim() === "#EXT-X-DISCONTINUITY") {
+                cursor++;
+              }
+              break;
+            }
+            if (!curTrim.startsWith("#") && curTrim !== "" && !isAdSegment(curTrim)) {
+              break;
+            }
+            cursor++;
+          }
+          i = cursor;
+          continue;
+        }
+
+        // Gộp các thẻ #EXT-X-DISCONTINUITY bị lặp kép liên tiếp (ví dụ trong cụm convertv7/ hoặc convertv8/) thành 1 thẻ duy nhất
+        // để HLS.js không tạo ra miền continuity counter (cc) rỗng gây nhảy cóc hoặc cắt mất vài giây phim
+        if (cleanLines.length > 0 && cleanLines[cleanLines.length - 1].trim() === "#EXT-X-DISCONTINUITY") {
           i++;
           continue;
         }
       }
 
-      // Nếu gặp phân đoạn quảng cáo (#EXTINF)
+      // Nếu gặp phân đoạn quảng cáo (#EXTINF) không có #EXT-X-DISCONTINUITY mở đầu
       if (line.startsWith("#EXTINF:")) {
         let peek = i + 1;
         while (peek < lines.length && lines[peek].startsWith("#") && !lines[peek].startsWith("#EXTINF:")) {
@@ -2114,8 +2138,7 @@ class AppleCinemaApp {
         }
         if (peek < lines.length && isAdSegment(lines[peek])) {
           i = peek + 1;
-          // Bỏ qua tag #EXT-X-DISCONTINUITY kết thúc khối quảng cáo
-          if (i < lines.length && lines[i].trim() === "#EXT-X-DISCONTINUITY") {
+          while (i < lines.length && lines[i].trim() === "#EXT-X-DISCONTINUITY") {
             i++;
           }
           continue;
@@ -2455,16 +2478,16 @@ class AppleCinemaApp {
         pLoader: CustomPlaylistLoader,
         enableWorker: true,
         lowLatencyMode: false,
-        progressive: true,
+        progressive: false,
         backBufferLength: 90,
-        maxBufferLength: 90,
-        maxMaxBufferLength: 180,
+        maxBufferLength: 60,
+        maxMaxBufferLength: 120,
         maxBufferSize: 120 * 1000 * 1000,
-        maxBufferHole: 0.8,
-        highBufferWatchdogPeriod: 3,
-        nudgeOffset: 0.2,
-        nudgeMaxRetry: 5,
-        maxFragLookUpTolerance: 0.4,
+        maxBufferHole: 0.1,
+        maxAudioFramesDrift: 4,
+        forceKeyFrameOnDiscontinuity: false,
+        nudgeMaxRetry: 10,
+        maxFragLookUpTolerance: 0.1,
         startLevel: -1,
         capLevelToPlayerSize: false,
         abrEwmaDefaultEstimate: 50000000,
